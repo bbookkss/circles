@@ -15,3 +15,43 @@ export async function updateProfile(formData: FormData) {
   revalidatePath('/profile')
   revalidatePath('/dashboard')
 }
+
+export async function backfillNeighborhoods(): Promise<{ updated: number; errors: number }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { updated: 0, errors: 0 }
+
+  // Find this user's circles that have coordinates but no neighborhood
+  const { data: circles } = await supabase
+    .from('circles')
+    .select('id, latitude, longitude')
+    .eq('created_by', user.id)
+    .not('latitude', 'is', null)
+    .not('longitude', 'is', null)
+    .is('neighborhood', null)
+
+  if (!circles || circles.length === 0) return { updated: 0, errors: 0 }
+
+  let updated = 0
+  let errors = 0
+
+  for (const circle of circles) {
+    try {
+      const res = await fetch(
+        `https://api.mapbox.com/geocoding/v5/mapbox.places/${circle.longitude},${circle.latitude}.json?types=neighborhood,locality&access_token=${process.env.NEXT_PUBLIC_MAPBOX_TOKEN}`
+      )
+      const json = await res.json()
+      const neighborhood = json.features?.[0]?.text ?? null
+
+      if (neighborhood) {
+        await supabase.from('circles').update({ neighborhood }).eq('id', circle.id)
+        updated++
+      }
+    } catch {
+      errors++
+    }
+  }
+
+  revalidatePath('/explore')
+  return { updated, errors }
+}

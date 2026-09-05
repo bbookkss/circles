@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import TopNav from '@/components/TopNav'
 import EditProfileForm from './EditProfileForm'
+import BackfillButton from './BackfillButton'
 
 export default async function ProfilePage() {
   const supabase = await createClient()
@@ -50,6 +51,11 @@ export default async function ProfilePage() {
           </div>
 
           <EditProfileForm fullName={profile?.full_name ?? ''} />
+
+          <div className="mt-6 pt-6 border-t space-y-2">
+            <p className="text-sm font-medium">Tools</p>
+            <BackfillButton />
+          </div>
 
           <div className="mt-10">
             <h2 className="font-semibold mb-4">Your circles ({circles?.length ?? 0})</h2>
