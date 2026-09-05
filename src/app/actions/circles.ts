@@ -13,6 +13,7 @@ export async function createCircle(formData: FormData) {
   const category = formData.get('category') as string
   const location = formData.get('location') as string
   const emoji = formData.get('emoji') as string
+  const visibility = formData.get('visibility') as string || 'public'
   const latitude = parseFloat(formData.get('latitude') as string)
   const longitude = parseFloat(formData.get('longitude') as string)
 
@@ -26,6 +27,7 @@ export async function createCircle(formData: FormData) {
       category: category || null,
       location: location?.trim() || null,
       emoji: emoji || null,
+      visibility,
       latitude: isNaN(latitude) ? null : latitude,
       longitude: isNaN(longitude) ? null : longitude,
       created_by: user.id,
@@ -35,10 +37,11 @@ export async function createCircle(formData: FormData) {
 
   if (error) return { error: error.message }
 
-  // Auto-join the circle you just created
+  // Creator auto-joins as admin
   await supabase.from('circle_members').insert({
     circle_id: data.id,
     user_id: user.id,
+    role: 'admin',
   })
 
   // Save schedule if provided
@@ -68,7 +71,7 @@ export async function joinCircle(formData: FormData) {
   if (!user) redirect('/login')
 
   const circle_id = formData.get('circle_id') as string
-  await supabase.from('circle_members').insert({ circle_id, user_id: user.id })
+  await supabase.from('circle_members').insert({ circle_id, user_id: user.id, role: 'member' })
   redirect(`/circles/${circle_id}`)
 }
 
@@ -82,4 +85,58 @@ export async function leaveCircle(formData: FormData) {
     .eq('circle_id', circle_id)
     .eq('user_id', user.id)
   redirect(`/circles/${circle_id}`)
+}
+
+export async function requestToJoin(formData: FormData) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  const circle_id = formData.get('circle_id') as string
+  await supabase.from('circle_join_requests').insert({ circle_id, user_id: user.id })
+  redirect(`/circles/${circle_id}`)
+}
+
+export async function withdrawRequest(formData: FormData) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  const circle_id = formData.get('circle_id') as string
+  await supabase.from('circle_join_requests').delete()
+    .eq('circle_id', circle_id)
+    .eq('user_id', user.id)
+  redirect(`/circles/${circle_id}`)
+}
+
+export async function approveRequest(formData: FormData) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  const circle_id = formData.get('circle_id') as string
+  const request_user_id = formData.get('user_id') as string
+
+  await supabase.from('circle_join_requests').update({ status: 'approved' })
+    .eq('circle_id', circle_id).eq('user_id', request_user_id)
+
+  await supabase.from('circle_members').insert({
+    circle_id, user_id: request_user_id, role: 'member',
+  })
+
+  redirect(`/circles/${circle_id}/requests`)
+}
+
+export async function rejectRequest(formData: FormData) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  const circle_id = formData.get('circle_id') as string
+  const request_user_id = formData.get('user_id') as string
+
+  await supabase.from('circle_join_requests').update({ status: 'rejected' })
+    .eq('circle_id', circle_id).eq('user_id', request_user_id)
+
+  redirect(`/circles/${circle_id}/requests`)
 }

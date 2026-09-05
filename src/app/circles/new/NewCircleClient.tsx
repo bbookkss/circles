@@ -49,6 +49,7 @@ export default function NewCircleClient() {
   const [selectedDays, setSelectedDays] = useState<number[]>([])
   const [hasSchedule, setHasSchedule] = useState(false)
   const [selectedEmoji, setSelectedEmoji] = useState<string | null>(null)
+  const [visibility, setVisibility] = useState<'public' | 'private'>('public')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
@@ -76,7 +77,7 @@ export default function NewCircleClient() {
   }
 
   return (
-    <div className="flex h-screen w-full overflow-hidden">
+    <div className="flex h-full w-full overflow-hidden">
       {/* Form sidebar */}
       <aside className="w-96 flex-shrink-0 bg-background border-r flex flex-col">
         <div className="p-4 border-b flex items-center gap-3">
@@ -169,6 +170,33 @@ export default function NewCircleClient() {
             ) : (
               <p className="text-xs text-muted-foreground">Click anywhere on the map to drop a pin</p>
             )}
+          </div>
+
+          {/* Visibility */}
+          <div className="space-y-2">
+            <Label>Visibility</Label>
+            <input type="hidden" name="visibility" value={visibility} />
+            <div className="flex gap-2">
+              {(['public', 'private'] as const).map((v) => (
+                <button
+                  key={v}
+                  type="button"
+                  onClick={() => setVisibility(v)}
+                  className={`flex-1 py-2 rounded-md text-sm font-medium border transition-colors ${
+                    visibility === v
+                      ? 'bg-foreground text-background border-foreground'
+                      : 'bg-background text-foreground border-input hover:bg-muted'
+                  }`}
+                >
+                  {v === 'public' ? '🌐 Public' : '🔒 Private'}
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {visibility === 'public'
+                ? 'Anyone can find and join this circle.'
+                : 'People must request to join. You approve them.'}
+            </p>
           </div>
 
           {/* Schedule section */}
