@@ -44,14 +44,34 @@ const FREQUENCIES = [
 
 type Pin = { longitude: number; latitude: number }
 
+async function reverseGeocode(lng: number, lat: number): Promise<string | null> {
+  const res = await fetch(
+    `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?types=neighborhood,locality&access_token=${MAPBOX_TOKEN}`
+  )
+  const json = await res.json()
+  const feature = json.features?.[0]
+  return feature?.text ?? null
+}
+
 export default function NewCircleClient() {
   const [pin, setPin] = useState<Pin | null>(null)
+  const [neighborhood, setNeighborhood] = useState<string | null>(null)
+  const [geocoding, setGeocoding] = useState(false)
   const [selectedDays, setSelectedDays] = useState<number[]>([])
   const [hasSchedule, setHasSchedule] = useState(false)
   const [selectedEmoji, setSelectedEmoji] = useState<string | null>(null)
   const [visibility, setVisibility] = useState<'public' | 'private'>('public')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+
+  async function handleMapClick(lng: number, lat: number) {
+    setPin({ longitude: lng, latitude: lat })
+    setNeighborhood(null)
+    setGeocoding(true)
+    const hood = await reverseGeocode(lng, lat)
+    setNeighborhood(hood)
+    setGeocoding(false)
+  }
 
   function toggleDay(value: number) {
     setSelectedDays((prev) =>
@@ -157,16 +177,30 @@ export default function NewCircleClient() {
 
           <input type="hidden" name="latitude" value={pin?.latitude ?? ''} />
           <input type="hidden" name="longitude" value={pin?.longitude ?? ''} />
+          <input type="hidden" name="neighborhood" value={neighborhood ?? ''} />
 
           <div className="space-y-2">
             <Label>Pin on map</Label>
             {pin ? (
-              <p className="text-xs text-muted-foreground">
-                📍 {pin.latitude.toFixed(5)}, {pin.longitude.toFixed(5)}{' '}
-                <button type="button" onClick={() => setPin(null)} className="underline ml-1">
-                  remove
-                </button>
-              </p>
+              <div className="text-xs text-muted-foreground space-y-0.5">
+                <p>
+                  📍 {pin.latitude.toFixed(5)}, {pin.longitude.toFixed(5)}{' '}
+                  <button
+                    type="button"
+                    onClick={() => { setPin(null); setNeighborhood(null) }}
+                    className="underline ml-1"
+                  >
+                    remove
+                  </button>
+                </p>
+                {geocoding && <p className="text-muted-foreground">Detecting neighborhood...</p>}
+                {!geocoding && neighborhood && (
+                  <p className="text-foreground font-medium">📌 {neighborhood}</p>
+                )}
+                {!geocoding && !neighborhood && pin && (
+                  <p className="text-muted-foreground italic">No neighborhood detected</p>
+                )}
+              </div>
             ) : (
               <p className="text-xs text-muted-foreground">Click anywhere on the map to drop a pin</p>
             )}
@@ -289,7 +323,7 @@ export default function NewCircleClient() {
           mapStyle="mapbox://styles/mapbox/dark-v11"
           mapboxAccessToken={MAPBOX_TOKEN}
           cursor="crosshair"
-          onClick={(e) => setPin({ longitude: e.lngLat.lng, latitude: e.lngLat.lat })}
+          onClick={(e) => handleMapClick(e.lngLat.lng, e.lngLat.lat)}
         >
           {pin && (
             <Marker longitude={pin.longitude} latitude={pin.latitude} anchor="center">

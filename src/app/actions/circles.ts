@@ -14,6 +14,7 @@ export async function createCircle(formData: FormData) {
   const location = formData.get('location') as string
   const emoji = formData.get('emoji') as string
   const visibility = formData.get('visibility') as string || 'public'
+  const neighborhood = formData.get('neighborhood') as string
   const latitude = parseFloat(formData.get('latitude') as string)
   const longitude = parseFloat(formData.get('longitude') as string)
 
@@ -28,6 +29,7 @@ export async function createCircle(formData: FormData) {
       location: location?.trim() || null,
       emoji: emoji || null,
       visibility,
+      neighborhood: neighborhood?.trim() || null,
       latitude: isNaN(latitude) ? null : latitude,
       longitude: isNaN(longitude) ? null : longitude,
       created_by: user.id,

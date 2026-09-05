@@ -17,12 +17,12 @@ const CirclesMap = dynamic(() => import('@/components/map/CirclesMap'), {
 
 const CATEGORIES = ['Music', 'Sports', 'Food & Drink', 'Arts & Culture', 'Outdoors', 'Tech', 'Social', 'Other']
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-const SF_NEIGHBORHOODS = ['Mission', 'SOMA', 'Castro', 'Haight', 'Marina', 'Richmond', 'Sunset', 'Tenderloin', 'Nob Hill', 'Pacific Heights', 'Dogpatch', 'Potrero Hill']
 
 type CircleWithMeta = CirclePin & {
   member_count?: number
   days_of_week?: number[]
   location?: string | null
+  neighborhood?: string | null
 }
 
 type Props = {
@@ -38,11 +38,17 @@ export default function ExploreClient({ circles }: Props) {
   const [sizeFilter, setSizeFilter] = useState<string | null>(null)
   const [showFilters, setShowFilters] = useState(false)
 
+  // Derive unique neighborhoods from actual circle data
+  const neighborhoods = useMemo(() => {
+    const hoods = circles.map((c) => c.neighborhood).filter(Boolean) as string[]
+    return [...new Set(hoods)].sort()
+  }, [circles])
+
   const filtered = useMemo(() => {
     return circles.filter((c) => {
       if (search && !c.name.toLowerCase().includes(search.toLowerCase())) return false
       if (categoryFilter && c.category !== categoryFilter) return false
-      if (neighborhoodFilter && !c.location?.toLowerCase().includes(neighborhoodFilter.toLowerCase())) return false
+      if (neighborhoodFilter && c.neighborhood !== neighborhoodFilter) return false
       if (dayFilter !== null && !c.days_of_week?.includes(dayFilter)) return false
       if (sizeFilter === 'small' && (c.member_count ?? 0) >= 10) return false
       if (sizeFilter === 'medium' && ((c.member_count ?? 0) < 10 || (c.member_count ?? 0) >= 50)) return false
@@ -135,16 +141,20 @@ export default function ExploreClient({ circles }: Props) {
             {/* Neighborhood */}
             <div>
               <p className="text-xs font-medium mb-1.5">Neighborhood</p>
-              <select
-                value={neighborhoodFilter ?? ''}
-                onChange={(e) => setNeighborhoodFilter(e.target.value || null)}
-                className="w-full rounded-md border border-input bg-background px-2 py-1 text-xs focus-visible:outline-none"
-              >
-                <option value="">Any</option>
-                {SF_NEIGHBORHOODS.map((n) => (
-                  <option key={n} value={n}>{n}</option>
-                ))}
-              </select>
+              {neighborhoods.length === 0 ? (
+                <p className="text-xs text-muted-foreground italic">No neighborhoods detected yet</p>
+              ) : (
+                <select
+                  value={neighborhoodFilter ?? ''}
+                  onChange={(e) => setNeighborhoodFilter(e.target.value || null)}
+                  className="w-full rounded-md border border-input bg-background px-2 py-1 text-xs focus-visible:outline-none"
+                >
+                  <option value="">Any</option>
+                  {neighborhoods.map((n) => (
+                    <option key={n} value={n}>{n}</option>
+                  ))}
+                </select>
+              )}
             </div>
 
             {/* Size */}
@@ -195,8 +205,10 @@ export default function ExploreClient({ circles }: Props) {
                     {circle.category && (
                       <p className="text-xs text-muted-foreground">{circle.category}</p>
                     )}
-                    {circle.location && (
-                      <p className="text-xs text-muted-foreground truncate">📍 {circle.location}</p>
+                    {(circle.neighborhood || circle.location) && (
+                      <p className="text-xs text-muted-foreground truncate">
+                        📍 {circle.neighborhood ?? circle.location}
+                      </p>
                     )}
                     {circle.member_count !== undefined && (
                       <p className="text-xs text-muted-foreground">👥 {circle.member_count}</p>

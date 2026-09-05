@@ -10,7 +10,7 @@ export default async function ExplorePage() {
 
   const { data: circles } = await supabase
     .from('circles')
-    .select('id, name, description, category, emoji, location, latitude, longitude')
+    .select('id, name, description, category, emoji, location, neighborhood, latitude, longitude')
     .not('latitude', 'is', null)
     .not('longitude', 'is', null)
 

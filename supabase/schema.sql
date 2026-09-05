@@ -14,6 +14,7 @@ create table public.circles (
   location text,
   category text,
   emoji text,
+  neighborhood text,
   latitude double precision,
   longitude double precision,
   created_by uuid references public.profiles(id) on delete set null,
