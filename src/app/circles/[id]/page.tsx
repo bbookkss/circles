@@ -64,9 +64,14 @@ export default async function CirclePage({ params }: { params: Promise<{ id: str
             ← Explore
           </Link>
           {isAdmin && (
-            <Link href={`/circles/${id}/requests`} className="text-sm text-muted-foreground hover:text-foreground">
-              Manage requests →
-            </Link>
+            <div className="flex items-center gap-4">
+              <Link href={`/circles/${id}/edit`} className="text-sm text-muted-foreground hover:text-foreground">
+                Edit
+              </Link>
+              <Link href={`/circles/${id}/requests`} className="text-sm text-muted-foreground hover:text-foreground">
+                Requests
+              </Link>
+            </div>
           )}
         </div>
 

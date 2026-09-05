@@ -67,6 +67,62 @@ export async function createCircle(formData: FormData) {
   redirect(`/circles/${data.id}`)
 }
 
+export async function updateCircle(formData: FormData) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
+
+  const circle_id = formData.get('circle_id') as string
+
+  // Verify admin
+  const { data: membership } = await supabase
+    .from('circle_members')
+    .select('role')
+    .eq('circle_id', circle_id)
+    .eq('user_id', user.id)
+    .maybeSingle()
+
+  if (membership?.role !== 'admin') return { error: 'Not authorized' }
+
+  const name = formData.get('name') as string
+  if (!name?.trim()) return { error: 'Name is required' }
+
+  const latitude = parseFloat(formData.get('latitude') as string)
+  const longitude = parseFloat(formData.get('longitude') as string)
+  const neighborhood = formData.get('neighborhood') as string
+
+  await supabase.from('circles').update({
+    name: name.trim(),
+    description: (formData.get('description') as string)?.trim() || null,
+    category: (formData.get('category') as string) || null,
+    location: (formData.get('location') as string)?.trim() || null,
+    emoji: (formData.get('emoji') as string) || null,
+    visibility: (formData.get('visibility') as string) || 'public',
+    neighborhood: neighborhood?.trim() || null,
+    latitude: isNaN(latitude) ? null : latitude,
+    longitude: isNaN(longitude) ? null : longitude,
+  }).eq('id', circle_id)
+
+  // Replace schedule if days provided
+  const days = formData.getAll('days_of_week').map(Number).filter((d) => !isNaN(d))
+  const start_time = formData.get('start_time') as string
+  const end_time = formData.get('end_time') as string
+
+  if (days.length > 0 && start_time && end_time) {
+    await supabase.from('circle_schedules').delete().eq('circle_id', circle_id)
+    await supabase.from('circle_schedules').insert({
+      circle_id,
+      days_of_week: days,
+      start_time,
+      end_time,
+      frequency: (formData.get('frequency') as string) || 'weekly',
+      note: (formData.get('schedule_note') as string)?.trim() || null,
+    })
+  }
+
+  redirect(`/circles/${circle_id}`)
+}
+
 export async function joinCircle(formData: FormData) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
