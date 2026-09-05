@@ -13,6 +13,8 @@ create table public.circles (
   description text,
   location text,
   category text,
+  latitude double precision,
+  longitude double precision,
   created_by uuid references public.profiles(id) on delete set null,
   created_at timestamptz default now()
 );
