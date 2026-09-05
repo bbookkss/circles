@@ -8,6 +8,7 @@ import { updateCircle } from '@/app/actions/circles'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import LocationSearch from '@/components/LocationSearch'
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN!
 const SF_CENTER = { longitude: -122.4194, latitude: 37.7749, zoom: 12 }
@@ -183,7 +184,18 @@ export default function EditCircleClient({ circle, schedule }: { circle: Circle;
           <input type="hidden" name="neighborhood" value={neighborhood ?? ''} />
 
           <div className="space-y-2">
-            <Label>Pin on map</Label>
+            <Label>Location search</Label>
+            <LocationSearch
+              onSelect={({ longitude, latitude, neighborhood: hood }) => {
+                setPin({ longitude, latitude })
+                setNeighborhood(hood)
+              }}
+            />
+            <p className="text-xs text-muted-foreground">Or click the map directly to move the pin</p>
+          </div>
+
+          <div className="space-y-1">
+            <Label>Pin</Label>
             {pin ? (
               <div className="text-xs text-muted-foreground space-y-0.5">
                 <p>
