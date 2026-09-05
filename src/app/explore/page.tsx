@@ -10,7 +10,7 @@ export default async function ExplorePage() {
   // Fetch circles that have coordinates set
   const { data: circles } = await supabase
     .from('circles')
-    .select('id, name, description, category, latitude, longitude')
+    .select('id, name, description, category, emoji, latitude, longitude')
     .not('latitude', 'is', null)
     .not('longitude', 'is', null)
 

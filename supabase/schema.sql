@@ -13,6 +13,7 @@ create table public.circles (
   description text,
   location text,
   category text,
+  emoji text,
   latitude double precision,
   longitude double precision,
   created_by uuid references public.profiles(id) on delete set null,
@@ -54,10 +55,23 @@ create trigger on_auth_user_created
   after insert on auth.users
   for each row execute procedure public.handle_new_user();
 
+-- Circle schedules: recurring meeting times
+create table public.circle_schedules (
+  id uuid default gen_random_uuid() primary key,
+  circle_id uuid references public.circles(id) on delete cascade,
+  days_of_week int[] not null,
+  start_time time not null,
+  end_time time not null,
+  frequency text not null default 'weekly',
+  note text,
+  created_at timestamptz default now()
+);
+
 -- RLS: enable on all tables
 alter table public.profiles enable row level security;
 alter table public.circles enable row level security;
 alter table public.circle_members enable row level security;
+alter table public.circle_schedules enable row level security;
 alter table public.events enable row level security;
 
 -- Profiles: users can read all profiles, only edit their own
@@ -74,6 +88,15 @@ create policy "circles: creator delete" on public.circles for delete using (auth
 create policy "members: auth read" on public.circle_members for select using (auth.role() = 'authenticated');
 create policy "members: auth insert" on public.circle_members for insert with check (auth.uid() = user_id);
 create policy "members: own delete" on public.circle_members for delete using (auth.uid() = user_id);
+
+-- Circle schedules RLS
+create policy "schedules: auth read" on public.circle_schedules for select using (auth.role() = 'authenticated');
+create policy "schedules: creator insert" on public.circle_schedules for insert with check (
+  auth.uid() = (select created_by from public.circles where id = circle_id)
+);
+create policy "schedules: creator delete" on public.circle_schedules for delete using (
+  auth.uid() = (select created_by from public.circles where id = circle_id)
+);
 
 -- Events: circle members can read; authenticated users can post
 create policy "events: auth read" on public.events for select using (auth.role() = 'authenticated');

@@ -1,12 +1,10 @@
 'use client'
 
-import { useRef, useState, useCallback } from 'react'
+import { useState, useCallback } from 'react'
 import Map, { Marker, Popup, NavigationControl, GeolocateControl } from 'react-map-gl/mapbox'
 import 'mapbox-gl/dist/mapbox-gl.css'
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN!
-
-// SF default center
 const SF_CENTER = { longitude: -122.4194, latitude: 37.7749, zoom: 13 }
 
 export type CirclePin = {
@@ -16,6 +14,7 @@ export type CirclePin = {
   latitude: number
   longitude: number
   category?: string | null
+  emoji?: string | null
   memberCount?: number
 }
 
@@ -40,11 +39,7 @@ export default function CirclesMap({ circles = [], onCircleClick }: Props) {
       mapboxAccessToken={MAPBOX_TOKEN}
     >
       <NavigationControl position="top-right" />
-      <GeolocateControl
-        position="top-right"
-        trackUserLocation
-        showUserHeading
-      />
+      <GeolocateControl position="top-right" trackUserLocation showUserHeading />
 
       {circles.map((circle) => (
         <Marker
@@ -55,10 +50,10 @@ export default function CirclesMap({ circles = [], onCircleClick }: Props) {
           onClick={() => handleMarkerClick(circle)}
         >
           <button
-            className="w-8 h-8 rounded-full bg-white border-2 border-black flex items-center justify-center text-xs font-bold shadow-lg hover:scale-110 transition-transform cursor-pointer"
             title={circle.name}
+            className="w-10 h-10 rounded-full bg-white border-2 border-white shadow-lg flex items-center justify-center hover:scale-110 transition-transform cursor-pointer text-xl"
           >
-            ●
+            {circle.emoji ?? '●'}
           </button>
         </Marker>
       ))}
@@ -70,10 +65,12 @@ export default function CirclesMap({ circles = [], onCircleClick }: Props) {
           anchor="bottom"
           onClose={() => setPopupCircle(null)}
           closeOnClick={false}
-          className="rounded-lg"
         >
           <div className="p-1 min-w-[160px]">
-            <p className="font-semibold text-sm">{popupCircle.name}</p>
+            <p className="font-semibold text-sm">
+              {popupCircle.emoji && <span className="mr-1">{popupCircle.emoji}</span>}
+              {popupCircle.name}
+            </p>
             {popupCircle.category && (
               <p className="text-xs text-gray-500 mt-0.5">{popupCircle.category}</p>
             )}
