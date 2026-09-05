@@ -281,7 +281,12 @@ export default async function CirclePage({ params }: { params: Promise<{ id: str
                 {members.map((m) => (
                   <div key={m.user_id} className="flex items-center gap-3">
                     <Initials name={m.full_name} size="sm" />
-                    <span className="text-sm flex-1">{m.full_name}</span>
+                    <Link
+                      href={m.isMe ? '/profile' : `/profile/${m.user_id}`}
+                      className="text-sm flex-1 hover:underline"
+                    >
+                      {m.full_name}
+                    </Link>
                     {m.role === 'admin' && (
                       <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">Admin</span>
                     )}
@@ -326,7 +331,12 @@ export default async function CirclePage({ params }: { params: Promise<{ id: str
                         <Initials name={post.author_name} size="sm" />
                         <div className="flex-1 min-w-0">
                           <div className="flex items-baseline gap-2 mb-1">
-                            <span className="text-sm font-medium">{post.author_name}</span>
+                            <Link
+                              href={post.user_id === user.id ? '/profile' : `/profile/${post.user_id}`}
+                              className="text-sm font-medium hover:underline"
+                            >
+                              {post.author_name}
+                            </Link>
                             <span className="text-xs text-muted-foreground">{formatTimeAgo(post.created_at)}</span>
                           </div>
                           <p className="text-sm whitespace-pre-wrap break-words">{post.content}</p>

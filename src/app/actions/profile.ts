@@ -12,7 +12,9 @@ export async function updateProfile(formData: FormData) {
   const full_name = (formData.get('full_name') as string).trim()
   if (!full_name) return
 
-  await supabase.from('profiles').update({ full_name }).eq('id', user.id)
+  const bio = (formData.get('bio') as string | null)?.trim() ?? null
+
+  await supabase.from('profiles').update({ full_name, bio }).eq('id', user.id)
   revalidatePath('/profile')
   revalidatePath('/home')
 }

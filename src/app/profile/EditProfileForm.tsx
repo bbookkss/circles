@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { updateProfile } from '@/app/actions/profile'
 
-export default function EditProfileForm({ fullName }: { fullName: string }) {
+export default function EditProfileForm({ fullName, bio }: { fullName: string; bio: string | null }) {
   const [editing, setEditing] = useState(false)
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
@@ -22,11 +22,14 @@ export default function EditProfileForm({ fullName }: { fullName: string }) {
 
   if (!editing) {
     return (
-      <div className="flex items-center gap-3">
-        {success && <p className="text-sm text-green-600">Saved!</p>}
-        <Button variant="outline" size="sm" onClick={() => setEditing(true)}>
-          Edit name
-        </Button>
+      <div className="space-y-1">
+        {bio && <p className="text-sm text-muted-foreground">{bio}</p>}
+        <div className="flex items-center gap-3 pt-1">
+          {success && <p className="text-sm text-green-600">Saved!</p>}
+          <Button variant="outline" size="sm" onClick={() => setEditing(true)}>
+            Edit profile
+          </Button>
+        </div>
       </div>
     )
   }
@@ -36,6 +39,18 @@ export default function EditProfileForm({ fullName }: { fullName: string }) {
       <div className="space-y-1">
         <Label htmlFor="full_name">Full name</Label>
         <Input id="full_name" name="full_name" defaultValue={fullName} required />
+      </div>
+      <div className="space-y-1">
+        <Label htmlFor="bio">Bio <span className="text-muted-foreground font-normal">(optional)</span></Label>
+        <textarea
+          id="bio"
+          name="bio"
+          defaultValue={bio ?? ''}
+          placeholder="Tell people a bit about yourself..."
+          rows={3}
+          maxLength={200}
+          className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring resize-none"
+        />
       </div>
       <div className="flex gap-2">
         <Button type="submit" size="sm" disabled={loading}>
