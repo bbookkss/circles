@@ -10,6 +10,10 @@ export default async function TopNav() {
     ? await supabase.from('profiles').select('full_name').eq('id', user.id).maybeSingle()
     : { data: null }
 
+  const { count: unread } = user
+    ? await supabase.from('notifications').select('*', { count: 'exact', head: true }).eq('user_id', user.id).eq('read', false)
+    : { count: 0 }
+
   const initials = profile?.full_name
     ? profile.full_name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
     : '?'
@@ -34,8 +38,18 @@ export default async function TopNav() {
         </Circled>
       </div>
 
-      {/* Right: profile + sign out */}
+      {/* Right: inbox + profile + sign out */}
       <div className="flex items-center gap-2">
+        <Circled>
+          <Link href="/inbox" className="relative px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
+            Inbox
+            {unread ? (
+              <span className="absolute top-0 right-0 min-w-4 h-4 px-1 rounded-full bg-foreground text-background text-[10px] font-bold flex items-center justify-center">
+                {unread > 9 ? '9+' : unread}
+              </span>
+            ) : null}
+          </Link>
+        </Circled>
         <Link
           href="/profile"
           className="w-8 h-8 rounded-full bg-foreground text-background flex items-center justify-center text-xs font-bold hover:opacity-80 transition-opacity"

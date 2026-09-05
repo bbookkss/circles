@@ -108,3 +108,111 @@ create policy "events: auth read" on public.events for select using (auth.role()
 create policy "events: auth insert" on public.events for insert with check (auth.uid() = created_by);
 create policy "events: creator update" on public.events for update using (auth.uid() = created_by);
 create policy "events: creator delete" on public.events for delete using (auth.uid() = created_by);
+
+-- ===========================================================================
+-- Post likes & comments
+-- (posts, follows, and the profiles.city/bio/instagram columns were added via
+--  ad-hoc migrations; this section documents the newest social tables.)
+-- ===========================================================================
+
+create table if not exists public.post_likes (
+  post_id uuid references public.posts(id) on delete cascade not null,
+  user_id uuid references public.profiles(id) on delete cascade not null,
+  created_at timestamptz default now() not null,
+  primary key (post_id, user_id)
+);
+alter table public.post_likes enable row level security;
+
+create policy "post_likes: read" on public.post_likes for select using (
+  exists (
+    select 1 from public.posts p join public.circles c on c.id = p.circle_id
+    where p.id = post_likes.post_id and (
+      c.visibility = 'public'
+      or exists (select 1 from public.circle_members m where m.circle_id = c.id and m.user_id = auth.uid())
+    )
+  )
+);
+create policy "post_likes: insert own" on public.post_likes for insert with check (
+  auth.uid() = user_id and exists (
+    select 1 from public.posts p join public.circle_members m on m.circle_id = p.circle_id
+    where p.id = post_likes.post_id and m.user_id = auth.uid()
+  )
+);
+create policy "post_likes: delete own" on public.post_likes for delete using (auth.uid() = user_id);
+
+create table if not exists public.post_comments (
+  id uuid primary key default gen_random_uuid(),
+  post_id uuid references public.posts(id) on delete cascade not null,
+  user_id uuid references public.profiles(id) on delete cascade not null,
+  content text not null,
+  created_at timestamptz default now() not null
+);
+alter table public.post_comments enable row level security;
+
+create policy "post_comments: read" on public.post_comments for select using (
+  exists (
+    select 1 from public.posts p join public.circles c on c.id = p.circle_id
+    where p.id = post_comments.post_id and (
+      c.visibility = 'public'
+      or exists (select 1 from public.circle_members m where m.circle_id = c.id and m.user_id = auth.uid())
+    )
+  )
+);
+create policy "post_comments: insert own" on public.post_comments for insert with check (
+  auth.uid() = user_id and exists (
+    select 1 from public.posts p join public.circle_members m on m.circle_id = p.circle_id
+    where p.id = post_comments.post_id and m.user_id = auth.uid()
+  )
+);
+create policy "post_comments: delete own" on public.post_comments for delete using (auth.uid() = user_id);
+
+-- ===========================================================================
+-- Comment likes & notifications (social layer, phase 1)
+-- ===========================================================================
+
+create table if not exists public.comment_likes (
+  comment_id uuid references public.post_comments(id) on delete cascade not null,
+  user_id uuid references public.profiles(id) on delete cascade not null,
+  created_at timestamptz default now() not null,
+  primary key (comment_id, user_id)
+);
+alter table public.comment_likes enable row level security;
+
+create policy "comment_likes: read" on public.comment_likes for select using (
+  exists (
+    select 1 from public.post_comments pc
+    join public.posts p on p.id = pc.post_id
+    join public.circles c on c.id = p.circle_id
+    where pc.id = comment_likes.comment_id and (
+      c.visibility = 'public'
+      or exists (select 1 from public.circle_members m where m.circle_id = c.id and m.user_id = auth.uid())
+    )
+  )
+);
+create policy "comment_likes: insert own" on public.comment_likes for insert with check (
+  auth.uid() = user_id and exists (
+    select 1 from public.post_comments pc
+    join public.posts p on p.id = pc.post_id
+    join public.circle_members m on m.circle_id = p.circle_id
+    where pc.id = comment_likes.comment_id and m.user_id = auth.uid()
+  )
+);
+create policy "comment_likes: delete own" on public.comment_likes for delete using (auth.uid() = user_id);
+
+create table if not exists public.notifications (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references public.profiles(id) on delete cascade not null,
+  actor_id uuid references public.profiles(id) on delete cascade not null,
+  type text not null,
+  circle_id uuid references public.circles(id) on delete cascade,
+  post_id uuid references public.posts(id) on delete cascade,
+  comment_id uuid references public.post_comments(id) on delete cascade,
+  read boolean not null default false,
+  created_at timestamptz default now() not null
+);
+alter table public.notifications enable row level security;
+
+create policy "notifications: own read" on public.notifications for select using (auth.uid() = user_id);
+create policy "notifications: actor insert" on public.notifications for insert with check (auth.uid() = actor_id);
+create policy "notifications: own update" on public.notifications for update using (auth.uid() = user_id);
+create policy "notifications: own delete" on public.notifications for delete using (auth.uid() = user_id);

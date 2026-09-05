@@ -3,9 +3,9 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Button } from '@/components/ui/button'
 import { joinCircle, leaveCircle, requestToJoin, withdrawRequest } from '@/app/actions/circles'
-import { deletePost } from '@/app/actions/posts'
 import TopNav from '@/components/TopNav'
 import PostCompose from '@/components/PostCompose'
+import PostItem from '@/components/PostItem'
 import CopyLinkButton from '@/components/CopyLinkButton'
 import FollowButton from '@/components/FollowButton'
 import Circled from '@/components/Circled'
@@ -24,18 +24,6 @@ function formatTime(t: string) {
   const ampm = h >= 12 ? 'pm' : 'am'
   const hour = h % 12 || 12
   return m === 0 ? `${hour}${ampm}` : `${hour}:${String(m).padStart(2, '0')}${ampm}`
-}
-
-function formatTimeAgo(ts: string) {
-  const diff = Date.now() - new Date(ts).getTime()
-  const mins = Math.floor(diff / 60000)
-  if (mins < 1) return 'just now'
-  if (mins < 60) return `${mins}m ago`
-  const hrs = Math.floor(mins / 60)
-  if (hrs < 24) return `${hrs}h ago`
-  const days = Math.floor(hrs / 24)
-  if (days < 7) return `${days}d ago`
-  return new Date(ts).toLocaleDateString()
 }
 
 function Initials({ name, size = 'md' }: { name: string; size?: 'sm' | 'md' }) {
@@ -175,9 +163,28 @@ export default async function CirclePage({ params }: { params: Promise<{ id: str
     supabase.from('circle_members').select('user_id, role').eq('circle_id', id).limit(24),
   ])
 
+  const postIds = (rawPosts ?? []).map((p) => p.id)
+
+  // Likes + comments for the visible posts
+  const [{ data: likeRows }, { data: commentRows }] = await Promise.all([
+    postIds.length > 0
+      ? supabase.from('post_likes').select('post_id, user_id').in('post_id', postIds)
+      : Promise.resolve({ data: [] as { post_id: string; user_id: string }[] }),
+    postIds.length > 0
+      ? supabase.from('post_comments').select('id, post_id, user_id, content, created_at').in('post_id', postIds).order('created_at', { ascending: true })
+      : Promise.resolve({ data: [] as { id: string; post_id: string; user_id: string; content: string; created_at: string }[] }),
+  ])
+
+  // Likes on the visible comments
+  const commentIds = (commentRows ?? []).map((c) => c.id)
+  const { data: commentLikeRows } = commentIds.length > 0
+    ? await supabase.from('comment_likes').select('comment_id, user_id').in('comment_id', commentIds)
+    : { data: [] as { comment_id: string; user_id: string }[] }
+
   const memberUserIds = (memberRows ?? []).map((m) => m.user_id)
   const postAuthorIds = (rawPosts ?? []).map((p) => p.user_id)
-  const allProfileIds = [...new Set([...memberUserIds, ...postAuthorIds, circle.created_by])]
+  const commentAuthorIds = (commentRows ?? []).map((c) => c.user_id)
+  const allProfileIds = [...new Set([...memberUserIds, ...postAuthorIds, ...commentAuthorIds, circle.created_by])]
 
   const [{ data: profiles }, { data: myFollows }, { data: myProfile }] = await Promise.all([
     allProfileIds.length > 0
@@ -200,9 +207,40 @@ export default async function CirclePage({ params }: { params: Promise<{ id: str
     isFollowing: followingSet.has(m.user_id),
   }))
 
+  // Aggregate likes and comments per post
+  const likeCountMap: Record<string, number> = {}
+  const likedByMe = new Set<string>()
+  for (const l of likeRows ?? []) {
+    likeCountMap[l.post_id] = (likeCountMap[l.post_id] ?? 0) + 1
+    if (l.user_id === user.id) likedByMe.add(l.post_id)
+  }
+
+  const commentLikeCount: Record<string, number> = {}
+  const commentLikedByMe = new Set<string>()
+  for (const l of commentLikeRows ?? []) {
+    commentLikeCount[l.comment_id] = (commentLikeCount[l.comment_id] ?? 0) + 1
+    if (l.user_id === user.id) commentLikedByMe.add(l.comment_id)
+  }
+
+  const commentsByPost: Record<string, { id: string; user_id: string; author_name: string; content: string; created_at: string; likeCount: number; likedByMe: boolean }[]> = {}
+  for (const c of commentRows ?? []) {
+    ;(commentsByPost[c.post_id] ??= []).push({
+      id: c.id,
+      user_id: c.user_id,
+      author_name: profileMap[c.user_id] ?? 'Someone',
+      content: c.content,
+      created_at: c.created_at,
+      likeCount: commentLikeCount[c.id] ?? 0,
+      likedByMe: commentLikedByMe.has(c.id),
+    })
+  }
+
   const posts = (rawPosts ?? []).map((p) => ({
     ...p,
     author_name: profileMap[p.user_id] ?? 'Someone',
+    likeCount: likeCountMap[p.id] ?? 0,
+    likedByMe: likedByMe.has(p.id),
+    comments: commentsByPost[p.id] ?? [],
   }))
 
   const creatorName = profileMap[circle.created_by] ?? null
@@ -366,35 +404,27 @@ export default async function CirclePage({ params }: { params: Promise<{ id: str
                   <p className="text-sm">{isMember ? 'Be the first to post something.' : 'Nothing posted here yet.'}</p>
                 </div>
               ) : (
-                <ul className="space-y-5">
-                  {posts.map((post) => {
-                    const isMyPost = post.user_id === user.id
-                    return (
-                      <li key={post.id} className="flex gap-3">
-                        <Initials name={post.author_name} size="sm" />
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-baseline gap-2 mb-1">
-                            <Link
-                              href={post.user_id === user.id ? '/profile' : `/profile/${post.user_id}`}
-                              className="text-sm font-medium hover:underline"
-                            >
-                              {post.author_name}
-                            </Link>
-                            <span className="text-xs text-muted-foreground">{formatTimeAgo(post.created_at)}</span>
-                          </div>
-                          <p className="text-sm whitespace-pre-wrap break-words">{post.content}</p>
-                        </div>
-                        {isMyPost && (
-                          <form action={deletePost}>
-                            <input type="hidden" name="post_id" value={post.id} />
-                            <input type="hidden" name="circle_id" value={id} />
-                            <button type="submit" className="text-xs text-muted-foreground hover:text-destructive transition-colors mt-0.5 flex-shrink-0 lowercase">delete</button>
-                          </form>
-                        )}
-                      </li>
-                    )
-                  })}
-                </ul>
+                <div className="divide-y divide-border border-t border-b">
+                  {posts.map((post) => (
+                    <PostItem
+                      key={post.id}
+                      post={{
+                        id: post.id,
+                        circleId: id,
+                        content: post.content,
+                        created_at: post.created_at,
+                        user_id: post.user_id,
+                        author_name: post.author_name,
+                      }}
+                      currentUserId={user.id}
+                      currentUserName={myName}
+                      initialLikeCount={post.likeCount}
+                      initialLiked={post.likedByMe}
+                      initialComments={post.comments}
+                      canInteract={isMember}
+                    />
+                  ))}
+                </div>
               )}
             </div>
           )}
