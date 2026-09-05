@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
+import { reverseGeocode } from '@/lib/geocoding'
 
 export async function updateProfile(formData: FormData) {
   const supabase = await createClient()
@@ -37,11 +38,7 @@ export async function backfillNeighborhoods(): Promise<{ updated: number; errors
 
   for (const circle of circles) {
     try {
-      const res = await fetch(
-        `https://api.mapbox.com/geocoding/v5/mapbox.places/${circle.longitude},${circle.latitude}.json?types=neighborhood,locality&access_token=${process.env.NEXT_PUBLIC_MAPBOX_TOKEN}`
-      )
-      const json = await res.json()
-      const neighborhood = json.features?.[0]?.text ?? null
+      const neighborhood = await reverseGeocode(circle.longitude!, circle.latitude!)
 
       if (neighborhood) {
         await supabase.from('circles').update({ neighborhood }).eq('id', circle.id)

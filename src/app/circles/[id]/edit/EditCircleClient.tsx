@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import LocationSearch from '@/components/LocationSearch'
+import { reverseGeocode } from '@/lib/geocoding'
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN!
 const SF_CENTER = { longitude: -122.4194, latitude: 37.7749, zoom: 12 }
@@ -54,13 +55,6 @@ type Schedule = {
   note?: string | null
 } | null
 
-async function reverseGeocode(lng: number, lat: number): Promise<string | null> {
-  const res = await fetch(
-    `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?types=neighborhood,locality&access_token=${MAPBOX_TOKEN}`
-  )
-  const json = await res.json()
-  return json.features?.[0]?.text ?? null
-}
 
 export default function EditCircleClient({ circle, schedule }: { circle: Circle; schedule: Schedule }) {
   const [pin, setPin] = useState<{ longitude: number; latitude: number } | null>(
