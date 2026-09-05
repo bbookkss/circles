@@ -27,11 +27,13 @@ export default async function UserProfilePage({ params }: { params: Promise<{ id
     { count: followerCount },
     { count: followingCount },
     { data: followRow },
+    { data: followsMeRow },
   ] = await Promise.all([
     supabase.from('circle_members').select('circle_id').eq('user_id', id),
     supabase.from('follows').select('*', { count: 'exact', head: true }).eq('following_id', id),
     supabase.from('follows').select('*', { count: 'exact', head: true }).eq('follower_id', id),
     supabase.from('follows').select('follower_id').eq('follower_id', user.id).eq('following_id', id).maybeSingle(),
+    supabase.from('follows').select('follower_id').eq('follower_id', id).eq('following_id', user.id).maybeSingle(),
   ])
 
   const circleIds = memberships?.map((m) => m.circle_id) ?? []
@@ -46,6 +48,7 @@ export default async function UserProfilePage({ params }: { params: Promise<{ id
     : { data: [] }
 
   const isFollowing = !!followRow
+  const canMessage = !!followRow && !!followsMeRow
 
   const initials = profile.full_name
     ? profile.full_name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
@@ -75,12 +78,19 @@ export default async function UserProfilePage({ params }: { params: Promise<{ id
                 </a>
               )}
               {profile.bio && <p className="text-sm text-muted-foreground">{profile.bio}</p>}
-              <form action={isFollowing ? unfollowUser : followUser}>
-                <input type="hidden" name="following_id" value={id} />
-                <Button type="submit" size="sm" variant={isFollowing ? 'outline' : 'default'}>
-                  {isFollowing ? 'Following' : 'Follow'}
-                </Button>
-              </form>
+              <div className="flex items-center gap-2 pt-1">
+                <form action={isFollowing ? unfollowUser : followUser}>
+                  <input type="hidden" name="following_id" value={id} />
+                  <Button type="submit" size="sm" variant={isFollowing ? 'outline' : 'default'}>
+                    {isFollowing ? 'Following' : 'Follow'}
+                  </Button>
+                </form>
+                {canMessage && (
+                  <Link href={`/messages/${id}`}>
+                    <Button size="sm" variant="outline">Message</Button>
+                  </Link>
+                )}
+              </div>
             </div>
           </div>
 

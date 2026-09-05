@@ -216,3 +216,32 @@ create policy "notifications: own read" on public.notifications for select using
 create policy "notifications: actor insert" on public.notifications for insert with check (auth.uid() = actor_id);
 create policy "notifications: own update" on public.notifications for update using (auth.uid() = user_id);
 create policy "notifications: own delete" on public.notifications for delete using (auth.uid() = user_id);
+
+-- ===========================================================================
+-- Direct messages (mutual-follow gated, phase 2)
+-- ===========================================================================
+
+create table if not exists public.messages (
+  id uuid primary key default gen_random_uuid(),
+  sender_id uuid references public.profiles(id) on delete cascade not null,
+  recipient_id uuid references public.profiles(id) on delete cascade not null,
+  content text not null,
+  read boolean not null default false,
+  created_at timestamptz default now() not null
+);
+alter table public.messages enable row level security;
+
+create index if not exists messages_pair_idx on public.messages (sender_id, recipient_id, created_at);
+create index if not exists messages_unread_idx on public.messages (recipient_id, read);
+
+create policy "messages: read own" on public.messages for select using (
+  auth.uid() = sender_id or auth.uid() = recipient_id
+);
+create policy "messages: insert if mutual follow" on public.messages for insert with check (
+  auth.uid() = sender_id
+  and exists (select 1 from public.follows where follower_id = auth.uid() and following_id = recipient_id)
+  and exists (select 1 from public.follows where follower_id = recipient_id and following_id = auth.uid())
+);
+create policy "messages: recipient update" on public.messages for update using (
+  auth.uid() = recipient_id
+);
