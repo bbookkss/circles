@@ -16,17 +16,23 @@ export default async function TopNav() {
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 h-14 bg-background border-b flex items-center px-4 gap-4">
       {/* Logo */}
-      <Link href="/dashboard" className="font-bold text-lg mr-2">
+      <Link href="/home" className="font-bold text-lg mr-2">
         Circles
       </Link>
 
       {/* Center links */}
       <div className="flex items-center gap-1 flex-1">
         <Link
+          href="/home"
+          className="px-3 py-1.5 rounded-md text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+        >
+          Home
+        </Link>
+        <Link
           href="/explore"
           className="px-3 py-1.5 rounded-md text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
         >
-          🗺 Explore
+          Explore
         </Link>
         <Link
           href="/circles/new"

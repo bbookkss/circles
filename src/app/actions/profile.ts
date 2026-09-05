@@ -14,7 +14,7 @@ export async function updateProfile(formData: FormData) {
 
   await supabase.from('profiles').update({ full_name }).eq('id', user.id)
   revalidatePath('/profile')
-  revalidatePath('/dashboard')
+  revalidatePath('/home')
 }
 
 export async function backfillNeighborhoods(): Promise<{ updated: number; errors: number }> {
@@ -22,14 +22,13 @@ export async function backfillNeighborhoods(): Promise<{ updated: number; errors
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { updated: 0, errors: 0 }
 
-  // Find this user's circles that have coordinates but no neighborhood
+  // Find this user's circles that have coordinates but no neighborhood or city
   const { data: circles } = await supabase
     .from('circles')
     .select('id, latitude, longitude')
     .eq('created_by', user.id)
     .not('latitude', 'is', null)
     .not('longitude', 'is', null)
-    .is('neighborhood', null)
 
   if (!circles || circles.length === 0) return { updated: 0, errors: 0 }
 
@@ -38,10 +37,10 @@ export async function backfillNeighborhoods(): Promise<{ updated: number; errors
 
   for (const circle of circles) {
     try {
-      const neighborhood = await reverseGeocode(circle.longitude!, circle.latitude!)
+      const { neighborhood, city } = await reverseGeocode(circle.longitude!, circle.latitude!)
 
-      if (neighborhood) {
-        await supabase.from('circles').update({ neighborhood }).eq('id', circle.id)
+      if (neighborhood || city) {
+        await supabase.from('circles').update({ neighborhood, city }).eq('id', circle.id)
         updated++
       }
     } catch {

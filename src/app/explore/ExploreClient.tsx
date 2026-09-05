@@ -23,6 +23,7 @@ type CircleWithMeta = CirclePin & {
   days_of_week?: number[]
   location?: string | null
   neighborhood?: string | null
+  city?: string | null
 }
 
 type Props = {
@@ -35,19 +36,28 @@ export default function ExploreClient({ circles }: Props) {
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null)
   const [dayFilter, setDayFilter] = useState<number | null>(null)
   const [neighborhoodFilter, setNeighborhoodFilter] = useState<string | null>(null)
+  const [cityFilter, setCityFilter] = useState<string | null>(null)
   const [sizeFilter, setSizeFilter] = useState<string | null>(null)
   const [showFilters, setShowFilters] = useState(false)
 
-  // Derive unique neighborhoods from actual circle data
-  const neighborhoods = useMemo(() => {
-    const hoods = circles.map((c) => c.neighborhood).filter(Boolean) as string[]
-    return [...new Set(hoods)].sort()
+  // Derive unique cities from actual circle data
+  const cities = useMemo(() => {
+    const cs = circles.map((c) => c.city).filter(Boolean) as string[]
+    return [...new Set(cs)].sort()
   }, [circles])
+
+  // Derive unique neighborhoods, filtered by selected city
+  const neighborhoods = useMemo(() => {
+    const source = cityFilter ? circles.filter((c) => c.city === cityFilter) : circles
+    const hoods = source.map((c) => c.neighborhood).filter(Boolean) as string[]
+    return [...new Set(hoods)].sort()
+  }, [circles, cityFilter])
 
   const filtered = useMemo(() => {
     return circles.filter((c) => {
       if (search && !c.name.toLowerCase().includes(search.toLowerCase())) return false
       if (categoryFilter && c.category !== categoryFilter) return false
+      if (cityFilter && c.city !== cityFilter) return false
       if (neighborhoodFilter && c.neighborhood !== neighborhoodFilter) return false
       if (dayFilter !== null && !c.days_of_week?.includes(dayFilter)) return false
       if (sizeFilter === 'small' && (c.member_count ?? 0) >= 10) return false
@@ -57,12 +67,13 @@ export default function ExploreClient({ circles }: Props) {
     })
   }, [circles, search, categoryFilter, dayFilter, neighborhoodFilter, sizeFilter])
 
-  const hasFilters = !!(search || categoryFilter || dayFilter !== null || neighborhoodFilter || sizeFilter)
+  const hasFilters = !!(search || categoryFilter || dayFilter !== null || cityFilter || neighborhoodFilter || sizeFilter)
 
   function clearFilters() {
     setSearch('')
     setCategoryFilter(null)
     setDayFilter(null)
+    setCityFilter(null)
     setNeighborhoodFilter(null)
     setSizeFilter(null)
   }
@@ -138,11 +149,33 @@ export default function ExploreClient({ circles }: Props) {
               </div>
             </div>
 
+            {/* City */}
+            <div>
+              <p className="text-xs font-medium mb-1.5">City</p>
+              {cities.length === 0 ? (
+                <p className="text-xs text-muted-foreground italic">No cities detected yet</p>
+              ) : (
+                <select
+                  value={cityFilter ?? ''}
+                  onChange={(e) => {
+                    setCityFilter(e.target.value || null)
+                    setNeighborhoodFilter(null)
+                  }}
+                  className="w-full rounded-md border border-input bg-background px-2 py-1 text-xs focus-visible:outline-none"
+                >
+                  <option value="">Any city</option>
+                  {cities.map((c) => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
+              )}
+            </div>
+
             {/* Neighborhood */}
             <div>
               <p className="text-xs font-medium mb-1.5">Neighborhood</p>
               {neighborhoods.length === 0 ? (
-                <p className="text-xs text-muted-foreground italic">No neighborhoods detected yet</p>
+                <p className="text-xs text-muted-foreground italic">{cityFilter ? 'No neighborhoods in this city yet' : 'No neighborhoods detected yet'}</p>
               ) : (
                 <select
                   value={neighborhoodFilter ?? ''}

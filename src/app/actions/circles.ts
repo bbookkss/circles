@@ -15,6 +15,7 @@ export async function createCircle(formData: FormData) {
   const emoji = formData.get('emoji') as string
   const visibility = formData.get('visibility') as string || 'public'
   const neighborhood = formData.get('neighborhood') as string
+  const city = formData.get('city') as string
   const latitude = parseFloat(formData.get('latitude') as string)
   const longitude = parseFloat(formData.get('longitude') as string)
 
@@ -30,6 +31,7 @@ export async function createCircle(formData: FormData) {
       emoji: emoji || null,
       visibility,
       neighborhood: neighborhood?.trim() || null,
+      city: city?.trim() || null,
       latitude: isNaN(latitude) ? null : latitude,
       longitude: isNaN(longitude) ? null : longitude,
       created_by: user.id,
@@ -90,6 +92,7 @@ export async function updateCircle(formData: FormData) {
   const latitude = parseFloat(formData.get('latitude') as string)
   const longitude = parseFloat(formData.get('longitude') as string)
   const neighborhood = formData.get('neighborhood') as string
+  const city = formData.get('city') as string
 
   await supabase.from('circles').update({
     name: name.trim(),
@@ -99,6 +102,7 @@ export async function updateCircle(formData: FormData) {
     emoji: (formData.get('emoji') as string) || null,
     visibility: (formData.get('visibility') as string) || 'public',
     neighborhood: neighborhood?.trim() || null,
+    city: city?.trim() || null,
     latitude: isNaN(latitude) ? null : latitude,
     longitude: isNaN(longitude) ? null : longitude,
   }).eq('id', circle_id)

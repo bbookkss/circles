@@ -63,6 +63,7 @@ export default function EditCircleClient({ circle, schedule }: { circle: Circle;
       : null
   )
   const [neighborhood, setNeighborhood] = useState<string | null>(circle.neighborhood ?? null)
+  const [city, setCity] = useState<string | null>((circle as any).city ?? null)
   const [geocoding, setGeocoding] = useState(false)
   const [selectedEmoji, setSelectedEmoji] = useState<string | null>(circle.emoji ?? null)
   const [visibility, setVisibility] = useState<'public' | 'private'>(
@@ -76,9 +77,11 @@ export default function EditCircleClient({ circle, schedule }: { circle: Circle;
   async function handleMapClick(lng: number, lat: number) {
     setPin({ longitude: lng, latitude: lat })
     setNeighborhood(null)
+    setCity(null)
     setGeocoding(true)
-    const hood = await reverseGeocode(lng, lat)
-    setNeighborhood(hood)
+    const result = await reverseGeocode(lng, lat)
+    setNeighborhood(result.neighborhood)
+    setCity(result.city)
     setGeocoding(false)
   }
 
@@ -176,13 +179,15 @@ export default function EditCircleClient({ circle, schedule }: { circle: Circle;
           <input type="hidden" name="latitude" value={pin?.latitude ?? ''} />
           <input type="hidden" name="longitude" value={pin?.longitude ?? ''} />
           <input type="hidden" name="neighborhood" value={neighborhood ?? ''} />
+          <input type="hidden" name="city" value={city ?? ''} />
 
           <div className="space-y-2">
             <Label>Location search</Label>
             <LocationSearch
-              onSelect={({ longitude, latitude, neighborhood: hood }) => {
+              onSelect={({ longitude, latitude, neighborhood: hood, city: c }) => {
                 setPin({ longitude, latitude })
                 setNeighborhood(hood)
+                setCity(c)
               }}
             />
             <p className="text-xs text-muted-foreground">Or click the map directly to move the pin</p>

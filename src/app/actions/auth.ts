@@ -15,13 +15,13 @@ export async function login(formData: FormData) {
   if (error) return { error: error.message }
 
   revalidatePath('/', 'layout')
-  redirect('/dashboard')
+  redirect('/home')
 }
 
 export async function signup(formData: FormData) {
   const supabase = await createClient()
 
-  const { error } = await supabase.auth.signUp({
+  const { data, error } = await supabase.auth.signUp({
     email: formData.get('email') as string,
     password: formData.get('password') as string,
     options: {
@@ -33,8 +33,13 @@ export async function signup(formData: FormData) {
 
   if (error) return { error: error.message }
 
+  // No session means Supabase requires email confirmation
+  if (!data.session) {
+    redirect('/check-email')
+  }
+
   revalidatePath('/', 'layout')
-  redirect('/dashboard')
+  redirect('/welcome')
 }
 
 export async function logout() {

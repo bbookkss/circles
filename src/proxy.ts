@@ -25,8 +25,19 @@ export async function proxy(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser()
 
+  const { pathname } = request.nextUrl
+
+  // Public routes — no auth required
+  const isPublicRoute =
+    pathname.startsWith('/login') ||
+    pathname.startsWith('/signup') ||
+    pathname.startsWith('/auth') ||
+    pathname.startsWith('/check-email') ||
+    // Circle detail pages are publicly viewable (page handles the unauthed state)
+    /^\/circles\/[^/]+$/.test(pathname)
+
   // Redirect unauthenticated users away from protected routes
-  if (!user && !request.nextUrl.pathname.startsWith('/login') && !request.nextUrl.pathname.startsWith('/signup') && !request.nextUrl.pathname.startsWith('/auth')) {
+  if (!user && !isPublicRoute) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     return NextResponse.redirect(url)
@@ -35,7 +46,7 @@ export async function proxy(request: NextRequest) {
   // Redirect authenticated users away from login/signup
   if (user && (request.nextUrl.pathname.startsWith('/login') || request.nextUrl.pathname.startsWith('/signup'))) {
     const url = request.nextUrl.clone()
-    url.pathname = '/dashboard'
+    url.pathname = '/home'
     return NextResponse.redirect(url)
   }
 

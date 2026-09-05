@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { extractNeighborhoodFromFeature } from '@/lib/geocoding'
+import { extractFromFeature } from '@/lib/geocoding'
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN!
 const SF_PROXIMITY = '-122.4194,37.7749'
@@ -10,10 +10,11 @@ type Suggestion = {
   place_name: string
   center: [number, number]
   neighborhood: string | null
+  city: string | null
 }
 
 type Props = {
-  onSelect: (result: { longitude: number; latitude: number; neighborhood: string | null; placeName: string }) => void
+  onSelect: (result: { longitude: number; latitude: number; neighborhood: string | null; city: string | null; placeName: string }) => void
 }
 
 export default function LocationSearch({ onSelect }: Props) {
@@ -46,11 +47,10 @@ export default function LocationSearch({ onSelect }: Props) {
           `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(value)}.json?autocomplete=true&country=us&proximity=${SF_PROXIMITY}&types=address,poi,neighborhood,locality&access_token=${MAPBOX_TOKEN}`
         )
         const json = await res.json()
-        const results: Suggestion[] = (json.features ?? []).map((f: any) => ({
-          place_name: f.place_name,
-          center: f.center,
-          neighborhood: extractNeighborhoodFromFeature(f),
-        }))
+        const results: Suggestion[] = (json.features ?? []).map((f: any) => {
+          const { neighborhood, city } = extractFromFeature(f)
+          return { place_name: f.place_name, center: f.center, neighborhood, city }
+        })
         setSuggestions(results)
         setOpen(results.length > 0)
       } finally {
@@ -67,6 +67,7 @@ export default function LocationSearch({ onSelect }: Props) {
       longitude: s.center[0],
       latitude: s.center[1],
       neighborhood: s.neighborhood,
+      city: s.city,
       placeName: s.place_name,
     })
   }
