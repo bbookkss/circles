@@ -12,7 +12,7 @@ export default async function ProfilePage() {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('full_name, bio')
+    .select('full_name, bio, instagram')
     .eq('id', user.id)
     .maybeSingle()
 
@@ -49,7 +49,17 @@ export default async function ProfilePage() {
             <div className="flex-1 min-w-0 space-y-1">
               <p className="font-bold text-xl">{profile?.full_name ?? 'Unknown'}</p>
               <p className="text-sm text-muted-foreground">{user.email}</p>
-              <EditProfileForm fullName={profile?.full_name ?? ''} bio={profile?.bio ?? null} />
+              {profile?.instagram && (
+                <a
+                  href={`https://instagram.com/${profile.instagram}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-muted-foreground hover:text-foreground underline underline-offset-2 inline-block"
+                >
+                  @{profile.instagram}
+                </a>
+              )}
+              <EditProfileForm fullName={profile?.full_name ?? ''} bio={profile?.bio ?? null} instagram={profile?.instagram ?? null} />
             </div>
           </div>
 
@@ -84,7 +94,7 @@ export default async function ProfilePage() {
                       >
                         <span className="text-lg">{circle.emoji ?? '●'}</span>
                         <span className="flex-1 text-sm font-medium">{circle.name}</span>
-                        {circle.visibility === 'private' && <span className="text-xs text-muted-foreground">🔒</span>}
+                        {circle.visibility === 'private' && <span className="text-xs text-muted-foreground border rounded-full px-2 py-0.5">Private</span>}
                         {role === 'admin' && <span className="text-xs bg-muted px-2 py-0.5 rounded-full">Admin</span>}
                       </Link>
                     </li>

@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import Link from 'next/link'
 import Map, { Marker } from 'react-map-gl/mapbox'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import { updateCircle } from '@/app/actions/circles'
@@ -9,7 +8,9 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import LocationSearch from '@/components/LocationSearch'
+import BackButton from '@/components/BackButton'
 import { reverseGeocode } from '@/lib/geocoding'
+import { applyCoffeeTheme } from '@/lib/mapTheme'
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN!
 const SF_CENTER = { longitude: -122.4194, latitude: 37.7749, zoom: 12 }
@@ -110,10 +111,8 @@ export default function EditCircleClient({ circle, schedule }: { circle: Circle;
     <div className="flex h-full w-full overflow-hidden">
       <aside className="w-96 flex-shrink-0 bg-background border-r flex flex-col">
         <div className="p-4 border-b flex items-center gap-3">
-          <Link href={`/circles/${circle.id}`} className="text-sm text-muted-foreground hover:text-foreground">
-            ← Back
-          </Link>
-          <h1 className="text-lg font-semibold">Edit Circle</h1>
+          <BackButton fallback={`/circles/${circle.id}`} />
+          <h1 className="text-lg font-semibold lowercase">edit circle</h1>
         </div>
 
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-4 space-y-5">
@@ -198,13 +197,13 @@ export default function EditCircleClient({ circle, schedule }: { circle: Circle;
             {pin ? (
               <div className="text-xs text-muted-foreground space-y-0.5">
                 <p>
-                  📍 {pin.latitude.toFixed(5)}, {pin.longitude.toFixed(5)}{' '}
+                  {pin.latitude.toFixed(5)}, {pin.longitude.toFixed(5)}{' '}
                   <button type="button" onClick={() => { setPin(null); setNeighborhood(null) }} className="underline ml-1">
                     remove
                   </button>
                 </p>
                 {geocoding && <p>Detecting neighborhood...</p>}
-                {!geocoding && neighborhood && <p className="text-foreground font-medium">📌 {neighborhood}</p>}
+                {!geocoding && neighborhood && <p className="text-foreground font-medium">{neighborhood}</p>}
               </div>
             ) : (
               <p className="text-xs text-muted-foreground">Click anywhere on the map to drop a pin</p>
@@ -224,7 +223,7 @@ export default function EditCircleClient({ circle, schedule }: { circle: Circle;
                     visibility === v ? 'bg-foreground text-background border-foreground' : 'bg-background text-foreground border-input hover:bg-muted'
                   }`}
                 >
-                  {v === 'public' ? '🌐 Public' : '🔒 Private'}
+                  {v === 'public' ? 'Public' : 'Private'}
                 </button>
               ))}
             </div>
@@ -298,15 +297,16 @@ export default function EditCircleClient({ circle, schedule }: { circle: Circle;
         <Map
           initialViewState={{ ...mapCenter, zoom: 13 }}
           style={{ width: '100%', height: '100%' }}
-          mapStyle="mapbox://styles/mapbox/dark-v11"
+          mapStyle="mapbox://styles/mapbox/light-v11"
           mapboxAccessToken={MAPBOX_TOKEN}
           cursor="crosshair"
+          onLoad={(e) => applyCoffeeTheme(e.target)}
           onClick={(e) => handleMapClick(e.lngLat.lng, e.lngLat.lat)}
         >
           {pin && (
             <Marker longitude={pin.longitude} latitude={pin.latitude} anchor="center">
               <div className="flex items-center justify-center w-10 h-10 rounded-full shadow-lg border-2 border-white bg-white text-2xl">
-                {selectedEmoji ?? '📍'}
+                {selectedEmoji ?? '●'}
               </div>
             </Marker>
           )}

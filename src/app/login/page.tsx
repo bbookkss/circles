@@ -28,26 +28,44 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex flex-col md:flex-row">
       {/* Left panel — hero */}
-      <div className="bg-foreground text-background flex flex-col justify-center px-8 py-12 md:w-1/2 md:min-h-screen">
-        <div className="max-w-sm mx-auto w-full">
-          <p className="text-2xl font-bold tracking-tight mb-2">Circles</p>
-          <h1 className="text-4xl font-bold leading-tight mb-4">
-            Find your people.
+      <div className="relative overflow-hidden bg-foreground text-background flex flex-col justify-center px-8 py-12 md:w-1/2 md:min-h-screen">
+        {/* Ambient hand-drawn circle in the background */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/circle-draw.gif"
+          alt=""
+          aria-hidden
+          className="pointer-events-none select-none absolute -right-24 -bottom-28 w-[520px] max-w-none opacity-[0.08]"
+        />
+        <div className="relative max-w-sm mx-auto w-full fade-rise">
+          {/* Wordmark with a circle drawing itself around it */}
+          <div className="relative w-fit mb-24">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/circle-draw.gif"
+              alt=""
+              aria-hidden
+              className="pointer-events-none select-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-48 max-w-none opacity-90"
+            />
+            <p className="relative text-3xl font-bold tracking-tight lowercase px-7 py-3">circles</p>
+          </div>
+          <h1 className="text-4xl font-bold leading-tight mb-4 lowercase">
+            find your people.
           </h1>
           <p className="text-background/70 text-base mb-8">
-            Recurring local gatherings — pickup sports, music sessions, neighborhood dinners, and more.
+            Recurring local gatherings: pickup sports, music sessions, neighborhood dinners, and more.
           </p>
           <ul className="space-y-3 text-sm text-background/80">
             <li className="flex items-start gap-3">
-              <span className="mt-0.5">🗺</span>
+              <span className="text-background/40 select-none">·</span>
               <span>Browse circles near you on an interactive map</span>
             </li>
             <li className="flex items-start gap-3">
-              <span className="mt-0.5">📅</span>
-              <span>Join groups with regular schedules — not one-off events</span>
+              <span className="text-background/40 select-none">·</span>
+              <span>Join groups with regular schedules, not one-off events</span>
             </li>
             <li className="flex items-start gap-3">
-              <span className="mt-0.5">🌐</span>
+              <span className="text-background/40 select-none">·</span>
               <span>Public circles anyone can join. Private ones by invite.</span>
             </li>
           </ul>
@@ -56,9 +74,9 @@ export default function LoginPage() {
 
       {/* Right panel — form */}
       <div className="flex flex-col justify-center px-8 py-12 md:w-1/2 md:min-h-screen bg-background">
-        <div className="max-w-sm mx-auto w-full space-y-6">
+        <div className="max-w-sm mx-auto w-full space-y-6 fade-rise stagger-1">
           <div>
-            <h2 className="text-2xl font-bold">Welcome back</h2>
+            <h2 className="text-2xl font-bold lowercase">welcome back</h2>
             <p className="text-muted-foreground text-sm mt-1">Sign in to your account</p>
           </div>
 

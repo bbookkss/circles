@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { logout } from '@/app/actions/auth'
+import Circled from '@/components/Circled'
 
 export default async function TopNav() {
   const supabase = await createClient()
@@ -14,32 +15,23 @@ export default async function TopNav() {
     : '?'
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 h-14 bg-background border-b flex items-center px-4 gap-4">
+    <nav className="fixed top-0 left-0 right-0 z-50 h-14 bg-background/80 backdrop-blur-md border-b flex items-center px-4 gap-4">
       {/* Logo */}
-      <Link href="/home" className="font-bold text-lg mr-2">
-        Circles
+      <Link href="/home" className="font-bold text-lg mr-2 tracking-tight lowercase hover:opacity-70 transition-opacity">
+        circles
       </Link>
 
       {/* Center links */}
-      <div className="flex items-center gap-1 flex-1">
-        <Link
-          href="/home"
-          className="px-3 py-1.5 rounded-md text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-        >
-          Home
-        </Link>
-        <Link
-          href="/explore"
-          className="px-3 py-1.5 rounded-md text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-        >
-          Explore
-        </Link>
-        <Link
-          href="/circles/new"
-          className="px-3 py-1.5 rounded-md text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-        >
-          + New Circle
-        </Link>
+      <div className="flex items-center gap-2 flex-1">
+        <Circled>
+          <Link href="/home" className="px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">Home</Link>
+        </Circled>
+        <Circled>
+          <Link href="/explore" className="px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">Explore</Link>
+        </Circled>
+        <Circled>
+          <Link href="/circles/new" className="px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors whitespace-nowrap">+ New Circle</Link>
+        </Circled>
       </div>
 
       {/* Right: profile + sign out */}
@@ -51,14 +43,16 @@ export default async function TopNav() {
         >
           {initials}
         </Link>
-        <form action={logout}>
-          <button
-            type="submit"
-            className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-          >
-            Sign out
-          </button>
-        </form>
+        <Circled>
+          <form action={logout}>
+            <button
+              type="submit"
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors px-2 py-1"
+            >
+              Sign out
+            </button>
+          </form>
+        </Circled>
       </div>
     </nav>
   )

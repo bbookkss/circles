@@ -7,9 +7,9 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
-  --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
+  --font-sans: var(--font-site);
+  --font-mono: var(--font-site);
+  --font-heading: var(--font-site);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -49,24 +49,25 @@
 }
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
+  /* Warm "bone" paper palette — deeper, tan-leaning */
+  --background: oklch(0.928 0.022 82);
+  --foreground: oklch(0.26 0.012 62);
+  --card: oklch(0.955 0.018 83);
+  --card-foreground: oklch(0.26 0.012 62);
+  --popover: oklch(0.955 0.018 83);
+  --popover-foreground: oklch(0.26 0.012 62);
+  --primary: oklch(0.26 0.012 62);
+  --primary-foreground: oklch(0.95 0.02 82);
+  --secondary: oklch(0.89 0.024 81);
+  --secondary-foreground: oklch(0.26 0.012 62);
+  --muted: oklch(0.892 0.024 81);
+  --muted-foreground: oklch(0.5 0.016 64);
+  --accent: oklch(0.89 0.024 81);
+  --accent-foreground: oklch(0.26 0.012 62);
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  --border: oklch(0.84 0.026 80);
+  --input: oklch(0.84 0.026 80);
+  --ring: oklch(0.66 0.02 72);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
@@ -128,3 +129,59 @@
     @apply font-sans;
   }
 }
+
+/* ---- Motion ---- */
+@keyframes fade-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@layer utilities {
+  .fade-rise {
+    animation: fade-rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .fade-in {
+    animation: fade-in 0.6s ease both;
+  }
+  /* Stagger helpers — apply alongside .fade-rise on list items */
+  .stagger-1 { animation-delay: 0.05s; }
+  .stagger-2 { animation-delay: 0.1s; }
+  .stagger-3 { animation-delay: 0.15s; }
+  .stagger-4 { animation-delay: 0.2s; }
+  .stagger-5 { animation-delay: 0.25s; }
+
+  /* Card lift on hover */
+  .lift {
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+  }
+  .lift:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px -8px oklch(0.26 0.012 62 / 0.22);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fade-rise,
+  .fade-in {
+    animation: none;
+  }
+  .lift:hover {
+    transform: none;
+  }
+}
+

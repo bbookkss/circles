@@ -14,6 +14,18 @@ function formatTime(t: string) {
   return m === 0 ? `${hour}${ampm}` : `${hour}:${m.toString().padStart(2, '0')}${ampm}`
 }
 
+function formatTimeAgo(ts: string) {
+  const diff = Date.now() - new Date(ts).getTime()
+  const mins = Math.floor(diff / 60000)
+  if (mins < 1) return 'just now'
+  if (mins < 60) return `${mins}m ago`
+  const hrs = Math.floor(mins / 60)
+  if (hrs < 24) return `${hrs}h ago`
+  const days = Math.floor(hrs / 24)
+  if (days < 7) return `${days}d ago`
+  return new Date(ts).toLocaleDateString()
+}
+
 export default async function HomePage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -51,6 +63,34 @@ export default async function HomePage() {
   const schedules = schedulesResult.data ?? []
 
   const scheduleMap = Object.fromEntries(schedules.map((s) => [s.circle_id, s]))
+  const circleMap = Object.fromEntries(circles.map((c) => [c.id, c]))
+
+  // Recent posts from the circles this user belongs to — the home feed
+  const { data: feedPostsRaw } = circleIds.length > 0
+    ? await supabase
+        .from('posts')
+        .select('id, content, created_at, user_id, circle_id')
+        .in('circle_id', circleIds)
+        .order('created_at', { ascending: false })
+        .limit(20)
+    : { data: [] as any[] }
+
+  const feedPosts = feedPostsRaw ?? []
+  const feedAuthorIds = [...new Set(feedPosts.map((p) => p.user_id))]
+  const { data: feedAuthors } = feedAuthorIds.length > 0
+    ? await supabase.from('profiles').select('id, full_name').in('id', feedAuthorIds)
+    : { data: [] as { id: string; full_name: string }[] }
+  const authorMap = Object.fromEntries((feedAuthors ?? []).map((a) => [a.id, a.full_name]))
+
+  const feed = feedPosts.map((p) => {
+    const c = circleMap[p.circle_id]
+    return {
+      ...p,
+      author_name: authorMap[p.user_id] ?? 'Someone',
+      circle_name: c?.name ?? 'a circle',
+      circle_emoji: c?.emoji ?? '●',
+    }
+  })
 
   // Figure out upcoming meets in the next 7 days
   const todayIdx = new Date().getDay() // 0=Sun
@@ -71,145 +111,138 @@ export default async function HomePage() {
   }
   upcoming.sort((a, b) => a.daysAway - b.daysAway)
 
-  const meetingToday = upcoming.filter((u) => u.daysAway === 0)
-  const meetingSoon = upcoming.filter((u) => u.daysAway > 0 && u.daysAway <= 6)
-
   const firstName = profile?.full_name?.split(' ')[0] ?? 'there'
+
+  const railLink = 'text-sm text-muted-foreground hover:text-foreground transition-colors w-fit'
 
   return (
     <>
       <TopNav />
       <main className="pt-14 min-h-screen bg-background">
-        <div className="max-w-2xl mx-auto px-4 py-8 space-y-8">
+        <div className="mx-auto max-w-5xl px-6 py-8 md:py-12 grid grid-cols-1 md:grid-cols-[190px_1fr] gap-6 md:gap-16">
 
-          <div>
-            <h1 className="text-2xl font-bold mb-1">Hey, {firstName}</h1>
-            <p className="text-muted-foreground text-sm">{DAY_NAMES[todayIdx]}</p>
-          </div>
+          {/* Left rail (becomes a compact header on mobile) */}
+          <aside className="md:sticky md:top-24 h-fit space-y-8 fade-rise">
+            <div>
+              <h1 className="text-2xl font-bold lowercase leading-tight">hey, {firstName}</h1>
+              <p className="text-muted-foreground text-sm mt-1">{DAY_NAMES[todayIdx]}</p>
+            </div>
+            {/* Desktop-only rail extras — on mobile the top nav already covers these */}
+            <nav className="hidden md:flex flex-col gap-2">
+              <Link href="/explore" className={railLink}>explore circles</Link>
+              <Link href="/circles/new" className={railLink}>new circle</Link>
+              <Link href="/profile" className={railLink}>your profile</Link>
+            </nav>
+            <p className="hidden md:block text-xs text-muted-foreground">
+              {circles.length} circle{circles.length !== 1 ? 's' : ''} joined
+            </p>
+          </aside>
 
-          {/* Today's meets */}
-          {meetingToday.length > 0 && (
-            <section>
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">Today</p>
-              <div className="space-y-2">
-                {meetingToday.map(({ circle, schedule }) => (
-                  <Link
-                    key={circle.id}
-                    href={`/circles/${circle.id}`}
-                    className="flex items-center gap-4 border rounded-xl px-4 py-3 hover:bg-muted transition-colors bg-muted/40"
-                  >
-                    <div className="w-10 h-10 rounded-full bg-background flex items-center justify-center text-xl flex-shrink-0 border">
-                      {circle.emoji ?? '●'}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold truncate">{circle.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {schedule.start_time && schedule.end_time
-                          ? `${formatTime(schedule.start_time)} – ${formatTime(schedule.end_time)}`
-                          : 'Meets today'}
-                        {circle.neighborhood ? ` · ${circle.neighborhood}` : circle.location ? ` · ${circle.location}` : ''}
-                      </p>
-                    </div>
-                    <span className="text-xs font-medium text-green-600 dark:text-green-400 flex-shrink-0">Today</span>
-                  </Link>
-                ))}
-              </div>
-            </section>
-          )}
+          {/* Feed */}
+          <div className="space-y-12 min-w-0">
 
-          {/* Coming up this week */}
-          {meetingSoon.length > 0 && (
-            <section>
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">This week</p>
-              <div className="space-y-2">
-                {meetingSoon.map(({ circle, daysAway, schedule }) => {
-                  const dayLabel = daysAway === 1 ? 'Tomorrow' : DAY_SHORT[(todayIdx + daysAway) % 7]
-                  return (
-                    <Link
-                      key={circle.id}
-                      href={`/circles/${circle.id}`}
-                      className="flex items-center gap-4 border rounded-xl px-4 py-3 hover:bg-muted transition-colors"
-                    >
-                      <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-xl flex-shrink-0">
-                        {circle.emoji ?? '●'}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium truncate">{circle.name}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {schedule.start_time && schedule.end_time
-                            ? `${formatTime(schedule.start_time)} – ${formatTime(schedule.end_time)}`
-                            : 'Scheduled'}
-                          {circle.neighborhood ? ` · ${circle.neighborhood}` : circle.location ? ` · ${circle.location}` : ''}
-                        </p>
-                      </div>
-                      <span className="text-xs text-muted-foreground flex-shrink-0">{dayLabel}</span>
-                    </Link>
-                  )
-                })}
-              </div>
-            </section>
-          )}
-
-          {/* All circles */}
-          <section>
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">Your circles</p>
-            {circles.length > 0 ? (
-              <ul className="space-y-2">
-                {circles.map((circle) => {
-                  const membership = memberships?.find((m) => m.circle_id === circle.id)
-                  return (
-                    <li key={circle.id}>
+            {/* This week */}
+            {upcoming.length > 0 && (
+              <section className="fade-rise stagger-1">
+                <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-1">This week</h2>
+                <div className="divide-y divide-border border-t border-b">
+                  {upcoming.map(({ circle, daysAway, schedule }) => {
+                    const isToday = daysAway === 0
+                    const dayLabel = isToday ? 'Today' : daysAway === 1 ? 'Tomorrow' : DAY_SHORT[(todayIdx + daysAway) % 7]
+                    return (
                       <Link
+                        key={circle.id}
                         href={`/circles/${circle.id}`}
-                        className="flex items-center gap-4 border rounded-xl px-4 py-3 hover:bg-muted transition-colors"
+                        className="group flex items-center gap-4 py-3.5"
                       >
-                        <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-xl flex-shrink-0">
-                          {circle.emoji ?? '●'}
-                        </div>
+                        <span className="w-6 text-center text-lg flex-shrink-0">{circle.emoji ?? '●'}</span>
                         <div className="flex-1 min-w-0">
-                          <p className="font-medium truncate">{circle.name}</p>
-                          <p className="text-xs text-muted-foreground">
+                          <p className="font-medium truncate group-hover:underline underline-offset-2">{circle.name}</p>
+                          <p className="text-xs text-muted-foreground truncate">
+                            {schedule.start_time && schedule.end_time
+                              ? `${formatTime(schedule.start_time)} – ${formatTime(schedule.end_time)}`
+                              : 'Scheduled'}
+                            {circle.neighborhood ? ` · ${circle.neighborhood}` : circle.location ? ` · ${circle.location}` : ''}
+                          </p>
+                        </div>
+                        <span className={`text-xs flex-shrink-0 tabular-nums ${isToday ? 'text-foreground font-semibold' : 'text-muted-foreground'}`}>
+                          {dayLabel}
+                        </span>
+                      </Link>
+                    )
+                  })}
+                </div>
+              </section>
+            )}
+
+            {/* Feed */}
+            {feed.length > 0 && (
+              <section className="fade-rise stagger-2">
+                <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-1">Latest</h2>
+                <div className="divide-y divide-border border-t border-b">
+                  {feed.map((post) => (
+                    <article key={post.id} className="py-4">
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1.5 flex-wrap">
+                        <Link href={`/circles/${post.circle_id}`} className="font-medium text-foreground hover:underline underline-offset-2">
+                          <span className="mr-1">{post.circle_emoji}</span>{post.circle_name}
+                        </Link>
+                        <span>·</span>
+                        <Link href={`/profile/${post.user_id}`} className="hover:underline underline-offset-2">{post.author_name}</Link>
+                        <span>·</span>
+                        <span className="tabular-nums">{formatTimeAgo(post.created_at)}</span>
+                      </div>
+                      <p className="text-sm whitespace-pre-wrap break-words">{post.content}</p>
+                    </article>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Your circles */}
+            <section className="fade-rise stagger-3">
+              <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-1">Your circles</h2>
+              {circles.length > 0 ? (
+                <div className="divide-y divide-border border-t border-b">
+                  {circles.map((circle) => {
+                    const membership = memberships?.find((m) => m.circle_id === circle.id)
+                    return (
+                      <Link
+                        key={circle.id}
+                        href={`/circles/${circle.id}`}
+                        className="group flex items-center gap-4 py-3.5"
+                      >
+                        <span className="w-6 text-center text-lg flex-shrink-0">{circle.emoji ?? '●'}</span>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium truncate group-hover:underline underline-offset-2">{circle.name}</p>
+                          <p className="text-xs text-muted-foreground truncate">
                             {[circle.category, circle.neighborhood ?? circle.location].filter(Boolean).join(' · ')}
                           </p>
                         </div>
-                        <div className="flex items-center gap-2 flex-shrink-0">
-                          {membership?.role === 'admin' && (
-                            <span className="text-xs bg-muted px-2 py-0.5 rounded-full border">Admin</span>
-                          )}
-                          {circle.visibility === 'private' && (
-                            <span className="text-xs text-muted-foreground">🔒</span>
-                          )}
-                        </div>
+                        {membership?.role === 'admin' && (
+                          <span className="text-xs text-muted-foreground flex-shrink-0">admin</span>
+                        )}
+                        {circle.visibility === 'private' && (
+                          <span className="text-xs text-muted-foreground flex-shrink-0">private</span>
+                        )}
                       </Link>
-                    </li>
-                  )
-                })}
-              </ul>
-            ) : (
-              <div className="border rounded-xl p-8 text-center space-y-3">
-                <p className="text-3xl">🔵</p>
-                <p className="font-semibold text-base">You haven&apos;t joined any circles yet</p>
-                <p className="text-sm text-muted-foreground max-w-xs mx-auto">
-                  Circles are recurring local groups — sports, music, dinners, anything that happens on a regular schedule.
-                </p>
-                <div className="flex gap-2 justify-center pt-2">
-                  <Link href="/explore"><Button>Find circles near me</Button></Link>
-                  <Link href="/circles/new"><Button variant="outline">Start one</Button></Link>
+                    )
+                  })}
                 </div>
-                <Link href="/welcome" className="text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground block pt-1">
-                  How does this work?
-                </Link>
-              </div>
-            )}
-          </section>
+              ) : (
+                <div className="border-t border-b py-10 text-center space-y-3">
+                  <p className="font-medium">You haven&apos;t joined any circles yet</p>
+                  <p className="text-sm text-muted-foreground max-w-sm mx-auto">
+                    Circles are recurring local groups. Sports, music, dinners, anything that happens on a regular schedule.
+                  </p>
+                  <div className="flex gap-2 justify-center pt-1">
+                    <Link href="/explore"><Button size="sm">Find circles near me</Button></Link>
+                    <Link href="/circles/new"><Button size="sm" variant="outline">Start one</Button></Link>
+                  </div>
+                </div>
+              )}
+            </section>
 
-          {circles.length > 0 && (
-            <div className="flex gap-2 pb-4">
-              <Link href="/explore"><Button variant="outline">Explore more</Button></Link>
-              <Link href="/circles/new"><Button>+ New circle</Button></Link>
-            </div>
-          )}
-
+          </div>
         </div>
       </main>
     </>

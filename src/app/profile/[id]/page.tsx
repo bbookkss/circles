@@ -16,7 +16,7 @@ export default async function UserProfilePage({ params }: { params: Promise<{ id
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('id, full_name, bio')
+    .select('id, full_name, bio, instagram')
     .eq('id', id)
     .maybeSingle()
 
@@ -64,6 +64,16 @@ export default async function UserProfilePage({ params }: { params: Promise<{ id
             </div>
             <div className="flex-1 min-w-0 space-y-2">
               <p className="font-bold text-xl">{profile.full_name}</p>
+              {profile.instagram && (
+                <a
+                  href={`https://instagram.com/${profile.instagram}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-muted-foreground hover:text-foreground underline underline-offset-2 inline-block"
+                >
+                  @{profile.instagram}
+                </a>
+              )}
               {profile.bio && <p className="text-sm text-muted-foreground">{profile.bio}</p>}
               <form action={isFollowing ? unfollowUser : followUser}>
                 <input type="hidden" name="following_id" value={id} />
@@ -105,7 +115,7 @@ export default async function UserProfilePage({ params }: { params: Promise<{ id
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium">{circle.name}</p>
                         {(circle.neighborhood || circle.location) && (
-                          <p className="text-xs text-muted-foreground">📍 {circle.neighborhood ?? circle.location}</p>
+                          <p className="text-xs text-muted-foreground">{circle.neighborhood ?? circle.location}</p>
                         )}
                       </div>
                       {circle.category && (

@@ -8,6 +8,9 @@ import TopNav from '@/components/TopNav'
 import PostCompose from '@/components/PostCompose'
 import CopyLinkButton from '@/components/CopyLinkButton'
 import FollowButton from '@/components/FollowButton'
+import Circled from '@/components/Circled'
+import BackButton from '@/components/BackButton'
+import CircleLocationMap from '@/components/map/CircleLocationMap'
 
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 const FREQ_LABELS: Record<string, string> = {
@@ -72,33 +75,33 @@ export default async function CirclePage({ params }: { params: Promise<{ id: str
   if (!user) {
     return (
       <>
-        <nav className="fixed top-0 left-0 right-0 z-50 h-14 bg-background border-b flex items-center px-4">
-          <Link href="/login" className="font-bold text-lg">Circles</Link>
+        <nav className="fixed top-0 left-0 right-0 z-50 h-14 bg-background/80 backdrop-blur-md border-b flex items-center px-4">
+          <Link href="/login" className="font-bold text-lg lowercase tracking-tight">circles</Link>
         </nav>
         <div className="pt-14 min-h-screen bg-background">
           <div className="max-w-2xl mx-auto px-4 py-8 space-y-8">
 
             {/* Circle preview */}
-            <div className="space-y-4">
+            <div className="space-y-4 fade-rise">
               {circle.emoji && <div className="text-6xl">{circle.emoji}</div>}
               <div className="space-y-2">
                 <div className="flex flex-wrap gap-1.5">
-                  {isPrivate && <span className="text-xs bg-muted px-2 py-0.5 rounded-full text-muted-foreground">🔒 Private</span>}
+                  {isPrivate && <span className="text-xs border px-2 py-0.5 rounded-full text-muted-foreground">Private</span>}
                   {circle.category && <span className="text-xs bg-muted px-2 py-0.5 rounded-full text-muted-foreground">{circle.category}</span>}
                 </div>
                 <h1 className="text-3xl font-bold">{circle.name}</h1>
                 {circle.description && <p className="text-muted-foreground">{circle.description}</p>}
               </div>
               <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
-                {(circle.neighborhood || circle.location) && <span>📍 {circle.neighborhood ?? circle.location}</span>}
-                <span>👥 {memberCount ?? 0} member{memberCount !== 1 ? 's' : ''}</span>
+                {(circle.neighborhood || circle.location) && <span>{circle.neighborhood ?? circle.location}</span>}
+                <span>{memberCount ?? 0} member{memberCount !== 1 ? 's' : ''}</span>
                 {creator?.full_name && <span>Started by {creator.full_name}</span>}
               </div>
             </div>
 
             {/* Schedule */}
             {schedules && schedules.length > 0 && (
-              <div className="border rounded-xl p-4 space-y-2">
+              <div className="border rounded-xl p-4 space-y-2 bg-card fade-rise stagger-1">
                 <p className="text-sm font-semibold">Schedule</p>
                 {schedules.map((s) => (
                   <div key={s.id} className="text-sm text-muted-foreground">
@@ -113,8 +116,26 @@ export default async function CirclePage({ params }: { params: Promise<{ id: str
               </div>
             )}
 
+            {/* Location map */}
+            {circle.latitude != null && circle.longitude != null && (
+              <div className="fade-rise stagger-2">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-2">Location</p>
+                <div className="h-56 rounded-xl overflow-hidden border">
+                  <CircleLocationMap longitude={circle.longitude} latitude={circle.latitude} emoji={circle.emoji} />
+                </div>
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-xs text-muted-foreground">
+                  {(circle.neighborhood || circle.location) && <span>{circle.neighborhood ?? circle.location}</span>}
+                  <span className="flex items-center gap-3">
+                    <span>Directions:</span>
+                    <a href={`https://maps.apple.com/?daddr=${circle.latitude},${circle.longitude}`} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 hover:text-foreground">Apple Maps</a>
+                    <a href={`https://www.google.com/maps/dir/?api=1&destination=${circle.latitude},${circle.longitude}`} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 hover:text-foreground">Google Maps</a>
+                  </span>
+                </div>
+              </div>
+            )}
+
             {/* Join CTA */}
-            <div className="border rounded-xl p-6 space-y-4 bg-muted/30">
+            <div className="border rounded-xl p-6 space-y-4 bg-card fade-rise stagger-2">
               <div>
                 <p className="font-semibold text-base">
                   {isPrivate ? 'Want to join this circle?' : 'Join this circle'}
@@ -201,29 +222,33 @@ export default async function CirclePage({ params }: { params: Promise<{ id: str
 
           {/* Back + admin links */}
           <div className="flex items-center justify-between">
-            <Link href="/explore" className="text-sm text-muted-foreground hover:text-foreground">← Explore</Link>
+            <BackButton fallback="/explore" />
             {isAdmin && (
-              <div className="flex items-center gap-4">
-                <Link href={`/circles/${id}/edit`} className="text-sm text-muted-foreground hover:text-foreground">Edit</Link>
-                <Link href={`/circles/${id}/requests`} className="text-sm text-muted-foreground hover:text-foreground">Requests</Link>
+              <div className="flex items-center gap-2">
+                <Circled>
+                  <Link href={`/circles/${id}/edit`} className="text-sm text-muted-foreground hover:text-foreground px-2 py-1">Edit</Link>
+                </Circled>
+                <Circled>
+                  <Link href={`/circles/${id}/requests`} className="text-sm text-muted-foreground hover:text-foreground px-2 py-1">Requests</Link>
+                </Circled>
               </div>
             )}
           </div>
 
           {/* Header */}
-          <div className="space-y-4">
+          <div className="space-y-4 fade-rise">
             {circle.emoji && <div className="text-6xl">{circle.emoji}</div>}
             <div className="space-y-2">
               <div className="flex flex-wrap gap-1.5">
-                {isPrivate && <span className="text-xs bg-muted px-2 py-0.5 rounded-full text-muted-foreground">🔒 Private</span>}
+                {isPrivate && <span className="text-xs border px-2 py-0.5 rounded-full text-muted-foreground">Private</span>}
                 {circle.category && <span className="text-xs bg-muted px-2 py-0.5 rounded-full text-muted-foreground">{circle.category}</span>}
               </div>
               <h1 className="text-3xl font-bold">{circle.name}</h1>
               {circle.description && <p className="text-muted-foreground">{circle.description}</p>}
             </div>
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
-              {(circle.neighborhood || circle.location) && <span>📍 {circle.neighborhood ?? circle.location}</span>}
-              <span>👥 {totalMembers} member{totalMembers !== 1 ? 's' : ''}</span>
+              {(circle.neighborhood || circle.location) && <span>{circle.neighborhood ?? circle.location}</span>}
+              <span>{totalMembers} member{totalMembers !== 1 ? 's' : ''}</span>
               {creatorName && <span>Started by {creatorName}</span>}
             </div>
             <div className="flex items-center gap-2 flex-wrap">
@@ -258,7 +283,7 @@ export default async function CirclePage({ params }: { params: Promise<{ id: str
 
           {/* Schedule */}
           {schedules && schedules.length > 0 && (
-            <div className="border rounded-xl p-4 space-y-2">
+            <div className="border rounded-xl p-4 space-y-2 bg-card fade-rise stagger-1">
               <p className="text-sm font-semibold">Schedule</p>
               {schedules.map((s) => (
                 <div key={s.id} className="text-sm text-muted-foreground">
@@ -273,9 +298,27 @@ export default async function CirclePage({ params }: { params: Promise<{ id: str
             </div>
           )}
 
+          {/* Location map */}
+          {circle.latitude != null && circle.longitude != null && (
+            <div className="fade-rise stagger-2">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-2">Location</p>
+              <div className="h-56 rounded-xl overflow-hidden border">
+                <CircleLocationMap longitude={circle.longitude} latitude={circle.latitude} emoji={circle.emoji} />
+              </div>
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-xs text-muted-foreground">
+                {(circle.neighborhood || circle.location) && <span>{circle.neighborhood ?? circle.location}</span>}
+                <span className="flex items-center gap-3">
+                  <span>Directions:</span>
+                  <a href={`https://maps.apple.com/?daddr=${circle.latitude},${circle.longitude}`} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 hover:text-foreground">Apple Maps</a>
+                  <a href={`https://www.google.com/maps/dir/?api=1&destination=${circle.latitude},${circle.longitude}`} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 hover:text-foreground">Google Maps</a>
+                </span>
+              </div>
+            </div>
+          )}
+
           {/* Members */}
           {(isMember || !isPrivate) && members.length > 0 && (
-            <div className="space-y-3">
+            <div className="space-y-3 fade-rise stagger-2">
               <p className="text-sm font-semibold">Members</p>
               <div className="space-y-2">
                 {members.map((m) => (
@@ -304,8 +347,8 @@ export default async function CirclePage({ params }: { params: Promise<{ id: str
 
           {/* Posts / gated */}
           {isPrivate && !isMember ? (
-            <div className="border rounded-xl p-8 text-center text-muted-foreground">
-              <p className="text-2xl mb-2">🔒</p>
+            <div className="border rounded-xl p-8 text-center text-muted-foreground bg-card fade-rise">
+              <div className="w-8 h-8 rounded-full border-2 border-muted-foreground/40 mx-auto mb-3" />
               <p className="font-medium mb-1">This circle is private</p>
               <p className="text-sm">
                 {hasPendingRequest
@@ -314,11 +357,11 @@ export default async function CirclePage({ params }: { params: Promise<{ id: str
               </p>
             </div>
           ) : (
-            <div className="space-y-6">
+            <div className="space-y-6 fade-rise stagger-3">
               <p className="text-sm font-semibold">Posts</p>
               {isMember && <PostCompose circleId={id} authorName={myName} />}
               {posts.length === 0 ? (
-                <div className="border rounded-xl p-8 text-center text-muted-foreground">
+                <div className="border rounded-xl p-8 text-center text-muted-foreground bg-card">
                   <p className="font-medium mb-1">No posts yet</p>
                   <p className="text-sm">{isMember ? 'Be the first to post something.' : 'Nothing posted here yet.'}</p>
                 </div>
@@ -345,7 +388,7 @@ export default async function CirclePage({ params }: { params: Promise<{ id: str
                           <form action={deletePost}>
                             <input type="hidden" name="post_id" value={post.id} />
                             <input type="hidden" name="circle_id" value={id} />
-                            <button type="submit" className="text-xs text-muted-foreground hover:text-destructive transition-colors mt-0.5 flex-shrink-0">✕</button>
+                            <button type="submit" className="text-xs text-muted-foreground hover:text-destructive transition-colors mt-0.5 flex-shrink-0 lowercase">delete</button>
                           </form>
                         )}
                       </li>

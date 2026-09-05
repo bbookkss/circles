@@ -21,12 +21,21 @@ export async function login(formData: FormData) {
 export async function signup(formData: FormData) {
   const supabase = await createClient()
 
+  const full_name = (formData.get('full_name') as string)?.trim()
+  const rawIg = (formData.get('instagram') as string | null)?.trim() ?? ''
+  const instagram = rawIg
+    ? rawIg.replace(/^https?:\/\/(www\.)?instagram\.com\//i, '').replace(/^@/, '').replace(/\/+$/, '').trim()
+    : ''
+
+  if (!instagram) return { error: 'Instagram handle is required' }
+
   const { data, error } = await supabase.auth.signUp({
     email: formData.get('email') as string,
     password: formData.get('password') as string,
     options: {
       data: {
-        full_name: formData.get('full_name') as string,
+        full_name,
+        instagram,
       },
     },
   })

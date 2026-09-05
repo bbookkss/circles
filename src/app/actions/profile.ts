@@ -14,7 +14,13 @@ export async function updateProfile(formData: FormData) {
 
   const bio = (formData.get('bio') as string | null)?.trim() ?? null
 
-  await supabase.from('profiles').update({ full_name, bio }).eq('id', user.id)
+  // Normalize the Instagram handle: strip a leading @, spaces, and any full URL
+  const rawIg = (formData.get('instagram') as string | null)?.trim() ?? ''
+  const instagram = rawIg
+    ? rawIg.replace(/^https?:\/\/(www\.)?instagram\.com\//i, '').replace(/^@/, '').replace(/\/+$/, '').trim() || null
+    : null
+
+  await supabase.from('profiles').update({ full_name, bio, instagram }).eq('id', user.id)
   revalidatePath('/profile')
   revalidatePath('/home')
 }

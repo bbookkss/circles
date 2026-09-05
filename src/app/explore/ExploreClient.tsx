@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button'
 const CirclesMap = dynamic(() => import('@/components/map/CirclesMap'), {
   ssr: false,
   loading: () => (
-    <div className="w-full h-full flex items-center justify-center bg-zinc-900 text-zinc-400 text-sm">
+    <div className="w-full h-full flex items-center justify-center bg-muted text-muted-foreground text-sm">
       Loading map...
     </div>
   ),
@@ -240,11 +240,11 @@ export default function ExploreClient({ circles }: Props) {
                     )}
                     {(circle.neighborhood || circle.location) && (
                       <p className="text-xs text-muted-foreground truncate">
-                        📍 {circle.neighborhood ?? circle.location}
+                        {circle.neighborhood ?? circle.location}
                       </p>
                     )}
                     {circle.member_count !== undefined && (
-                      <p className="text-xs text-muted-foreground">👥 {circle.member_count}</p>
+                      <p className="text-xs text-muted-foreground">{circle.member_count} member{circle.member_count !== 1 ? 's' : ''}</p>
                     )}
                   </button>
                 </li>

@@ -3,6 +3,7 @@
 import { useState, useCallback } from 'react'
 import Map, { Marker, Popup, NavigationControl, GeolocateControl } from 'react-map-gl/mapbox'
 import 'mapbox-gl/dist/mapbox-gl.css'
+import { applyCoffeeTheme } from '@/lib/mapTheme'
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN!
 const SF_CENTER = { longitude: -122.4194, latitude: 37.7749, zoom: 13 }
@@ -35,8 +36,9 @@ export default function CirclesMap({ circles = [], onCircleClick }: Props) {
     <Map
       initialViewState={SF_CENTER}
       style={{ width: '100%', height: '100%' }}
-      mapStyle="mapbox://styles/mapbox/dark-v11"
+      mapStyle="mapbox://styles/mapbox/light-v11"
       mapboxAccessToken={MAPBOX_TOKEN}
+      onLoad={(e) => applyCoffeeTheme(e.target)}
     >
       <NavigationControl position="top-right" />
       <GeolocateControl position="top-right" trackUserLocation showUserHeading />

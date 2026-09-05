@@ -6,7 +6,15 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { updateProfile } from '@/app/actions/profile'
 
-export default function EditProfileForm({ fullName, bio }: { fullName: string; bio: string | null }) {
+export default function EditProfileForm({
+  fullName,
+  bio,
+  instagram,
+}: {
+  fullName: string
+  bio: string | null
+  instagram: string | null
+}) {
   const [editing, setEditing] = useState(false)
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
@@ -39,6 +47,23 @@ export default function EditProfileForm({ fullName, bio }: { fullName: string; b
       <div className="space-y-1">
         <Label htmlFor="full_name">Full name</Label>
         <Input id="full_name" name="full_name" defaultValue={fullName} required />
+      </div>
+      <div className="space-y-1">
+        <Label htmlFor="instagram">Instagram</Label>
+        <div className="flex items-center gap-1">
+          <span className="text-sm text-muted-foreground">@</span>
+          <Input
+            id="instagram"
+            name="instagram"
+            defaultValue={instagram ?? ''}
+            placeholder="yourhandle"
+            required
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
+          />
+        </div>
+        <p className="text-xs text-muted-foreground">Links to your Instagram so people can find you.</p>
       </div>
       <div className="space-y-1">
         <Label htmlFor="bio">Bio <span className="text-muted-foreground font-normal">(optional)</span></Label>
