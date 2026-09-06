@@ -2,12 +2,14 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import TopNav from '@/components/TopNav'
-import InboxReadMarker from './InboxReadMarker'
+import ReadMarker from './ReadMarker'
 
 const TYPE_TEXT: Record<string, string> = {
   post_like: 'liked your post',
   post_comment: 'commented on your post',
   comment_like: 'liked your comment',
+  join_request: 'requested to join your circle',
+  request_approved: 'approved your request to join',
 }
 
 function timeAgo(ts: string) {
@@ -26,7 +28,7 @@ function initialsOf(name: string) {
   return name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)
 }
 
-export default async function InboxPage() {
+export default async function NotificationsPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
@@ -47,10 +49,10 @@ export default async function InboxPage() {
   return (
     <>
       <TopNav />
-      <InboxReadMarker />
+      <ReadMarker />
       <main className="pt-14 min-h-screen bg-background">
         <div className="max-w-2xl mx-auto px-6 py-10">
-          <h1 className="text-2xl font-bold lowercase mb-6">inbox</h1>
+          <h1 className="text-2xl font-bold lowercase mb-6">notifications</h1>
 
           {!notifs || notifs.length === 0 ? (
             <div className="border-t border-b py-12 text-center">
@@ -61,7 +63,9 @@ export default async function InboxPage() {
               {notifs.map((n) => {
                 const actor = actorMap[n.actor_id] ?? 'Someone'
                 const text = TYPE_TEXT[n.type] ?? 'interacted with you'
-                const href = n.circle_id ? `/circles/${n.circle_id}` : '/home'
+                const href = n.type === 'join_request' && n.circle_id
+                  ? `/circles/${n.circle_id}/requests`
+                  : n.circle_id ? `/circles/${n.circle_id}` : '/home'
                 return (
                   <Link key={n.id} href={href} className={`flex items-center gap-3 py-3.5 ${!n.read ? '' : 'opacity-70'}`}>
                     <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-semibold flex-shrink-0">

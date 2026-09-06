@@ -14,6 +14,6 @@ export async function markAllNotificationsRead() {
     .eq('user_id', user.id)
     .eq('read', false)
 
-  revalidatePath('/inbox')
+  revalidatePath('/notifications')
   revalidatePath('/', 'layout') // refresh the nav unread badge
 }

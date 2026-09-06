@@ -156,6 +156,18 @@ export async function requestToJoin(formData: FormData) {
 
   const circle_id = formData.get('circle_id') as string
   await supabase.from('circle_join_requests').insert({ circle_id, user_id: user.id })
+
+  // Notify the circle's admins
+  const { data: admins } = await supabase
+    .from('circle_members')
+    .select('user_id')
+    .eq('circle_id', circle_id)
+    .eq('role', 'admin')
+  const rows = (admins ?? [])
+    .filter((a) => a.user_id !== user.id)
+    .map((a) => ({ user_id: a.user_id, actor_id: user.id, type: 'join_request', circle_id }))
+  if (rows.length > 0) await supabase.from('notifications').insert(rows)
+
   redirect(`/circles/${circle_id}`)
 }
 
@@ -184,6 +196,11 @@ export async function approveRequest(formData: FormData) {
 
   await supabase.from('circle_members').insert({
     circle_id, user_id: request_user_id, role: 'member',
+  })
+
+  // Notify the requester that they're in
+  await supabase.from('notifications').insert({
+    user_id: request_user_id, actor_id: user.id, type: 'request_approved', circle_id,
   })
 
   redirect(`/circles/${circle_id}/requests`)

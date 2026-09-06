@@ -34,7 +34,7 @@ export default function Circled({
           alt=""
           aria-hidden
           className="pointer-events-none select-none absolute inset-0 h-full w-full max-w-none brightness-0 opacity-70"
-          style={{ transform: 'scale(1.25, 1.9)' }}
+          style={{ transform: 'scale(1.15, 1.65)' }}
         />
       )}
       <span className="relative">{children}</span>

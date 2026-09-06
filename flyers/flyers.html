@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>circles — flyers</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap');
+
+  :root {
+    --bone: #e8ddc9;
+    --ink: #2e2a22;
+    --muted: #877c68;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Space Mono', monospace;
+    background: #999;
+    color: var(--ink);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+    padding: 24px;
+  }
+
+  .note {
+    max-width: 8.5in;
+    background: #fff;
+    color: #333;
+    font-family: system-ui, sans-serif;
+    font-size: 13px;
+    line-height: 1.5;
+    padding: 16px 20px;
+    border-radius: 8px;
+  }
+  .note code { background: #eee; padding: 1px 4px; border-radius: 3px; }
+
+  .flyer {
+    width: 8.5in;
+    height: 11in;
+    background: var(--bone);
+    padding: 0.85in;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.25);
+  }
+
+  /* Hand-drawn circle from the app, darkened to ink */
+  .scribble { filter: brightness(0); opacity: 0.9; pointer-events: none; }
+
+  .wordmark { font-weight: 700; letter-spacing: -0.02em; text-transform: lowercase; }
+
+  /* QR placeholder */
+  .qr {
+    width: 2.1in;
+    height: 2.1in;
+    border: 2px dashed var(--ink);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.4;
+    background: rgba(255,255,255,0.25);
+  }
+
+  .muted { color: var(--muted); }
+  .center { align-items: center; text-align: center; }
+
+  @media print {
+    body { background: none; gap: 0; padding: 0; }
+    .note { display: none; }
+    .flyer { box-shadow: none; page-break-after: always; }
+    @page { size: letter; margin: 0; }
+  }
+</style>
+</head>
+<body>
+
+<div class="note">
+  <strong>How to use:</strong> Print the flyer(s) you like (⌘P → Save as PDF, letter size, margins “None”).
+  Each dashed box is where a <strong>QR code</strong> goes — generate one that points to your live Vercel URL
+  (e.g. at <code>qr-code-generator.com</code>) and drop it in, or hand it back to me once the site is deployed and I’ll wire it up.
+  The scribble circle is your app’s hand-drawn mark.
+</div>
+
+<!-- ============ FLYER 1 — JOIN ============ -->
+<div class="flyer center" style="justify-content: space-between;">
+  <div class="wordmark" style="font-size: 20px;">circles</div>
+  <div style="font-size: 170px; font-weight:700; letter-spacing:-0.04em; line-height:0.9;">JOIN</div>
+  <div class="qr">QR</div>
+</div>
+
+<!-- ============ FLYER 2 — wordmark + QR ============ -->
+<div class="flyer center" style="justify-content: center; gap: 1.4in;">
+  <div class="wordmark" style="font-size: 72px;">circles</div>
+  <div class="qr">QR</div>
+</div>
+
+<!-- ============ FLYER 3 — QR inside the scribble ============ -->
+<div class="flyer center" style="justify-content: center;">
+  <div style="position:relative; display:flex; align-items:center; justify-content:center; width:5.6in; height:5.6in;">
+    <img class="scribble" src="../public/circle-draw.gif" alt="" style="position:absolute; width:5.6in;" />
+    <div class="qr" style="border:none; background:none;">QR</div>
+  </div>
+  <div class="wordmark muted" style="position:absolute; bottom:0.85in; font-size:18px;">circles</div>
+</div>
+
+<!-- ============ FLYER 4 — one line ============ -->
+<div class="flyer center" style="justify-content: space-between;">
+  <div class="wordmark" style="font-size: 20px;">circles</div>
+  <div style="font-size: 40px; font-weight:700; line-height:1.15;">find<br />your<br />people.</div>
+  <div class="qr">QR</div>
+</div>
+
+<!-- ============ FLYER 5 — QR is the hero ============ -->
+<div class="flyer center" style="justify-content: center; gap: 1.1in;">
+  <div style="position:relative; display:flex; align-items:center; justify-content:center;">
+    <img class="scribble" src="../public/circle-draw.gif" alt="" style="position:absolute; width:4.4in;" />
+    <div class="qr" style="width:2.6in; height:2.6in; border-style:solid;">QR</div>
+  </div>
+  <div class="wordmark" style="font-size: 24px;">circles</div>
+</div>
+
+</body>
+</html>

@@ -8,16 +8,24 @@ export default async function ExplorePage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: circles } = await supabase
-    .from('circles')
-    .select('id, name, description, category, emoji, location, neighborhood, city, latitude, longitude')
-    .not('latitude', 'is', null)
-    .not('longitude', 'is', null)
+  const [{ data: circles }, { data: people }] = await Promise.all([
+    supabase
+      .from('circles')
+      .select('id, name, description, category, emoji, location, neighborhood, city, latitude, longitude')
+      .not('latitude', 'is', null)
+      .not('longitude', 'is', null),
+    supabase
+      .from('profiles')
+      .select('id, full_name, instagram')
+      .neq('id', user.id),
+  ])
+
+  const peopleList = (people ?? []).filter((p) => p.full_name)
 
   if (!circles) return (
     <>
       <TopNav />
-      <ExploreClient circles={[]} />
+      <ExploreClient circles={[]} people={peopleList} />
     </>
   )
 
@@ -53,7 +61,7 @@ export default async function ExplorePage() {
   return (
     <>
       <TopNav />
-      <ExploreClient circles={enriched} />
+      <ExploreClient circles={enriched} people={peopleList} />
     </>
   )
 }

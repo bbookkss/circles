@@ -41,8 +41,8 @@ export default async function TopNav() {
         </Circled>
       </div>
 
-      {/* Right: inbox + profile + sign out */}
-      <div className="flex items-center gap-2">
+      {/* Right: notifications + profile + sign out */}
+      <div className="flex items-center gap-3">
         <Circled>
           <Link href="/messages" className="relative px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
             Messages
@@ -54,8 +54,8 @@ export default async function TopNav() {
           </Link>
         </Circled>
         <Circled>
-          <Link href="/inbox" className="relative px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
-            Inbox
+          <Link href="/notifications" className="relative px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
+            Notifications
             {unread ? (
               <span className="absolute top-0 right-0 min-w-4 h-4 px-1 rounded-full bg-foreground text-background text-[10px] font-bold flex items-center justify-center">
                 {unread > 9 ? '9+' : unread}

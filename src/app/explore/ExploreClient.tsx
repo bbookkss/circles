@@ -26,11 +26,18 @@ type CircleWithMeta = CirclePin & {
   city?: string | null
 }
 
-type Props = {
-  circles: CircleWithMeta[]
+type Person = {
+  id: string
+  full_name: string | null
+  instagram: string | null
 }
 
-export default function ExploreClient({ circles }: Props) {
+type Props = {
+  circles: CircleWithMeta[]
+  people: Person[]
+}
+
+export default function ExploreClient({ circles, people }: Props) {
   const [selected, setSelected] = useState<CircleWithMeta | null>(null)
   const [search, setSearch] = useState('')
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null)
@@ -67,6 +74,15 @@ export default function ExploreClient({ circles }: Props) {
     })
   }, [circles, search, categoryFilter, dayFilter, neighborhoodFilter, sizeFilter])
 
+  // People matching the search term (only when actively searching)
+  const peopleResults = useMemo(() => {
+    const q = search.trim().toLowerCase()
+    if (!q) return []
+    return people
+      .filter((p) => (p.full_name?.toLowerCase().includes(q)) || (p.instagram?.toLowerCase().includes(q)))
+      .slice(0, 6)
+  }, [people, search])
+
   const hasFilters = !!(search || categoryFilter || dayFilter !== null || cityFilter || neighborhoodFilter || sizeFilter)
 
   function clearFilters() {
@@ -86,7 +102,7 @@ export default function ExploreClient({ circles }: Props) {
         <div className="p-3 border-b space-y-2">
           <input
             type="text"
-            placeholder="Search circles..."
+            placeholder="Search circles & people..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -214,8 +230,30 @@ export default function ExploreClient({ circles }: Props) {
 
         {/* Results */}
         <div className="flex-1 overflow-y-auto">
+          {/* People matches (only while searching) */}
+          {peopleResults.length > 0 && (
+            <div className="border-b">
+              <p className="px-4 pt-2.5 pb-1 text-[11px] font-semibold text-muted-foreground uppercase tracking-widest">People</p>
+              <ul>
+                {peopleResults.map((p) => (
+                  <li key={p.id}>
+                    <Link href={`/profile/${p.id}`} className="flex items-center gap-3 px-4 py-2.5 hover:bg-muted transition-colors">
+                      <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-semibold flex-shrink-0">
+                        {(p.full_name ?? '?').split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium truncate">{p.full_name}</p>
+                        {p.instagram && <p className="text-xs text-muted-foreground truncate">@{p.instagram}</p>}
+                      </div>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
           <p className="px-4 py-2 text-xs text-muted-foreground border-b">
-            {filtered.length} circle{filtered.length !== 1 ? 's' : ''}
+            {peopleResults.length > 0 ? 'Circles · ' : ''}{filtered.length} circle{filtered.length !== 1 ? 's' : ''}
           </p>
           {filtered.length === 0 ? (
             <div className="p-4 text-sm text-muted-foreground">
