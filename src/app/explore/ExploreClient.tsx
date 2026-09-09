@@ -4,6 +4,7 @@ import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { useState, useMemo } from 'react'
 import type { CirclePin } from '@/components/map/CirclesMap'
+import type { MapView } from '@/lib/mapView'
 import { Button } from '@/components/ui/button'
 
 const CirclesMap = dynamic(() => import('@/components/map/CirclesMap'), {
@@ -35,9 +36,12 @@ type Person = {
 type Props = {
   circles: CircleWithMeta[]
   people: Person[]
+  initialView?: MapView
+  /** City name from the IP lookup, when that is what decided the view. */
+  place?: string | null
 }
 
-export default function ExploreClient({ circles, people }: Props) {
+export default function ExploreClient({ circles, people, initialView, place }: Props) {
   const [selected, setSelected] = useState<CircleWithMeta | null>(null)
   const [search, setSearch] = useState('')
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null)
@@ -327,7 +331,31 @@ export default function ExploreClient({ circles, people }: Props) {
 
       {/* Map */}
       <main className="flex-1 relative">
-        <CirclesMap circles={filtered} onCircleClick={setSelected} />
+        <CirclesMap
+          circles={filtered}
+          onCircleClick={setSelected}
+          initialView={initialView}
+          // Suppressed while filtering: an empty view is then the filters
+          // doing their job, not an area with nothing in it.
+          emptyOverlay={hasFilters ? undefined : ({ showAll }) => (
+            <div className="bg-background/95 backdrop-blur border rounded-xl px-5 py-4 text-center shadow-lg max-w-xs">
+              <p className="text-sm font-medium">
+                No circles {place ? `in ${place}` : 'here'} yet
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Someone has to be first. It may as well be you.
+              </p>
+              <div className="flex gap-2 justify-center mt-3">
+                <Link href="/circles/new">
+                  <Button size="sm">Start one</Button>
+                </Link>
+                <Button size="sm" variant="outline" onClick={showAll}>
+                  See everywhere
+                </Button>
+              </div>
+            </div>
+          )}
+        />
         {selected && (
           <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-background border rounded-xl shadow-lg px-5 py-3 flex items-center gap-4 min-w-[240px]">
             <span className="text-2xl">{selected.emoji ?? '●'}</span>

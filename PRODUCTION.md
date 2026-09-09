@@ -80,6 +80,13 @@ works fine from this machine.
 Everything below has proven database logic (rolled-back transactions) but has
 never been exercised through the UI by a real person.
 
+- [ ] **Explore map centring from IP.** `/explore` opens on the circles you
+      are in, falling back to `x-vercel-ip-latitude` / `-longitude` / `-city`,
+      then San Francisco. Those headers are set by Vercel's edge and are
+      absent under `npm run dev`, so only the first and last links of that
+      chain have actually been exercised. Check on the deployed site — a VPN
+      in another city is enough — and confirm the city name in the "No circles
+      in X yet" overlay is populated and correctly decoded.
 - [ ] **Username round trip.** Set a username, sign out, sign back in with it.
 - [ ] **Password reset round trip.** Depends on the two Auth items above.
 - [ ] **Account deletion, actually submitted.** The panel and its disabled

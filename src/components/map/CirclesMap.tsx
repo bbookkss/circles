@@ -1,12 +1,14 @@
 'use client'
 
 import { useState, useCallback } from 'react'
+import type { ReactNode } from 'react'
 import Map, { Marker, Popup, NavigationControl, GeolocateControl } from 'react-map-gl/mapbox'
+import type { Map as MapboxMap, LngLatBounds } from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import { applyCoffeeTheme } from '@/lib/mapTheme'
+import { SF_VIEW, type MapView } from '@/lib/mapView'
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN!
-const SF_CENTER = { longitude: -122.4194, latitude: 37.7749, zoom: 13 }
 
 export type CirclePin = {
   id: string
@@ -23,9 +25,26 @@ export type CirclePin = {
 type Props = {
   circles?: CirclePin[]
   onCircleClick?: (circle: CirclePin) => void
+  /** Where to open. Defaults to San Francisco when the caller has no better idea. */
+  initialView?: MapView
+  /**
+   * Shown over the map whenever no pin falls inside the visible area. Given a
+   * `showAll` helper, because escaping an empty area needs the map instance
+   * and only this component has one.
+   */
+  emptyOverlay?: (helpers: { showAll: () => void }) => ReactNode
 }
 
-export default function CirclesMap({ circles = [], onCircleClick }: Props) {
+export default function CirclesMap({
+  circles = [],
+  onCircleClick,
+  initialView = SF_VIEW,
+  emptyOverlay,
+}: Props) {
+  // Both live in state rather than refs: the overlay is handed a helper that
+  // closes over the map, and "is anything visible" is derived during render.
+  const [map, setMap] = useState<MapboxMap | null>(null)
+  const [bounds, setBounds] = useState<LngLatBounds | null>(null)
   const [popupCircle, setPopupCircle] = useState<CirclePin | null>(null)
 
   const handleMarkerClick = useCallback((circle: CirclePin) => {
@@ -33,13 +52,40 @@ export default function CirclesMap({ circles = [], onCircleClick }: Props) {
     onCircleClick?.(circle)
   }, [onCircleClick])
 
+  // Derived from the latest bounds rather than stored, so it answers correctly
+  // both when the map is panned away from the pins and when the pins
+  // themselves change underneath it, e.g. a filter clearing.
+  const nothingInView =
+    !!emptyOverlay &&
+    bounds !== null &&
+    !circles.some((c) => bounds.contains([c.longitude, c.latitude]))
+
+  /** Pull back until every circle is on screen, wherever they are. */
+  const showAll = useCallback(() => {
+    if (!map || circles.length === 0) return
+    const lats = circles.map((c) => c.latitude)
+    const lngs = circles.map((c) => c.longitude)
+    map.fitBounds(
+      [
+        [Math.min(...lngs), Math.min(...lats)],
+        [Math.max(...lngs), Math.max(...lats)],
+      ],
+      { padding: 80, duration: 1400, maxZoom: 13 }
+    )
+  }, [circles, map])
+
   return (
     <Map
-      initialViewState={SF_CENTER}
+      initialViewState={initialView}
       style={{ width: '100%', height: '100%' }}
       mapStyle="mapbox://styles/mapbox/light-v11"
       mapboxAccessToken={MAPBOX_TOKEN}
-      onLoad={(e) => applyCoffeeTheme(e.target)}
+      onLoad={(e) => {
+        applyCoffeeTheme(e.target)
+        setMap(e.target)
+        setBounds(e.target.getBounds())
+      }}
+      onMoveEnd={(e) => setBounds(e.target.getBounds())}
     >
       <NavigationControl position="top-right" />
       <GeolocateControl position="top-right" trackUserLocation showUserHeading />
@@ -94,6 +140,12 @@ export default function CirclesMap({ circles = [], onCircleClick }: Props) {
             )}
           </div>
         </Popup>
+      )}
+
+      {emptyOverlay && nothingInView && (
+        <div className="absolute inset-0 flex items-center justify-center p-6 pointer-events-none">
+          <div className="pointer-events-auto">{emptyOverlay({ showAll })}</div>
+        </div>
       )}
     </Map>
   )
