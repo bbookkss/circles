@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { createClient, getAuthUser } from '@/lib/supabase/server'
 import { logout } from '@/app/actions/auth'
 import Circled from '@/components/Circled'
+import MobileNav from '@/components/MobileNav'
 
 export default async function TopNav() {
   const supabase = await createClient()
@@ -29,7 +30,7 @@ export default async function TopNav() {
       </Link>
 
       {/* Center links */}
-      <div className="flex items-center gap-2 flex-1">
+      <div className="hidden md:flex items-center gap-2 flex-1">
         <Circled>
           <Link href="/home" className="px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">Home</Link>
         </Circled>
@@ -42,7 +43,7 @@ export default async function TopNav() {
       </div>
 
       {/* Right: notifications + profile + sign out */}
-      <div className="flex items-center gap-3">
+      <div className="hidden md:flex items-center gap-3">
         <Circled>
           <Link href="/messages" className="relative px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
             Messages
@@ -80,6 +81,20 @@ export default async function TopNav() {
             </button>
           </form>
         </Circled>
+      </div>
+
+      {/* Phones: the eight-item row does not fit, so everything but the logo
+          and avatar moves behind a menu. Without this, Messages, Notifications
+          and Sign out were rendered off-screen and unreachable. */}
+      <div className="flex md:hidden items-center gap-2 ml-auto">
+        <Link
+          href="/profile"
+          className="w-8 h-8 rounded-full bg-foreground text-background flex items-center justify-center text-xs font-bold hover:opacity-80 transition-opacity"
+          title="Your profile"
+        >
+          {initials}
+        </Link>
+        <MobileNav unread={unread ?? 0} unreadDms={unreadDms ?? 0} />
       </div>
     </nav>
   )
