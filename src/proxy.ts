@@ -23,7 +23,21 @@ export async function proxy(request: NextRequest) {
     }
   )
 
+  // This call also refreshes an expiring session, writing rotated auth cookies
+  // onto supabaseResponse.
   const { data: { user } } = await supabase.auth.getUser()
+
+  // Any response we return INSTEAD of supabaseResponse has to carry those
+  // cookies over. Miss this and a refresh silently logs the user out: the
+  // server rotates the refresh token, the browser never receives the new one,
+  // and the old one is already invalid.
+  const redirectTo = (pathname: string) => {
+    const url = request.nextUrl.clone()
+    url.pathname = pathname
+    const response = NextResponse.redirect(url)
+    supabaseResponse.cookies.getAll().forEach((cookie) => response.cookies.set(cookie))
+    return response
+  }
 
   const { pathname } = request.nextUrl
 
@@ -40,16 +54,12 @@ export async function proxy(request: NextRequest) {
 
   // Redirect unauthenticated users away from protected routes
   if (!user && !isPublicRoute) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/login'
-    return NextResponse.redirect(url)
+    return redirectTo('/login')
   }
 
   // Redirect authenticated users away from login/signup
-  if (user && (request.nextUrl.pathname.startsWith('/login') || request.nextUrl.pathname.startsWith('/signup'))) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/home'
-    return NextResponse.redirect(url)
+  if (user && (pathname.startsWith('/login') || pathname.startsWith('/signup'))) {
+    return redirectTo('/home')
   }
 
   return supabaseResponse

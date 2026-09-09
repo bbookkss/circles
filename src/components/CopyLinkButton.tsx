@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import Circled from '@/components/Circled'
 
 export default function CopyLinkButton() {
   const [copied, setCopied] = useState(false)
@@ -13,11 +12,12 @@ export default function CopyLinkButton() {
     setTimeout(() => setCopied(false), 2000)
   }
 
+  // No <Circled> here on purpose. The sketched oval is for borderless text
+  // links (TopNav, Back, Edit); drawn over a bordered Button it reads as two
+  // competing outlines. This sits next to Leave, so it should match it.
   return (
-    <Circled>
-      <Button variant="outline" size="sm" onClick={handleCopy}>
-        {copied ? 'Copied' : 'Copy link'}
-      </Button>
-    </Circled>
+    <Button variant="outline" size="sm" onClick={handleCopy}>
+      {copied ? 'Copied' : 'Copy link'}
+    </Button>
   )
 }
