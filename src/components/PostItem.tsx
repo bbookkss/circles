@@ -30,6 +30,9 @@ type Props = {
   initialLiked: boolean
   initialComments: Comment[]
   canInteract: boolean
+  // Only set on the home feed, where posts span circles. Inside a circle the
+  // context is already obvious, so it stays off.
+  circle?: { id: string; name: string; emoji?: string | null }
 }
 
 function initialsOf(name: string) {
@@ -64,6 +67,7 @@ export default function PostItem({
   initialLiked,
   initialComments,
   canInteract,
+  circle,
 }: Props) {
   const [liked, setLiked] = useState(initialLiked)
   const [likeCount, setLikeCount] = useState(initialLikeCount)
@@ -143,6 +147,18 @@ export default function PostItem({
               </Link>
             ) : (
               <span className="text-sm font-medium text-muted-foreground">{post.author_name}</span>
+            )}
+            {circle && (
+              <>
+                <span className="text-xs text-muted-foreground">in</span>
+                <Link
+                  href={`/circles/${circle.id}`}
+                  className="text-xs font-medium hover:underline underline-offset-2 truncate"
+                >
+                  {circle.emoji && <span className="mr-1">{circle.emoji}</span>}
+                  {circle.name}
+                </Link>
+              </>
             )}
             <span className="text-xs text-muted-foreground">{timeAgo(post.created_at)}</span>
           </div>

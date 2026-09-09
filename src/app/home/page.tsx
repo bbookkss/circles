@@ -3,6 +3,8 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import TopNav from '@/components/TopNav'
 import { Button } from '@/components/ui/button'
+import HomeCompose from '@/components/HomeCompose'
+import PostItem from '@/components/PostItem'
 
 const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 const DAY_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
@@ -12,18 +14,6 @@ function formatTime(t: string) {
   const ampm = h >= 12 ? 'pm' : 'am'
   const hour = h % 12 || 12
   return m === 0 ? `${hour}${ampm}` : `${hour}:${m.toString().padStart(2, '0')}${ampm}`
-}
-
-function formatTimeAgo(ts: string) {
-  const diff = Date.now() - new Date(ts).getTime()
-  const mins = Math.floor(diff / 60000)
-  if (mins < 1) return 'just now'
-  if (mins < 60) return `${mins}m ago`
-  const hrs = Math.floor(mins / 60)
-  if (hrs < 24) return `${hrs}h ago`
-  const days = Math.floor(hrs / 24)
-  if (days < 7) return `${days}d ago`
-  return new Date(ts).toLocaleDateString()
 }
 
 export default async function HomePage() {
@@ -48,7 +38,7 @@ export default async function HomePage() {
     circleIds.length > 0
       ? supabase
           .from('circles')
-          .select('id, name, emoji, category, location, neighborhood, visibility')
+          .select('id, name, emoji, category, location, neighborhood, visibility, kind')
           .in('id', circleIds)
       : Promise.resolve({ data: [] as any[] }),
     circleIds.length > 0
@@ -76,22 +66,69 @@ export default async function HomePage() {
     : { data: [] as any[] }
 
   const feedPosts = feedPostsRaw ?? []
-  // Null once the author deletes their account — the post is kept, unattributed.
-  const feedAuthorIds = [...new Set(feedPosts.map((p) => p.user_id))].filter((v): v is string => !!v)
-  const { data: feedAuthors } = feedAuthorIds.length > 0
-    ? await supabase.from('profiles').select('id, full_name').in('id', feedAuthorIds)
-    : { data: [] as { id: string; full_name: string }[] }
-  const authorMap = Object.fromEntries((feedAuthors ?? []).map((a) => [a.id, a.full_name]))
+  const postIds = feedPosts.map((p) => p.id)
 
-  const feed = feedPosts.map((p) => {
-    const c = circleMap[p.circle_id]
-    return {
-      ...p,
-      author_name: p.user_id ? authorMap[p.user_id] ?? 'Someone' : 'Deleted user',
-      circle_name: c?.name ?? 'a circle',
-      circle_emoji: c?.emoji ?? '●',
-    }
-  })
+  // Likes and comments, so the feed carries the same affordances as a circle
+  // page rather than being a read-only digest.
+  const [{ data: likeRows }, { data: commentRows }] = await Promise.all([
+    postIds.length > 0
+      ? supabase.from('post_likes').select('post_id, user_id').in('post_id', postIds)
+      : Promise.resolve({ data: [] as { post_id: string; user_id: string }[] }),
+    postIds.length > 0
+      ? supabase
+          .from('post_comments')
+          .select('id, post_id, user_id, content, created_at')
+          .in('post_id', postIds)
+          .order('created_at', { ascending: true })
+      : Promise.resolve({ data: [] as any[] }),
+  ])
+
+  const commentIds = (commentRows ?? []).map((c) => c.id)
+  const { data: commentLikeRows } = commentIds.length > 0
+    ? await supabase.from('comment_likes').select('comment_id, user_id').in('comment_id', commentIds)
+    : { data: [] as { comment_id: string; user_id: string }[] }
+
+  // Null author = the account was deleted; the post itself was kept.
+  const authorIds = [
+    ...new Set([
+      ...feedPosts.map((p) => p.user_id),
+      ...(commentRows ?? []).map((c) => c.user_id),
+    ]),
+  ].filter((v): v is string => !!v)
+
+  const { data: authors } = authorIds.length > 0
+    ? await supabase.from('profiles').select('id, full_name').in('id', authorIds)
+    : { data: [] as { id: string; full_name: string }[] }
+
+  const authorMap = Object.fromEntries((authors ?? []).map((a) => [a.id, a.full_name]))
+  const authorName = (uid: string | null) => (uid ? authorMap[uid] ?? 'Someone' : 'Deleted user')
+
+  const likeCount: Record<string, number> = {}
+  const likedByMe = new Set<string>()
+  for (const l of likeRows ?? []) {
+    likeCount[l.post_id] = (likeCount[l.post_id] ?? 0) + 1
+    if (l.user_id === user.id) likedByMe.add(l.post_id)
+  }
+
+  const commentLikeCount: Record<string, number> = {}
+  const commentLikedByMe = new Set<string>()
+  for (const l of commentLikeRows ?? []) {
+    commentLikeCount[l.comment_id] = (commentLikeCount[l.comment_id] ?? 0) + 1
+    if (l.user_id === user.id) commentLikedByMe.add(l.comment_id)
+  }
+
+  const commentsByPost: Record<string, any[]> = {}
+  for (const c of commentRows ?? []) {
+    ;(commentsByPost[c.post_id] ??= []).push({
+      id: c.id,
+      user_id: c.user_id,
+      author_name: authorName(c.user_id),
+      content: c.content,
+      created_at: c.created_at,
+      likeCount: commentLikeCount[c.id] ?? 0,
+      likedByMe: commentLikedByMe.has(c.id),
+    })
+  }
 
   // Figure out upcoming meets in the next 7 days
   const todayIdx = new Date().getDay() // 0=Sun
@@ -100,7 +137,6 @@ export default async function HomePage() {
   for (const circle of circles) {
     const sched = scheduleMap[circle.id]
     if (!sched?.days_of_week?.length) continue
-    // Find the nearest upcoming day (including today)
     let minDaysAway = Infinity
     for (const day of sched.days_of_week) {
       const diff = (day - todayIdx + 7) % 7
@@ -113,7 +149,7 @@ export default async function HomePage() {
   upcoming.sort((a, b) => a.daysAway - b.daysAway)
 
   const firstName = profile?.full_name?.split(' ')[0] ?? 'there'
-
+  const myName = profile?.full_name ?? 'You'
   const railLink = 'text-sm text-muted-foreground hover:text-foreground transition-colors w-fit'
 
   return (
@@ -128,120 +164,118 @@ export default async function HomePage() {
               <h1 className="text-2xl font-bold lowercase leading-tight">hey, {firstName}</h1>
               <p className="text-muted-foreground text-sm mt-1">{DAY_NAMES[todayIdx]}</p>
             </div>
-            {/* Desktop-only rail extras — on mobile the top nav already covers these */}
+
             <nav className="hidden md:flex flex-col gap-2">
               <Link href="/explore" className={railLink}>explore circles</Link>
               <Link href="/circles/new" className={railLink}>new circle</Link>
               <Link href="/profile" className={railLink}>your profile</Link>
             </nav>
-            <p className="hidden md:block text-xs text-muted-foreground">
-              {circles.length} circle{circles.length !== 1 ? 's' : ''} joined
-            </p>
+
+            {/* Your circles lives here now. It used to sit below the feed as a
+                nine-row list, which pushed the actual posts off the screen. */}
+            {circles.length > 0 && (
+              <div className="hidden md:block space-y-2">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
+                  Your circles
+                </p>
+                <ul className="space-y-1.5">
+                  {circles.map((circle) => (
+                    <li key={circle.id}>
+                      <Link
+                        href={`/circles/${circle.id}`}
+                        className="group flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        <span className="w-4 text-center flex-shrink-0">{circle.emoji ?? '●'}</span>
+                        <span className="truncate group-hover:underline underline-offset-2">{circle.name}</span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </aside>
 
           {/* Feed */}
-          <div className="space-y-12 min-w-0">
+          <div className="space-y-6 min-w-0">
 
-            {/* This week */}
+            {/* This week — a strip, not a section. Enough to know where to be,
+                small enough that the feed still starts near the top. */}
             {upcoming.length > 0 && (
-              <section className="fade-rise stagger-1">
-                <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-1">This week</h2>
-                <div className="divide-y divide-border border-t border-b">
-                  {upcoming.map(({ circle, daysAway, schedule }) => {
-                    const isToday = daysAway === 0
-                    const dayLabel = isToday ? 'Today' : daysAway === 1 ? 'Tomorrow' : DAY_SHORT[(todayIdx + daysAway) % 7]
-                    return (
-                      <Link
-                        key={circle.id}
-                        href={`/circles/${circle.id}`}
-                        className="group flex items-center gap-4 py-3.5"
-                      >
-                        <span className="w-6 text-center text-lg flex-shrink-0">{circle.emoji ?? '●'}</span>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium truncate group-hover:underline underline-offset-2">{circle.name}</p>
-                          <p className="text-xs text-muted-foreground truncate">
-                            {schedule.start_time && schedule.end_time
-                              ? `${formatTime(schedule.start_time)} – ${formatTime(schedule.end_time)}`
-                              : 'Scheduled'}
-                            {circle.neighborhood ? ` · ${circle.neighborhood}` : circle.location ? ` · ${circle.location}` : ''}
-                          </p>
-                        </div>
-                        <span className={`text-xs flex-shrink-0 tabular-nums ${isToday ? 'text-foreground font-semibold' : 'text-muted-foreground'}`}>
-                          {dayLabel}
-                        </span>
-                      </Link>
-                    )
-                  })}
-                </div>
-              </section>
+              <div className="flex flex-wrap gap-2 fade-rise">
+                {upcoming.slice(0, 4).map(({ circle, daysAway, schedule }) => {
+                  const when =
+                    daysAway === 0 ? 'Today' : daysAway === 1 ? 'Tomorrow' : DAY_SHORT[(todayIdx + daysAway) % 7]
+                  return (
+                    <Link
+                      key={circle.id}
+                      href={`/circles/${circle.id}`}
+                      className="flex items-center gap-2 border rounded-full pl-2.5 pr-3 py-1.5 text-xs hover:bg-muted transition-colors min-w-0"
+                    >
+                      <span className="flex-shrink-0">{circle.emoji ?? '●'}</span>
+                      <span className="font-medium truncate">{circle.name}</span>
+                      <span className="text-muted-foreground flex-shrink-0 tabular-nums">
+                        {when} {formatTime(schedule.start_time)}
+                      </span>
+                    </Link>
+                  )
+                })}
+              </div>
             )}
 
-            {/* Feed */}
-            {feed.length > 0 && (
-              <section className="fade-rise stagger-2">
-                <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-1">Latest</h2>
-                <div className="divide-y divide-border border-t border-b">
-                  {feed.map((post) => (
-                    <article key={post.id} className="py-4">
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1.5 flex-wrap">
-                        <Link href={`/circles/${post.circle_id}`} className="font-medium text-foreground hover:underline underline-offset-2">
-                          <span className="mr-1">{post.circle_emoji}</span>{post.circle_name}
-                        </Link>
-                        <span>·</span>
-                        <Link href={`/profile/${post.user_id}`} className="hover:underline underline-offset-2">{post.author_name}</Link>
-                        <span>·</span>
-                        <span className="tabular-nums">{formatTimeAgo(post.created_at)}</span>
-                      </div>
-                      <p className="text-sm whitespace-pre-wrap break-words">{post.content}</p>
-                    </article>
-                  ))}
-                </div>
-              </section>
+            {circles.length > 0 && (
+              <div className="border-b pb-5 fade-rise stagger-1">
+                <HomeCompose
+                  circles={circles.map((c) => ({ id: c.id, name: c.name, emoji: c.emoji }))}
+                  authorName={myName}
+                />
+              </div>
             )}
 
-            {/* Your circles */}
-            <section className="fade-rise stagger-3">
-              <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-1">Your circles</h2>
-              {circles.length > 0 ? (
-                <div className="divide-y divide-border border-t border-b">
-                  {circles.map((circle) => {
-                    const membership = memberships?.find((m) => m.circle_id === circle.id)
-                    return (
-                      <Link
-                        key={circle.id}
-                        href={`/circles/${circle.id}`}
-                        className="group flex items-center gap-4 py-3.5"
-                      >
-                        <span className="w-6 text-center text-lg flex-shrink-0">{circle.emoji ?? '●'}</span>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium truncate group-hover:underline underline-offset-2">{circle.name}</p>
-                          <p className="text-xs text-muted-foreground truncate">
-                            {[circle.category, circle.neighborhood ?? circle.location].filter(Boolean).join(' · ')}
-                          </p>
-                        </div>
-                        {membership?.role === 'admin' && (
-                          <span className="text-xs text-muted-foreground flex-shrink-0">admin</span>
-                        )}
-                        {circle.visibility === 'private' && (
-                          <span className="text-xs text-muted-foreground flex-shrink-0">private</span>
-                        )}
-                      </Link>
-                    )
-                  })}
+            {circles.length === 0 ? (
+              <div className="border-t border-b py-10 text-center space-y-3">
+                <p className="font-medium">You haven&apos;t joined any circles yet</p>
+                <p className="text-sm text-muted-foreground max-w-sm mx-auto">
+                  Circles are recurring local groups. Sports, music, dinners, anything that happens on a regular schedule.
+                </p>
+                <div className="flex gap-2 justify-center pt-1">
+                  <Link href="/explore"><Button size="sm">Find circles near me</Button></Link>
+                  <Link href="/circles/new"><Button size="sm" variant="outline">Start one</Button></Link>
                 </div>
-              ) : (
-                <div className="border-t border-b py-10 text-center space-y-3">
-                  <p className="font-medium">You haven&apos;t joined any circles yet</p>
-                  <p className="text-sm text-muted-foreground max-w-sm mx-auto">
-                    Circles are recurring local groups. Sports, music, dinners, anything that happens on a regular schedule.
-                  </p>
-                  <div className="flex gap-2 justify-center pt-1">
-                    <Link href="/explore"><Button size="sm">Find circles near me</Button></Link>
-                    <Link href="/circles/new"><Button size="sm" variant="outline">Start one</Button></Link>
-                  </div>
-                </div>
-              )}
-            </section>
+              </div>
+            ) : feedPosts.length === 0 ? (
+              <div className="py-10 text-center space-y-2">
+                <p className="font-medium">Nothing posted yet</p>
+                <p className="text-sm text-muted-foreground max-w-sm mx-auto">
+                  When someone in your circles posts, it shows up here. You could go first.
+                </p>
+              </div>
+            ) : (
+              <div className="divide-y divide-border fade-rise stagger-2">
+                {feedPosts.map((p) => {
+                  const c = circleMap[p.circle_id]
+                  return (
+                    <PostItem
+                      key={p.id}
+                      post={{
+                        id: p.id,
+                        circleId: p.circle_id,
+                        content: p.content,
+                        created_at: p.created_at,
+                        user_id: p.user_id,
+                        author_name: authorName(p.user_id),
+                      }}
+                      circle={c ? { id: c.id, name: c.name, emoji: c.emoji } : undefined}
+                      currentUserId={user.id}
+                      currentUserName={myName}
+                      initialLikeCount={likeCount[p.id] ?? 0}
+                      initialLiked={likedByMe.has(p.id)}
+                      initialComments={commentsByPost[p.id] ?? []}
+                      canInteract
+                    />
+                  )
+                })}
+              </div>
+            )}
 
           </div>
         </div>
