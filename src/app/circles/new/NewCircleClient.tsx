@@ -48,7 +48,8 @@ const FREQUENCIES = [
 type Pin = { longitude: number; latitude: number }
 
 
-export default function NewCircleClient() {
+export default function NewCircleClient({ isBusiness = false }: { isBusiness?: boolean }) {
+  const [kind, setKind] = useState<'social' | 'commercial'>('social')
   const [pin, setPin] = useState<Pin | null>(null)
   const [neighborhood, setNeighborhood] = useState<string | null>(null)
   const [city, setCity] = useState<string | null>(null)
@@ -241,6 +242,36 @@ export default function NewCircleClient() {
                 : 'People must request to join. You approve them.'}
             </p>
           </div>
+
+          {/* Kind — only offered to verified businesses. The database rejects
+              a commercial circle from anyone else regardless of this UI. */}
+          {isBusiness && (
+            <div className="space-y-2">
+              <Label>Circle type</Label>
+              <input type="hidden" name="kind" value={kind} />
+              <div className="flex gap-2">
+                {(['social', 'commercial'] as const).map((k) => (
+                  <button
+                    key={k}
+                    type="button"
+                    onClick={() => setKind(k)}
+                    className={`flex-1 py-2 rounded-md text-sm font-medium border transition-colors ${
+                      kind === k
+                        ? 'bg-foreground text-background border-foreground'
+                        : 'bg-background text-foreground border-input hover:bg-muted'
+                    }`}
+                  >
+                    {k === 'social' ? 'Social' : 'Commercial'}
+                  </button>
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {kind === 'social'
+                  ? "A regular circle, same as anyone else's."
+                  : 'Promotes your venue. Shown in its own colour on the map, and people can filter for it.'}
+              </p>
+            </div>
+          )}
 
           {/* Schedule section */}
           <div className="border-t pt-4 space-y-4">

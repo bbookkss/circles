@@ -107,6 +107,7 @@ export default async function CirclePage({ params }: { params: Promise<{ id: str
               <div className="space-y-2">
                 <div className="flex flex-wrap gap-1.5">
                   {isPrivate && <span className="text-xs border px-2 py-0.5 rounded-full text-muted-foreground">Private</span>}
+                  {circle.kind === 'commercial' && <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-medium">Business</span>}
                   {circle.category && <span className="text-xs bg-muted px-2 py-0.5 rounded-full text-muted-foreground">{circle.category}</span>}
                 </div>
                 <h1 className="text-3xl font-bold">{circle.name}</h1>
@@ -334,6 +335,7 @@ export default async function CirclePage({ params }: { params: Promise<{ id: str
             <div className="space-y-2">
               <div className="flex flex-wrap gap-1.5">
                 {isPrivate && <span className="text-xs border px-2 py-0.5 rounded-full text-muted-foreground">Private</span>}
+                  {circle.kind === 'commercial' && <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-medium">Business</span>}
                 {circle.category && <span className="text-xs bg-muted px-2 py-0.5 rounded-full text-muted-foreground">{circle.category}</span>}
               </div>
               <h1 className="text-3xl font-bold">{circle.name}</h1>

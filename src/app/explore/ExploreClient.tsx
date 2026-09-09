@@ -45,6 +45,7 @@ export default function ExploreClient({ circles, people }: Props) {
   const [neighborhoodFilter, setNeighborhoodFilter] = useState<string | null>(null)
   const [cityFilter, setCityFilter] = useState<string | null>(null)
   const [sizeFilter, setSizeFilter] = useState<string | null>(null)
+  const [kindFilter, setKindFilter] = useState<'social' | 'commercial' | null>(null)
   const [showFilters, setShowFilters] = useState(false)
 
   // Derive unique cities from actual circle data
@@ -70,9 +71,11 @@ export default function ExploreClient({ circles, people }: Props) {
       if (sizeFilter === 'small' && (c.member_count ?? 0) >= 10) return false
       if (sizeFilter === 'medium' && ((c.member_count ?? 0) < 10 || (c.member_count ?? 0) >= 50)) return false
       if (sizeFilter === 'large' && (c.member_count ?? 0) < 50) return false
+      // Anything without an explicit kind is a social circle.
+      if (kindFilter && (c.kind ?? 'social') !== kindFilter) return false
       return true
     })
-  }, [circles, search, categoryFilter, dayFilter, neighborhoodFilter, sizeFilter])
+  }, [circles, search, categoryFilter, dayFilter, cityFilter, neighborhoodFilter, sizeFilter, kindFilter])
 
   // People matching the search term (only when actively searching)
   const peopleResults = useMemo(() => {
@@ -83,7 +86,7 @@ export default function ExploreClient({ circles, people }: Props) {
       .slice(0, 6)
   }, [people, search])
 
-  const hasFilters = !!(search || categoryFilter || dayFilter !== null || cityFilter || neighborhoodFilter || sizeFilter)
+  const hasFilters = !!(search || categoryFilter || dayFilter !== null || cityFilter || neighborhoodFilter || sizeFilter || kindFilter)
 
   function clearFilters() {
     setSearch('')
@@ -92,6 +95,7 @@ export default function ExploreClient({ circles, people }: Props) {
     setCityFilter(null)
     setNeighborhoodFilter(null)
     setSizeFilter(null)
+    setKindFilter(null)
   }
 
   return (
@@ -125,6 +129,29 @@ export default function ExploreClient({ circles, people }: Props) {
         {/* Filter panel */}
         {showFilters && (
           <div className="border-b p-3 space-y-4 bg-muted/30">
+            {/* Social vs commercial */}
+            <div>
+              <p className="text-xs font-medium mb-1.5">Type</p>
+              <div className="flex flex-wrap gap-1">
+                {([
+                  { value: 'social', label: 'Social' },
+                  { value: 'commercial', label: 'Businesses' },
+                ] as const).map((k) => (
+                  <button
+                    key={k.value}
+                    onClick={() => setKindFilter(kindFilter === k.value ? null : k.value)}
+                    className={`text-xs px-2 py-0.5 rounded-full border transition-colors ${
+                      kindFilter === k.value
+                        ? 'bg-foreground text-background border-foreground'
+                        : 'border-input hover:bg-muted'
+                    }`}
+                  >
+                    {k.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {/* Category */}
             <div>
               <p className="text-xs font-medium mb-1.5">Category</p>

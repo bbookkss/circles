@@ -8,11 +8,14 @@ export default async function NewCirclePage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
+  const { data: profile } = await supabase
+    .from('profiles').select('is_business').eq('id', user.id).maybeSingle()
+
   return (
     <>
       <TopNav />
       <div className="pt-14 h-screen">
-        <NewCircleClient />
+        <NewCircleClient isBusiness={profile?.is_business === true} />
       </div>
     </>
   )

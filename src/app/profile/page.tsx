@@ -113,6 +113,14 @@ export default async function ProfilePage() {
             <BackfillButton />
           </div>
 
+          {/* Business */}
+          <div className="pt-4 border-t space-y-2">
+            <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Business</p>
+            <Link href="/business" className="text-sm underline underline-offset-2">
+              Run a restaurant or business?
+            </Link>
+          </div>
+
           {/* Danger zone */}
           <div className="pt-4 border-t space-y-2">
             <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Account</p>

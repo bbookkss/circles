@@ -11,7 +11,7 @@ export default async function ExplorePage() {
   const [{ data: circles }, { data: people }] = await Promise.all([
     supabase
       .from('circles')
-      .select('id, name, description, category, emoji, location, neighborhood, city, latitude, longitude')
+      .select('id, name, description, category, emoji, location, neighborhood, city, latitude, longitude, kind')
       .not('latitude', 'is', null)
       .not('longitude', 'is', null),
     supabase

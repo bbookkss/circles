@@ -17,6 +17,7 @@ export type CirclePin = {
   category?: string | null
   emoji?: string | null
   memberCount?: number
+  kind?: string | null
 }
 
 type Props = {
@@ -52,8 +53,10 @@ export default function CirclesMap({ circles = [], onCircleClick }: Props) {
           onClick={() => handleMarkerClick(circle)}
         >
           <button
-            title={circle.name}
-            className="w-10 h-10 rounded-full bg-white border-2 border-white shadow-lg flex items-center justify-center hover:scale-110 transition-transform cursor-pointer text-xl"
+            title={circle.kind === 'commercial' ? `${circle.name} · business` : circle.name}
+            className={`w-10 h-10 rounded-full bg-white shadow-lg flex items-center justify-center hover:scale-110 transition-transform cursor-pointer text-xl border-2 ${
+              circle.kind === 'commercial' ? 'border-amber-500' : 'border-white'
+            }`}
           >
             {circle.emoji ?? '●'}
           </button>
@@ -73,9 +76,16 @@ export default function CirclesMap({ circles = [], onCircleClick }: Props) {
               {popupCircle.emoji && <span className="mr-1">{popupCircle.emoji}</span>}
               {popupCircle.name}
             </p>
-            {popupCircle.category && (
-              <p className="text-xs text-gray-500 mt-0.5">{popupCircle.category}</p>
-            )}
+            <div className="flex items-center gap-1.5 mt-0.5">
+              {popupCircle.category && (
+                <span className="text-xs text-gray-500">{popupCircle.category}</span>
+              )}
+              {popupCircle.kind === 'commercial' && (
+                <span className="text-[10px] font-medium text-amber-700 bg-amber-100 rounded-full px-1.5 py-0.5">
+                  Business
+                </span>
+              )}
+            </div>
             {popupCircle.description && (
               <p className="text-xs mt-1 text-gray-700 line-clamp-2">{popupCircle.description}</p>
             )}

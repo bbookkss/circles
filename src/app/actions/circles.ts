@@ -14,6 +14,10 @@ export async function createCircle(formData: FormData) {
   const location = formData.get('location') as string
   const emoji = formData.get('emoji') as string
   const visibility = formData.get('visibility') as string || 'public'
+  // Only verified businesses may set this. The UI hides the option, and a
+  // trigger on circles rejects it outright, so this is the third line rather
+  // than the only one.
+  const kind = formData.get('kind') === 'commercial' ? 'commercial' : 'social'
   const neighborhood = formData.get('neighborhood') as string
   const city = formData.get('city') as string
   const latitude = parseFloat(formData.get('latitude') as string)
@@ -30,6 +34,7 @@ export async function createCircle(formData: FormData) {
       location: location?.trim() || null,
       emoji: emoji || null,
       visibility,
+      kind,
       neighborhood: neighborhood?.trim() || null,
       city: city?.trim() || null,
       latitude: isNaN(latitude) ? null : latitude,
