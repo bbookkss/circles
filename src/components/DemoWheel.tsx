@@ -68,7 +68,7 @@ function PostCard({ c }: { c: Post }) {
   )
 }
 
-export default function DemoWheel() {
+export default function DemoWheel({ className = 'h-[320px] md:h-[46vh]' }: { className?: string }) {
   const column = (
     <div className="space-y-3" aria-hidden>
       {CARDS.map((c, i) =>
@@ -79,7 +79,7 @@ export default function DemoWheel() {
 
   return (
     <div
-      className="relative h-[320px] md:h-[46vh] overflow-hidden marquee-mask"
+      className={`relative overflow-hidden marquee-mask ${className}`}
       // Screen readers get the point without the carousel.
       role="img"
       aria-label="A feed of example circles: beach volleyball on Tuesdays and Thursdays, morning pages on weekdays, pickup basketball on Wednesdays, and posts between their members."

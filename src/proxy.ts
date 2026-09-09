@@ -52,6 +52,9 @@ export async function proxy(request: NextRequest) {
 
   // Public routes — no auth required
   const isPublicRoute =
+    // The landing page has to be readable by someone who has never heard of
+    // this, which is the entire point of having one.
+    pathname === '/' ||
     pathname.startsWith('/login') ||
     pathname.startsWith('/signup') ||
     pathname.startsWith('/auth') ||
