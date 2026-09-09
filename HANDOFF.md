@@ -153,3 +153,67 @@ To inspect live policies:
 select tablename, policyname, cmd, roles, qual
 from pg_policies where schemaname = 'public' order by tablename, cmd;
 ```
+
+---
+
+# Update — 2026-09-08
+
+The app-side RLS fix was committed and deployed (`41ca7ec`). Production is
+consistent again: an anonymous visitor on a public circle now sees the real
+member count. Verified against `circles-rho-sand.vercel.app`, which is the
+alias that serves anonymous traffic — the `circles-<hash>-bookstaver.vercel.app`
+deployment URLs sit behind Vercel SSO and 302 to a login, so they are useless
+for testing logged-out behaviour.
+
+## Remaining-work items now closed
+
+**4. `post_likes` / `post_comments` / `comment_likes` predicates** — read back
+from a live `pg_dump`. All three route through the security-definer helper, as
+intended, with no recursion:
+
+```
+post_likes: read     USING (can_read_circle_content(post_circle(post_id), auth.uid()))
+post_comments: read  USING (can_read_circle_content(post_circle(post_id), auth.uid()))
+comment_likes: read  USING (can_read_circle_content(comment_circle(comment_id), auth.uid()))
+```
+
+**5. `supabase/schema.sql` regenerated** from the live database. It now carries
+all 46 policies, the security-definer helpers and the column-level grants.
+No policy anywhere still uses the bare `auth.role() = 'authenticated'` test
+that caused the original exposure.
+
+## How to dump the schema
+
+`supabase db dump` runs pg_dump inside Docker, which is not installed. Use
+native pg_dump instead (`brew install libpq`, keg-only):
+
+```bash
+/opt/homebrew/opt/libpq/bin/pg_dump --schema-only --schema=public "$URL" -f supabase/schema.sql
+```
+
+Use the **direct** connection host, `db.<ref>.supabase.co:5432`, user
+`postgres`. It is IPv6-only, which works fine from this machine. The pooler
+host is region-stamped (`aws-N-<region>.pooler.supabase.com`) and rejects a
+wrong guess with a confusing `ENOTFOUND tenant/user` error rather than a DNS
+failure.
+
+## Two things the dump turned up
+
+**`bio` and `full_name` are still world-readable, and the audit notes above
+overstate the fix.** The prose says anon could scrape "name, bio and Instagram
+handle" and that this was fixed. What was actually applied grants anon
+`select (id, full_name, avatar_url, created_at, bio)` — so only `instagram`
+was withdrawn. Probed live: `instagram` returns `42501`, while `bio` and
+`full_name` return rows for every profile, with no requirement that the
+profile belong to a public circle. Name and avatar almost certainly have to
+stay readable for public circle pages to render. Whether `bio` does is a
+product decision that has not actually been made.
+
+**`anon` holds INSERT / UPDATE / DELETE / TRUNCATE on every public table.**
+This is stock Supabase posture, not something the audit introduced — Supabase
+grants broadly and relies on RLS. Worth knowing anyway: RLS gates DML, and
+every write policy was probed at `42501`, but **TRUNCATE is not subject to
+RLS**. It is not reachable through PostgREST, which never emits TRUNCATE, so
+there is no live path to it today. It would become one the moment a
+`security invoker` function callable by anon runs a TRUNCATE. Revoking
+TRUNCATE from anon costs nothing if you want the privilege gone.
