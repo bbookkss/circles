@@ -100,8 +100,8 @@ export default function CirclesMap({
         >
           <button
             title={circle.kind === 'commercial' ? `${circle.name} · business` : circle.name}
-            className={`w-10 h-10 rounded-full bg-white shadow-lg flex items-center justify-center hover:scale-110 transition-transform cursor-pointer text-xl border-2 ${
-              circle.kind === 'commercial' ? 'border-amber-500' : 'border-white'
+            className={`w-10 h-10 rounded-full bg-card shadow-lg flex items-center justify-center hover:scale-110 transition-transform cursor-pointer text-xl border-2 ${
+              circle.kind === 'commercial' ? 'border-amber-600' : 'border-card'
             }`}
           >
             {circle.emoji ?? '●'}
@@ -124,7 +124,7 @@ export default function CirclesMap({
             </p>
             <div className="flex items-center gap-1.5 mt-0.5">
               {popupCircle.category && (
-                <span className="text-xs text-gray-500">{popupCircle.category}</span>
+                <span className="text-xs text-muted-foreground">{popupCircle.category}</span>
               )}
               {popupCircle.kind === 'commercial' && (
                 <span className="text-[10px] font-medium text-amber-700 bg-amber-100 rounded-full px-1.5 py-0.5">
@@ -133,10 +133,10 @@ export default function CirclesMap({
               )}
             </div>
             {popupCircle.description && (
-              <p className="text-xs mt-1 text-gray-700 line-clamp-2">{popupCircle.description}</p>
+              <p className="text-xs mt-1 text-foreground/80 line-clamp-2">{popupCircle.description}</p>
             )}
             {popupCircle.memberCount !== undefined && (
-              <p className="text-xs text-gray-400 mt-1">{popupCircle.memberCount} members</p>
+              <p className="text-xs text-muted-foreground mt-1">{popupCircle.memberCount} members</p>
             )}
           </div>
         </Popup>

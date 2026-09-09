@@ -6,6 +6,7 @@ import { useState, useMemo } from 'react'
 import type { CirclePin } from '@/components/map/CirclesMap'
 import type { MapView } from '@/lib/mapView'
 import { Button } from '@/components/ui/button'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 const CirclesMap = dynamic(() => import('@/components/map/CirclesMap'), {
   ssr: false,
@@ -202,19 +203,24 @@ export default function ExploreClient({ circles, people, initialView, place }: P
               {cities.length === 0 ? (
                 <p className="text-xs text-muted-foreground italic">No cities detected yet</p>
               ) : (
-                <select
+                <Select
                   value={cityFilter ?? ''}
-                  onChange={(e) => {
-                    setCityFilter(e.target.value || null)
+                  onValueChange={(v) => {
+                    setCityFilter((v as string) || null)
                     setNeighborhoodFilter(null)
                   }}
-                  className="w-full rounded-md border border-input bg-background px-2 py-1 text-xs focus-visible:outline-none"
+                  items={{ '': 'Any city', ...Object.fromEntries(cities.map((c) => [c, c])) }}
                 >
-                  <option value="">Any city</option>
-                  {cities.map((c) => (
-                    <option key={c} value={c}>{c}</option>
-                  ))}
-                </select>
+                  <SelectTrigger size="sm" className="w-full text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Any city</SelectItem>
+                    {cities.map((c) => (
+                      <SelectItem key={c} value={c}>{c}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               )}
             </div>
 
@@ -224,16 +230,21 @@ export default function ExploreClient({ circles, people, initialView, place }: P
               {neighborhoods.length === 0 ? (
                 <p className="text-xs text-muted-foreground italic">{cityFilter ? 'No neighborhoods in this city yet' : 'No neighborhoods detected yet'}</p>
               ) : (
-                <select
+                <Select
                   value={neighborhoodFilter ?? ''}
-                  onChange={(e) => setNeighborhoodFilter(e.target.value || null)}
-                  className="w-full rounded-md border border-input bg-background px-2 py-1 text-xs focus-visible:outline-none"
+                  onValueChange={(v) => setNeighborhoodFilter((v as string) || null)}
+                  items={{ '': 'Any', ...Object.fromEntries(neighborhoods.map((n) => [n, n])) }}
                 >
-                  <option value="">Any</option>
-                  {neighborhoods.map((n) => (
-                    <option key={n} value={n}>{n}</option>
-                  ))}
-                </select>
+                  <SelectTrigger size="sm" className="w-full text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Any</SelectItem>
+                    {neighborhoods.map((n) => (
+                      <SelectItem key={n} value={n}>{n}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               )}
             </div>
 

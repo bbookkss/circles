@@ -11,6 +11,7 @@ import LocationSearch from '@/components/LocationSearch'
 import BackButton from '@/components/BackButton'
 import { reverseGeocode } from '@/lib/geocoding'
 import { applyCoffeeTheme } from '@/lib/mapTheme'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN!
 const SF_CENTER = { longitude: -122.4194, latitude: 37.7749, zoom: 12 }
@@ -158,17 +159,21 @@ export default function EditCircleClient({ circle, schedule }: { circle: Circle;
 
           <div className="space-y-2">
             <Label htmlFor="category">Category</Label>
-            <select
-              id="category"
+            <Select
               name="category"
               defaultValue={circle.category ?? ''}
-              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              items={{ '': 'Select a category', ...Object.fromEntries(CATEGORIES.map((c) => [c, c])) }}
             >
-              <option value="">Select a category</option>
-              {CATEGORIES.map((cat) => (
-                <option key={cat} value={cat}>{cat}</option>
-              ))}
-            </select>
+              <SelectTrigger id="category" className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Select a category</SelectItem>
+                {CATEGORIES.map((cat) => (
+                  <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-2">
@@ -269,16 +274,20 @@ export default function EditCircleClient({ circle, schedule }: { circle: Circle;
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="frequency">Frequency</Label>
-                  <select
-                    id="frequency"
+                  <Select
                     name="frequency"
                     defaultValue={schedule?.frequency ?? 'weekly'}
-                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    items={FREQUENCIES}
                   >
-                    {FREQUENCIES.map((f) => (
-                      <option key={f.value} value={f.value}>{f.label}</option>
-                    ))}
-                  </select>
+                    <SelectTrigger id="frequency" className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {FREQUENCIES.map((f) => (
+                        <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="starts_on">First meet</Label>

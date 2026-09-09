@@ -185,3 +185,156 @@
   }
 }
 
+
+/* ---------------------------------------------------------------------------
+   Mapbox chrome.
+   Mapbox renders its popups, controls and attribution into the page with its
+   own stylesheet, which is white, system-font and square-cornered — visibly
+   not this app. These override it with the same tokens everything else uses,
+   so the map stops looking like a third-party embed.
+   --------------------------------------------------------------------------- */
+
+.mapboxgl-popup-content {
+  background: var(--popover);
+  color: var(--popover-foreground);
+  font-family: var(--font-site), ui-monospace, monospace;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 8px 24px -10px oklch(0.26 0.012 62 / 0.3);
+  /* Extra right padding keeps the title clear of the close button. */
+  padding: 0.75rem 2rem 0.75rem 0.875rem;
+}
+
+/* The tip is a CSS triangle, so its colour is a border colour and each anchor
+   direction needs its own rule. */
+.mapboxgl-popup-anchor-top .mapboxgl-popup-tip,
+.mapboxgl-popup-anchor-top-left .mapboxgl-popup-tip,
+.mapboxgl-popup-anchor-top-right .mapboxgl-popup-tip {
+  border-bottom-color: var(--popover);
+}
+.mapboxgl-popup-anchor-bottom .mapboxgl-popup-tip,
+.mapboxgl-popup-anchor-bottom-left .mapboxgl-popup-tip,
+.mapboxgl-popup-anchor-bottom-right .mapboxgl-popup-tip {
+  border-top-color: var(--popover);
+}
+.mapboxgl-popup-anchor-left .mapboxgl-popup-tip {
+  border-right-color: var(--popover);
+}
+.mapboxgl-popup-anchor-right .mapboxgl-popup-tip {
+  border-left-color: var(--popover);
+}
+
+/* Mapbox pins this to the very corner, which sits half outside a rounded
+   popup. Inset it so it reads as part of the card.
+   Two classes deep on purpose: mapbox-gl.css is injected after this file, so a
+   single-class rule loses the tie on `top`/`right`. */
+.mapboxgl-popup .mapboxgl-popup-close-button {
+  top: 0.25rem;
+  right: 0.25rem;
+  width: 1.5rem;
+  height: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted-foreground);
+  font-family: var(--font-site), ui-monospace, monospace;
+  font-size: 0.9rem;
+  line-height: 1;
+  border-radius: var(--radius-sm);
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+.mapboxgl-popup-close-button:hover {
+  background: var(--accent);
+  color: var(--foreground);
+}
+
+/* Zoom, compass and geolocate buttons. */
+.mapboxgl-ctrl-group {
+  background: var(--popover);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: 0 4px 14px -8px oklch(0.26 0.012 62 / 0.35);
+  overflow: hidden;
+}
+.mapboxgl-ctrl-group button + button {
+  border-top: 1px solid var(--border);
+}
+.mapboxgl-ctrl-group button:hover {
+  background: var(--accent);
+}
+/* The control glyphs are background SVGs baked to near-black, so they are
+   tinted rather than replaced. */
+.mapboxgl-ctrl-group button .mapboxgl-ctrl-icon {
+  filter: sepia(0.35) saturate(0.6) hue-rotate(345deg) opacity(0.75);
+}
+
+.mapboxgl-ctrl-attrib {
+  background: oklch(from var(--popover) l c h / 0.8) !important;
+  font-family: var(--font-site), ui-monospace, monospace;
+  border-radius: var(--radius-sm) 0 0 0;
+}
+.mapboxgl-ctrl-attrib a {
+  color: var(--muted-foreground);
+}
+
+/* ---------------------------------------------------------------------------
+   Native controls the browser draws for us.
+   These cannot be replaced the way a <select> was, but the parts the page owns
+   — accent colour, selection, scrollbars, the little date/time glyphs — can be
+   pulled into the palette so nothing reads as default-browser.
+   --------------------------------------------------------------------------- */
+
+:root {
+  /* Checkboxes, radios, range inputs and progress bars all take this instead
+     of the OS blue. */
+  accent-color: var(--foreground);
+  color-scheme: light;
+}
+
+::selection {
+  background: oklch(from var(--foreground) l c h / 0.16);
+  color: var(--foreground);
+}
+
+/* The calendar and clock glyphs inside date/time inputs ship as near-black
+   browser icons; tint them to muted so they sit with the rest of the form.
+   Note the picker panel itself is drawn by the browser and cannot be themed —
+   same limitation that made a custom <select> necessary. */
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  opacity: 0.5;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+input[type="date"]::-webkit-calendar-picker-indicator:hover,
+input[type="time"]::-webkit-calendar-picker-indicator:hover,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 0.9;
+}
+
+/* Scrollbars: Firefox first, then the WebKit/Blink pseudo-elements. */
+* {
+  scrollbar-color: var(--border) transparent;
+  scrollbar-width: thin;
+}
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--muted-foreground);
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-corner {
+  background: transparent;
+}

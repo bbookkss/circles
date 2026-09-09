@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { createPost } from '@/app/actions/posts'
 import { Button } from '@/components/ui/button'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 type CircleOption = { id: string; name: string; emoji?: string | null }
 
@@ -60,17 +61,26 @@ export default function HomeCompose({
         <div className="flex items-center justify-between gap-3">
           <label className="flex items-center gap-2 min-w-0">
             <span className="text-xs text-muted-foreground flex-shrink-0">to</span>
-            <select
+            <Select
               value={circleId}
-              onChange={(e) => setCircleId(e.target.value)}
-              className="text-xs bg-background border border-input rounded-md px-2 py-1 max-w-[220px] truncate focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              onValueChange={(v) => setCircleId(v as string)}
+              // Maps value -> label so the trigger shows the circle name
+              // rather than its uuid.
+              items={Object.fromEntries(
+                circles.map((c) => [c.id, c.emoji ? `${c.emoji} ${c.name}` : c.name])
+              )}
             >
-              {circles.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.emoji ? `${c.emoji} ${c.name}` : c.name}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger size="sm" className="text-xs max-w-[220px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {circles.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    {c.emoji ? `${c.emoji} ${c.name}` : c.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </label>
           <div className="flex items-center gap-3 flex-shrink-0">
             <span className="text-xs text-muted-foreground tabular-nums">{content.length}/1000</span>

@@ -80,6 +80,16 @@ works fine from this machine.
 Everything below has proven database logic (rolled-back transactions) but has
 never been exercised through the UI by a real person.
 
+- [ ] **Dropdowns on a real phone.** The seven native `<select>`s became Base
+      UI `Select` so the open list could be themed — the OS draws a native
+      select's list and no CSS reaches it. The cost is that phones no longer
+      get their native wheel picker. Base UI handles touch, but this is the
+      flyer → QR → mobile browser path, so it wants checking on an actual
+      handset rather than a narrow desktop window.
+      Still browser-drawn and unthemeable for the same reason: the calendar
+      and clock panels behind `<input type="date">` and `type="time"` on the
+      new-circle form. Only their glyphs are tinted.
+
 - [ ] **Username round trip.** Set a username, sign out, sign back in with it.
 - [ ] **Password reset round trip.** Depends on the two Auth items above.
 - [ ] **Account deletion, actually submitted.** The panel and its disabled

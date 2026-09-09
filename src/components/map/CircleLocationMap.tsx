@@ -29,7 +29,7 @@ export default function CircleLocationMap({
       attributionControl={false}
     >
       <Marker longitude={longitude} latitude={latitude} anchor="center">
-        <div className="w-9 h-9 rounded-full bg-white border-2 border-white shadow-lg flex items-center justify-center text-lg">
+        <div className="w-9 h-9 rounded-full bg-card border-2 border-card shadow-lg flex items-center justify-center text-lg">
           {emoji ?? '●'}
         </div>
       </Marker>
