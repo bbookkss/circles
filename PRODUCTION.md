@@ -35,29 +35,31 @@ works fine from this machine.
 
 ## Blocking — do before anyone real signs up
 
-- [ ] **Restrict the Mapbox token.** mapbox.com/account/access-tokens → the
-      `pk.` token → URL restriction for `circles-rho-sand.vercel.app`. It is
-      public and billable; this is the only open item with money attached.
+- [ ] **Cap Mapbox spend, and refresh the old default token.** The token is
+      now rotated: `hicircles.com web (URL-restricted)` is live everywhere,
+      restricted to hicircles.com, www, circles-rho-sand.vercel.app and
+      localhost:3000. Two things remain, and the first matters more than the
+      restriction does:
+      - **Set a usage/spend limit** in the Mapbox account. Probed 2026-09-09:
+        the URL restriction is enforced on the **geocoding** endpoint (403
+        from a disallowed origin) but **not** on styles, fonts or iconset —
+        those return 200 from any origin, with `access-control-allow-origin:
+        *`. So a copied token can still load maps and bill you. A spend cap is
+        the actual guard, not the URL list.
+      - **Refresh the Default public token** (console → Tokens → Refresh).
+        It is unrestricted, was in the public bundle for days, and cannot be
+        deleted — only refreshed. Nothing uses it any more: production and
+        `.env.local` both carry the new token, verified by grepping the
+        deployed chunks.
 
-- [ ] **Supabase Auth URL config.** Authentication → URL Configuration.
-      Site URL `https://circles-rho-sand.vercel.app`; Redirect URLs must
-      include `https://circles-rho-sand.vercel.app/**` and
-      `http://localhost:3000/**`. Password reset links bounce without this.
+      Note for next time: URL restrictions can only be set on tokens you
+      create. The Default public token has no such control, which is why this
+      needed a new token rather than an edit.
 
 - [ ] **Real SMTP.** The default Supabase mailer is rate-limited to a couple
       of messages an hour. Password reset and signup confirmation both depend
       on it, so it will silently fail the moment more than one person signs up
       at once.
-
-- [ ] **Buy a custom domain and point Vercel at it.** Vercel → project →
-      Settings → Domains. Do this *before* the two items at the top of this
-      section, not after: both hardcode `circles-rho-sand.vercel.app`, so
-      doing them first means doing them twice.
-      - Mapbox URL restriction has to list the new domain.
-      - Supabase Site URL and Redirect URLs both have to be updated, or
-        password reset and signup confirmation links bounce.
-      - The flyer QR codes point at whatever domain is live when they are
-        printed, so the domain wants to be settled before any flyer goes up.
 
 ## Environment
 
@@ -149,6 +151,13 @@ never been exercised through the UI by a real person.
 - [x] Account deletion, with content anonymised and circles handed over
 - [x] Commercial circles behind manual business verification
 - [x] Password reset and optional usernames
+- [x] **Custom domain `hicircles.com`** registered 2026-09-09 via Vercel,
+      attached and verified, serving 200. `www` 307-redirects to the apex.
+      Supabase Site URL is `https://hicircles.com`; redirect URLs cover the
+      apex, `/**`, and `http://localhost:3000/**` — the localhost entry was
+      missing entirely before, so password reset had never worked in dev.
+      Mapbox token rotated to a URL-restricted one; map and location search
+      both verified on the live domain.
 - [x] Explore map opens where the user is, verified against production
       2026-09-09. Vercel does send `x-vercel-ip-latitude`, `-longitude` and
       `-city` (percent-encoded — `San%20Francisco` — and decoded correctly),
