@@ -40,32 +40,64 @@ export default async function CirclePage({ params }: { params: Promise<{ id: str
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  const { data: circle } = await supabase
+  const { data: fullCircle } = await supabase
     .from('circles')
     .select('*')
     .eq('id', id)
     .single()
 
+  // Under RLS a private circle is invisible to everyone but its members, so
+  // the select above returns nothing for outsiders. Fall back to the preview
+  // RPC (security definer, preview columns only — no coordinates) so a shared
+  // link still renders a join prompt instead of a 404.
+  let circle = fullCircle
+  let isPreviewOnly = false
+  if (!circle) {
+    const { data: preview } = await supabase
+      .rpc('circle_preview', { circle_id: id })
+      .maybeSingle()
+    if (preview) {
+      circle = preview
+      isPreviewOnly = true
+    }
+  }
+
   if (!circle) notFound()
 
   const isPrivate = circle.visibility === 'private'
 
-  // Data available to everyone
-  const [{ count: memberCount }, { data: schedules }] = await Promise.all([
-    supabase.from('circle_members').select('*', { count: 'exact', head: true }).eq('circle_id', id),
+  // Data available to everyone. A preview-only circle also hides its members
+  // and schedule, so the count comes from the RPC and schedules stay empty.
+  const [{ count: memberCountRaw }, { data: schedules }] = await Promise.all([
+    // circle_id only: anon is granted that single column so it can count
+    // members without being able to enumerate who they are.
+    supabase.from('circle_members').select('circle_id', { count: 'exact', head: true }).eq('circle_id', id),
     supabase.from('circle_schedules').select('*').eq('circle_id', id),
   ])
+  const memberCount = isPreviewOnly ? (circle.member_count as number) : memberCountRaw
 
-  const { data: creator } = await supabase
-    .from('profiles').select('full_name').eq('id', circle.created_by).maybeSingle()
+  const { data: creator } = isPreviewOnly
+    ? { data: { full_name: circle.creator_name as string | null } }
+    : await supabase
+        .from('profiles').select('full_name').eq('id', circle.created_by).maybeSingle()
 
-  // Unauthenticated — show preview card
-  if (!user) {
+  // A signed-in outsider looking at a private circle only has the preview too,
+  // so they get this branch as well — with a request-to-join CTA.
+  const { data: previewJoinRequest } = user && isPreviewOnly
+    ? await supabase
+        .from('circle_join_requests')
+        .select('status').eq('circle_id', id).eq('user_id', user.id).maybeSingle()
+    : { data: null }
+
+  // Unauthenticated, or signed in without access — show preview card
+  if (!user || isPreviewOnly) {
     return (
       <>
-        <nav className="fixed top-0 left-0 right-0 z-50 h-14 bg-background/80 backdrop-blur-md border-b flex items-center px-4">
-          <Link href="/login" className="font-bold text-lg lowercase tracking-tight">circles</Link>
-        </nav>
+        {user ? <TopNav /> : (
+          <nav className="fixed top-0 left-0 right-0 z-50 h-14 bg-background/80 backdrop-blur-md border-b flex items-center px-4">
+            <Link href="/login" className="font-bold text-lg lowercase tracking-tight">circles</Link>
+          </nav>
+        )}
         <div className="pt-14 min-h-screen bg-background">
           <div className="max-w-2xl mx-auto px-4 py-8 space-y-8">
 
@@ -129,18 +161,36 @@ export default async function CirclePage({ params }: { params: Promise<{ id: str
                   {isPrivate ? 'Want to join this circle?' : 'Join this circle'}
                 </p>
                 <p className="text-sm text-muted-foreground mt-1">
-                  {isPrivate
-                    ? 'Create an account to request access. The admin will approve you.'
-                    : 'Create a free account to join and see posts from this circle.'}
+                  {user
+                    ? 'Ask the admin for access to see members and posts.'
+                    : isPrivate
+                      ? 'Create an account to request access. The admin will approve you.'
+                      : 'Create a free account to join and see posts from this circle.'}
                 </p>
               </div>
               <div className="flex gap-2">
-                <Link href={`/signup`}>
-                  <Button>{isPrivate ? 'Create account to request' : 'Create account to join'}</Button>
-                </Link>
-                <Link href="/login">
-                  <Button variant="outline">Sign in</Button>
-                </Link>
+                {user ? (
+                  previewJoinRequest?.status === 'pending' ? (
+                    <form action={withdrawRequest}>
+                      <input type="hidden" name="circle_id" value={id} />
+                      <Button variant="outline" type="submit">Withdraw request</Button>
+                    </form>
+                  ) : (
+                    <form action={requestToJoin}>
+                      <input type="hidden" name="circle_id" value={id} />
+                      <Button type="submit">Request to join</Button>
+                    </form>
+                  )
+                ) : (
+                  <>
+                    <Link href={`/signup`}>
+                      <Button>{isPrivate ? 'Create account to request' : 'Create account to join'}</Button>
+                    </Link>
+                    <Link href="/login">
+                      <Button variant="outline">Sign in</Button>
+                    </Link>
+                  </>
+                )}
               </div>
             </div>
 
