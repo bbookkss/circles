@@ -80,15 +80,6 @@ works fine from this machine.
 Everything below has proven database logic (rolled-back transactions) but has
 never been exercised through the UI by a real person.
 
-- [ ] **Explore map centring from IP — the header names.** The decision
-      itself is covered by `npm test` (all three branches, precedence, and
-      malformed input). What tests cannot prove is that Vercel actually sends
-      `x-vercel-ip-latitude` / `-longitude` / `-city` on the current platform —
-      those names come from their docs, and mocked headers agree with whatever
-      I mocked. Confirm on the deployed site with a VPN in another city: the
-      map should open there, and the overlay should name the city. If the
-      names have changed the fallback is San Francisco, so it fails quietly
-      rather than breaking — which is exactly why it needs checking.
 - [ ] **Username round trip.** Set a username, sign out, sign back in with it.
 - [ ] **Password reset round trip.** Depends on the two Auth items above.
 - [ ] **Account deletion, actually submitted.** The panel and its disabled
@@ -148,6 +139,14 @@ never been exercised through the UI by a real person.
 - [x] Account deletion, with content anonymised and circles handed over
 - [x] Commercial circles behind manual business verification
 - [x] Password reset and optional usernames
+- [x] Explore map opens where the user is, verified against production
+      2026-09-09. Vercel does send `x-vercel-ip-latitude`, `-longitude` and
+      `-city` (percent-encoded — `San%20Francisco` — and decoded correctly),
+      alongside `-timezone` and `-postal-code` which may be useful later.
+      Note `x-vercel-*` also carries `x-vercel-oidc-token`,
+      `x-vercel-proxy-signature` and an `x-vercel-sc-headers` blob holding an
+      Authorization bearer: never echo that namespace by prefix, allowlist the
+      `-ip-` keys you want.
 - [x] `anon` write privileges revoked on every public table
       (`revoke-anon-writes-2026-09-08.sql`, applied 2026-09-09). Probed live:
       an anon INSERT now fails with `42501 permission denied` rather than
