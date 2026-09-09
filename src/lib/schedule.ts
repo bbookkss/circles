@@ -83,15 +83,34 @@ export function zonedInstant(dateISO: string, time: string, tz: string): Date {
   return new Date(naiveUTC - tzOffsetMs(new Date(guess), tz))
 }
 
+/** Where a meet sits relative to now: too early to answer, answerable, over. */
+export type MeetPhase = 'before' | 'open' | 'finished'
+
 /**
  * Mirrors the `circle_check_ins` trigger: check-in opens 24 hours before the
  * meet starts and closes when it ends, evaluated in the circle's own timezone.
  *
  * The trigger is the real gate — this exists so the UI does not offer a button
- * the database is certain to reject. Counting calendar days is not good
- * enough: a meet "tomorrow" at 5:30pm is 31 hours away this morning, which
- * reads as open and is not.
+ * the database is certain to reject, and so a finished meet can be demoted
+ * rather than holding a full card until midnight. Counting calendar days is
+ * not good enough: a meet "tomorrow" at 5:30pm is 31 hours away this morning,
+ * which reads as open and is not.
  */
+export function meetPhase(
+  occursOn: string,
+  startTime: string,
+  endTime: string,
+  tz: string = APP_TZ,
+  now: Date = new Date()
+): MeetPhase {
+  const start = zonedInstant(occursOn, startTime, tz)
+  const end = zonedInstant(occursOn, endTime, tz)
+
+  if (now.getTime() > end.getTime()) return 'finished'
+  if (now.getTime() < start.getTime() - 24 * 60 * 60 * 1000) return 'before'
+  return 'open'
+}
+
 export function checkInWindow(
   occursOn: string,
   startTime: string,
@@ -99,14 +118,12 @@ export function checkInWindow(
   tz: string = APP_TZ,
   now: Date = new Date()
 ): { open: boolean; reason?: string } {
-  const start = zonedInstant(occursOn, startTime, tz)
-  const end = zonedInstant(occursOn, endTime, tz)
-
-  if (now.getTime() < start.getTime() - 24 * 60 * 60 * 1000) {
-    return { open: false, reason: 'Check-in opens 24 hours before the meet.' }
+  switch (meetPhase(occursOn, startTime, endTime, tz, now)) {
+    case 'before':
+      return { open: false, reason: 'Check-in opens 24 hours before the meet.' }
+    case 'finished':
+      return { open: false, reason: 'That meet has already finished.' }
+    default:
+      return { open: true }
   }
-  if (now.getTime() > end.getTime()) {
-    return { open: false, reason: 'That meet has already finished.' }
-  }
-  return { open: true }
 }

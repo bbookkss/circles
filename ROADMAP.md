@@ -182,7 +182,10 @@ Keep this so the next rework does not repeat the last one.
   "N going", and the names of who is coming, so home answers "where am I meant
   to be and who else is going" without opening a circle. Posts kept the full
   `PostItem` treatment but moved below, under a "Chatter" label. Rail widened
-  190px → 230px.
+  190px → 230px. A meet stays its circle's "next occurrence" until local
+  midnight, so a finished one would otherwise hold a full card all evening —
+  it collapses to a single "finished · N went" line instead, and goes when the
+  date rolls.
 - **On the merged stream**, which the note above nominated: it does not
   survive contact with the layout. Posts run newest-first, meets run
   soonest-first, so a single chronological column has to choose a direction

@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import HomeCompose from '@/components/HomeCompose'
 import PostItem from '@/components/PostItem'
 import CheckInControl from '@/components/CheckInControl'
-import { todayISO, dayNameISO, daysBetweenISO, relativeDayLabel, formatTime, checkInWindow } from '@/lib/schedule'
+import { todayISO, dayNameISO, daysBetweenISO, relativeDayLabel, formatTime, checkInWindow, meetPhase } from '@/lib/schedule'
 
 export default async function HomePage() {
   const supabase = await createClient()
@@ -75,6 +75,14 @@ export default async function HomePage() {
     }))
     .filter((u: Upcoming) => u.circle && u.schedule && u.daysAway >= 0 && u.daysAway < 7)
     .sort((a: Upcoming, b: Upcoming) => a.daysAway - b.daysAway)
+
+  // A meet stays the circle's "next occurrence" until local midnight, so
+  // without this split a finished meet would hold a full card for the rest of
+  // the day. It keeps a one-line record instead, and goes when the date rolls.
+  const isOver = (u: Upcoming) =>
+    meetPhase(u.occursOn, u.schedule.start_time, u.schedule.end_time, u.circle.timezone) === 'finished'
+  const ahead = upcoming.filter((u) => !isOver(u))
+  const over = upcoming.filter(isOver)
 
   // Who is coming to each of those. Fetched by date as well as circle, so a
   // check-in against some other occurrence never lands on this week's card.
@@ -232,16 +240,20 @@ export default async function HomePage() {
               <section className="space-y-3 fade-rise">
                 <p className={sectionLabel}>This week</p>
 
-                {upcoming.length === 0 ? (
+                {ahead.length === 0 && (
                   <div className="border rounded-xl px-4 py-8 text-center space-y-1">
-                    <p className="text-sm font-medium">Nothing on this week</p>
+                    <p className="text-sm font-medium">
+                      Nothing {over.length > 0 ? 'else ' : ''}on this week
+                    </p>
                     <p className="text-xs text-muted-foreground">
-                      Your circles have no meets in the next seven days.
+                      Your circles have no {over.length > 0 ? 'further ' : ''}meets in the next seven days.
                     </p>
                   </div>
-                ) : (
+                )}
+
+                {ahead.length > 0 && (
                   <ul className="space-y-3">
-                    {upcoming.map(({ circle, schedule, occursOn }) => {
+                    {ahead.map(({ circle, schedule, occursOn }) => {
                       const rows = checkInsByMeet[meetKey(circle.id, occursOn)] ?? []
                       const going = rows.filter((r) => r.status === 'yes')
                       const maybes = rows.filter((r) => r.status === 'maybe')
@@ -303,6 +315,32 @@ export default async function HomePage() {
                               ))}
                             </div>
                           )}
+                        </li>
+                      )
+                    })}
+                  </ul>
+                )}
+
+                {over.length > 0 && (
+                  <ul className="space-y-1 pt-1">
+                    {over.map(({ circle, schedule, occursOn }) => {
+                      const went = (checkInsByMeet[meetKey(circle.id, occursOn)] ?? [])
+                        .filter((r) => r.status === 'yes').length
+                      return (
+                        <li key={circle.id}>
+                          <Link
+                            href={`/circles/${circle.id}`}
+                            className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors py-1"
+                          >
+                            <span className="flex-shrink-0">{circle.emoji ?? '●'}</span>
+                            <span className="truncate">{circle.name}</span>
+                            <span className="flex-shrink-0">
+                              · finished {formatTime(schedule.start_time)}
+                            </span>
+                            {went > 0 && (
+                              <span className="flex-shrink-0">· {went} went</span>
+                            )}
+                          </Link>
                         </li>
                       )
                     })}
