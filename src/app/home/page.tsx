@@ -5,16 +5,7 @@ import TopNav from '@/components/TopNav'
 import { Button } from '@/components/ui/button'
 import HomeCompose from '@/components/HomeCompose'
 import PostItem from '@/components/PostItem'
-
-const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
-const DAY_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-
-function formatTime(t: string) {
-  const [h, m] = t.split(':').map(Number)
-  const ampm = h >= 12 ? 'pm' : 'am'
-  const hour = h % 12 || 12
-  return m === 0 ? `${hour}${ampm}` : `${hour}:${m.toString().padStart(2, '0')}${ampm}`
-}
+import { todayISO, dayNameISO, daysBetweenISO, relativeDayLabel, formatTime } from '@/lib/schedule'
 
 export default async function HomePage() {
   const supabase = await createClient()
@@ -130,23 +121,30 @@ export default async function HomePage() {
     })
   }
 
-  // Figure out upcoming meets in the next 7 days
-  const todayIdx = new Date().getDay() // 0=Sun
-  const upcoming: { circle: typeof circles[0]; daysAway: number; schedule: typeof schedules[0] }[] = []
+  // Upcoming meets. The recurrence maths is in the database, so biweekly and
+  // monthly are honoured — this page used to just find the nearest matching
+  // weekday and ignore frequency entirely.
+  const today = todayISO()
+  const { data: nextOccurrences } = circleIds.length > 0
+    ? await supabase.rpc('circles_next_occurrence', { cids: circleIds })
+    : { data: [] as { circle_id: string; occurs_on: string }[] }
 
-  for (const circle of circles) {
-    const sched = scheduleMap[circle.id]
-    if (!sched?.days_of_week?.length) continue
-    let minDaysAway = Infinity
-    for (const day of sched.days_of_week) {
-      const diff = (day - todayIdx + 7) % 7
-      if (diff < minDaysAway) minDaysAway = diff
-    }
-    if (minDaysAway <= 6) {
-      upcoming.push({ circle, daysAway: minDaysAway, schedule: sched })
-    }
+  type Upcoming = {
+    circle: any
+    schedule: any
+    occursOn: string
+    daysAway: number
   }
-  upcoming.sort((a, b) => a.daysAway - b.daysAway)
+
+  const upcoming: Upcoming[] = ((nextOccurrences ?? []) as { circle_id: string; occurs_on: string }[])
+    .map((n) => ({
+      circle: circleMap[n.circle_id],
+      schedule: scheduleMap[n.circle_id],
+      occursOn: n.occurs_on,
+      daysAway: daysBetweenISO(today, n.occurs_on),
+    }))
+    .filter((u: Upcoming) => u.circle && u.schedule && u.daysAway >= 0 && u.daysAway < 7)
+    .sort((a: Upcoming, b: Upcoming) => a.daysAway - b.daysAway)
 
   const firstName = profile?.full_name?.split(' ')[0] ?? 'there'
   const myName = profile?.full_name ?? 'You'
@@ -162,7 +160,7 @@ export default async function HomePage() {
           <aside className="md:sticky md:top-24 h-fit space-y-8 fade-rise">
             <div>
               <h1 className="text-2xl font-bold lowercase leading-tight">hey, {firstName}</h1>
-              <p className="text-muted-foreground text-sm mt-1">{DAY_NAMES[todayIdx]}</p>
+              <p className="text-muted-foreground text-sm mt-1">{dayNameISO(today)}</p>
             </div>
 
             <nav className="hidden md:flex flex-col gap-2">
@@ -202,9 +200,8 @@ export default async function HomePage() {
                 small enough that the feed still starts near the top. */}
             {upcoming.length > 0 && (
               <div className="flex flex-wrap gap-2 fade-rise">
-                {upcoming.slice(0, 4).map(({ circle, daysAway, schedule }) => {
-                  const when =
-                    daysAway === 0 ? 'Today' : daysAway === 1 ? 'Tomorrow' : DAY_SHORT[(todayIdx + daysAway) % 7]
+                {upcoming.slice(0, 4).map(({ circle, occursOn, schedule }) => {
+                  const when = relativeDayLabel(occursOn, today)
                   return (
                     <Link
                       key={circle.id}

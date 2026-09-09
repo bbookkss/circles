@@ -53,6 +53,7 @@ type Schedule = {
   start_time: string
   end_time: string
   frequency: string
+  starts_on?: string | null
   note?: string | null
 } | null
 
@@ -278,6 +279,19 @@ export default function EditCircleClient({ circle, schedule }: { circle: Circle;
                       <option key={f.value} value={f.value}>{f.label}</option>
                     ))}
                   </select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="starts_on">First meet</Label>
+                  <Input
+                    id="starts_on"
+                    name="starts_on"
+                    type="date"
+                    defaultValue={schedule?.starts_on ?? new Date().toISOString().slice(0, 10)}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Every later meet is counted from this date. For every other
+                    week or monthly, this is what decides which week.
+                  </p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="schedule_note">Note <span className="text-muted-foreground">(optional)</span></Label>

@@ -61,12 +61,17 @@ export async function createCircle(formData: FormData) {
   const schedule_note = formData.get('schedule_note') as string
 
   if (days.length > 0 && start_time && end_time) {
+    // Anchors the recurrence. Without it 'biweekly' has no meaning — nothing
+    // says which week is the on week. Defaults to today if the form omits it.
+    const starts_on = (formData.get('starts_on') as string)?.trim() || null
+
     await supabase.from('circle_schedules').insert({
       circle_id: data.id,
       days_of_week: days,
       start_time,
       end_time,
       frequency: frequency || 'weekly',
+      starts_on,
       note: schedule_note?.trim() || null,
     })
   }
@@ -118,6 +123,8 @@ export async function updateCircle(formData: FormData) {
   const end_time = formData.get('end_time') as string
 
   if (days.length > 0 && start_time && end_time) {
+    const starts_on = (formData.get('starts_on') as string)?.trim() || null
+
     await supabase.from('circle_schedules').delete().eq('circle_id', circle_id)
     await supabase.from('circle_schedules').insert({
       circle_id,
@@ -125,6 +132,7 @@ export async function updateCircle(formData: FormData) {
       start_time,
       end_time,
       frequency: (formData.get('frequency') as string) || 'weekly',
+      starts_on,
       note: (formData.get('schedule_note') as string)?.trim() || null,
     })
   }

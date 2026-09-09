@@ -336,6 +336,21 @@ export default function NewCircleClient({ isBusiness = false }: { isBusiness?: b
                   </select>
                 </div>
 
+                {/* Starts on — anchors the recurrence */}
+                <div className="space-y-2">
+                  <Label htmlFor="starts_on">First meet</Label>
+                  <Input
+                    id="starts_on"
+                    name="starts_on"
+                    type="date"
+                    defaultValue={new Date().toISOString().slice(0, 10)}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Every later meet is counted from this date. For every other
+                    week or monthly, this is what decides which week.
+                  </p>
+                </div>
+
                 {/* Note */}
                 <div className="space-y-2">
                   <Label htmlFor="schedule_note">Note <span className="text-muted-foreground">(optional)</span></Label>
