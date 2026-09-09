@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getAuthUser } from '@/lib/supabase/server'
 import TopNav from '@/components/TopNav'
 import { Button } from '@/components/ui/button'
 import HomeCompose from '@/components/HomeCompose'
@@ -10,7 +10,7 @@ import { todayISO, dayNameISO, daysBetweenISO, relativeDayLabel, formatTime, che
 
 export default async function HomePage() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getAuthUser(supabase)
   if (!user) redirect('/login')
 
   // ---------------------------------------------------------------------

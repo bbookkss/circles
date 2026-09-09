@@ -1,13 +1,13 @@
 import { redirect } from 'next/navigation'
 import { headers } from 'next/headers'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getAuthUser } from '@/lib/supabase/server'
 import TopNav from '@/components/TopNav'
 import ExploreClient from './ExploreClient'
 import { geoFromHeaders, resolveMapView } from '@/lib/mapView'
 
 export default async function ExplorePage() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getAuthUser(supabase)
   if (!user) redirect('/login')
 
   // Wave 1 — nothing here needs anything from the others.

@@ -1,6 +1,6 @@
 import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getAuthUser } from '@/lib/supabase/server'
 import TopNav from '@/components/TopNav'
 import BackButton from '@/components/BackButton'
 import MessageThread from '@/components/MessageThread'
@@ -8,7 +8,7 @@ import MessageThread from '@/components/MessageThread'
 export default async function MessageThreadPage({ params }: { params: Promise<{ userId: string }> }) {
   const { userId } = await params
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getAuthUser(supabase)
   if (!user) redirect('/login')
   if (userId === user.id) redirect('/messages')
 

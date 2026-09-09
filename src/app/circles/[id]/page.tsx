@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getAuthUser } from '@/lib/supabase/server'
 import { Button } from '@/components/ui/button'
 import { joinCircle, leaveCircle, requestToJoin, withdrawRequest } from '@/app/actions/circles'
 import TopNav from '@/components/TopNav'
@@ -40,7 +40,7 @@ function Initials({ name, size = 'md' }: { name: string; size?: 'sm' | 'md' }) {
 export default async function CirclePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getAuthUser(supabase)
 
   const { data: fullCircle } = await supabase
     .from('circles')

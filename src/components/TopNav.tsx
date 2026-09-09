@@ -1,11 +1,11 @@
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getAuthUser } from '@/lib/supabase/server'
 import { logout } from '@/app/actions/auth'
 import Circled from '@/components/Circled'
 
 export default async function TopNav() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getAuthUser(supabase)
   const { data: profile } = user
     ? await supabase.from('profiles').select('full_name').eq('id', user.id).maybeSingle()
     : { data: null }

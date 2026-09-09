@@ -1,11 +1,11 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getAuthUser } from '@/lib/supabase/server'
 
 export async function sendMessage(recipientId: string, content: string) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getAuthUser(supabase)
   if (!user) return { error: 'Not authenticated' }
 
   const text = content.trim()
@@ -27,7 +27,7 @@ export async function sendMessage(recipientId: string, content: string) {
 
 export async function markConversationRead(otherUserId: string) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getAuthUser(supabase)
   if (!user) return
 
   await supabase

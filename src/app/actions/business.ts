@@ -1,11 +1,11 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getAuthUser } from '@/lib/supabase/server'
 
 export async function submitBusinessRequest(formData: FormData) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getAuthUser(supabase)
   if (!user) return { error: 'Not signed in' }
 
   const business_name = (formData.get('business_name') as string)?.trim()
@@ -38,7 +38,7 @@ export async function submitBusinessRequest(formData: FormData) {
 
 export async function reviewBusinessRequest(formData: FormData) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getAuthUser(supabase)
   if (!user) return { error: 'Not signed in' }
 
   const request_id = formData.get('request_id') as string

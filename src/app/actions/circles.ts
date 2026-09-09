@@ -2,7 +2,7 @@
 
 import { redirect } from 'next/navigation'
 import tzLookup from 'tz-lookup'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getAuthUser } from '@/lib/supabase/server'
 
 /**
  * A circle's timezone comes from its pin, not from the server's locale. It
@@ -23,7 +23,7 @@ function timezoneFor(latitude: number, longitude: number): string {
 
 export async function createCircle(formData: FormData) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getAuthUser(supabase)
   if (!user) return { error: 'Not authenticated' }
 
   const name = formData.get('name') as string
@@ -100,7 +100,7 @@ export async function createCircle(formData: FormData) {
 
 export async function updateCircle(formData: FormData) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getAuthUser(supabase)
   if (!user) return { error: 'Not authenticated' }
 
   const circle_id = formData.get('circle_id') as string
@@ -163,7 +163,7 @@ export async function updateCircle(formData: FormData) {
 
 export async function joinCircle(formData: FormData) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getAuthUser(supabase)
   if (!user) redirect('/login')
 
   const circle_id = formData.get('circle_id') as string
@@ -173,7 +173,7 @@ export async function joinCircle(formData: FormData) {
 
 export async function leaveCircle(formData: FormData) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getAuthUser(supabase)
   if (!user) redirect('/login')
 
   const circle_id = formData.get('circle_id') as string
@@ -185,7 +185,7 @@ export async function leaveCircle(formData: FormData) {
 
 export async function requestToJoin(formData: FormData) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getAuthUser(supabase)
   if (!user) redirect('/login')
 
   const circle_id = formData.get('circle_id') as string
@@ -207,7 +207,7 @@ export async function requestToJoin(formData: FormData) {
 
 export async function withdrawRequest(formData: FormData) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getAuthUser(supabase)
   if (!user) redirect('/login')
 
   const circle_id = formData.get('circle_id') as string
@@ -219,7 +219,7 @@ export async function withdrawRequest(formData: FormData) {
 
 export async function approveRequest(formData: FormData) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getAuthUser(supabase)
   if (!user) redirect('/login')
 
   const circle_id = formData.get('circle_id') as string
@@ -242,7 +242,7 @@ export async function approveRequest(formData: FormData) {
 
 export async function rejectRequest(formData: FormData) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getAuthUser(supabase)
   if (!user) redirect('/login')
 
   const circle_id = formData.get('circle_id') as string
