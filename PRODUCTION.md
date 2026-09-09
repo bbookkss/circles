@@ -1,22 +1,14 @@
 # Production readiness
 
-> ## ▶ RESUME HERE — two migrations are written but NOT applied
+> **Migrations: up to date.** `schedule-timezone-2026-09-08.sql` and
+> `check-ins-2026-09-08.sql` were applied to production on 2026-09-09 and
+> verified against the live database: all 9 circles carry a timezone (Florida
+> Eastern, the rest Pacific), the timezone guard rejects unknown zone names,
+> and `circle_check_ins` has RLS on with 4 policies and no `anon` grant.
 >
-> The working tree and production database are out of step. Run this first:
->
-> ```bash
-> cd ~/circles
-> URL=$(grep '^SUPABASE_DB_URL=' .env.local | cut -d= -f2- | tr -d '"')
-> PW="${${URL#*://}%%@*}"; PW="${PW#*:}"
-> PSQL="/opt/homebrew/opt/libpq/bin/psql postgresql://postgres:${PW}@db.vkmzsseilmahguqlgiok.supabase.co:5432/postgres"
-> $PSQL -f supabase/schedule-timezone-2026-09-08.sql
-> $PSQL -f supabase/check-ins-2026-09-08.sql
-> ```
->
-> Until then the circle page degrades rather than crashes: `circle_today` and
-> `circle_check_ins` do not exist, so every next-meet card shows "0 going" with
-> the check-in buttons disabled, and the day label is wrong. Nothing errors
-> visibly, which is exactly why it is easy to miss.
+> When a migration is written but not yet applied, replace this block with a
+> ▶ RESUME HERE banner naming the file — the failure mode is silent (the page
+> degrades instead of erroring), so it has to be called out here.
 
 
 Running list of what still needs doing before real users arrive. Add to it as
