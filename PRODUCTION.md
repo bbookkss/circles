@@ -80,13 +80,15 @@ works fine from this machine.
 Everything below has proven database logic (rolled-back transactions) but has
 never been exercised through the UI by a real person.
 
-- [ ] **Explore map centring from IP.** `/explore` opens on the circles you
-      are in, falling back to `x-vercel-ip-latitude` / `-longitude` / `-city`,
-      then San Francisco. Those headers are set by Vercel's edge and are
-      absent under `npm run dev`, so only the first and last links of that
-      chain have actually been exercised. Check on the deployed site — a VPN
-      in another city is enough — and confirm the city name in the "No circles
-      in X yet" overlay is populated and correctly decoded.
+- [ ] **Explore map centring from IP — the header names.** The decision
+      itself is covered by `npm test` (all three branches, precedence, and
+      malformed input). What tests cannot prove is that Vercel actually sends
+      `x-vercel-ip-latitude` / `-longitude` / `-city` on the current platform —
+      those names come from their docs, and mocked headers agree with whatever
+      I mocked. Confirm on the deployed site with a VPN in another city: the
+      map should open there, and the overlay should name the city. If the
+      names have changed the fallback is San Francisco, so it fails quietly
+      rather than breaking — which is exactly why it needs checking.
 - [ ] **Username round trip.** Set a username, sign out, sign back in with it.
 - [ ] **Password reset round trip.** Depends on the two Auth items above.
 - [ ] **Account deletion, actually submitted.** The panel and its disabled

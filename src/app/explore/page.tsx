@@ -3,38 +3,7 @@ import { headers } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import TopNav from '@/components/TopNav'
 import ExploreClient from './ExploreClient'
-import { SF_VIEW, viewForPoints, type MapView } from '@/lib/mapView'
-
-/**
- * Where to open the map, and what to call that place.
- *
- * The IP headers are populated by Vercel's edge and are absent locally, which
- * is why San Francisco remains the final fallback rather than an error.
- */
-async function resolveInitialView(
-  myCircles: { latitude: number | null; longitude: number | null }[]
-): Promise<{ view: MapView; place: string | null }> {
-  const mine = myCircles.filter(
-    (c): c is { latitude: number; longitude: number } =>
-      c.latitude !== null && c.longitude !== null
-  )
-  const fromCircles = viewForPoints(mine)
-  if (fromCircles) return { view: fromCircles, place: null }
-
-  const h = await headers()
-  const lat = Number(h.get('x-vercel-ip-latitude'))
-  const lng = Number(h.get('x-vercel-ip-longitude'))
-  if (Number.isFinite(lat) && Number.isFinite(lng) && (lat !== 0 || lng !== 0)) {
-    const city = h.get('x-vercel-ip-city')
-    return {
-      view: { latitude: lat, longitude: lng, zoom: 11 },
-      // Vercel percent-encodes the city header ("San%20Francisco").
-      place: city ? decodeURIComponent(city) : null,
-    }
-  }
-
-  return { view: SF_VIEW, place: null }
-}
+import { geoFromHeaders, resolveMapView } from '@/lib/mapView'
 
 export default async function ExplorePage() {
   const supabase = await createClient()
@@ -71,7 +40,13 @@ export default async function ExplorePage() {
         .not('longitude', 'is', null)
     : { data: [] as { latitude: number | null; longitude: number | null }[] }
 
-  const { view: initialView, place } = await resolveInitialView(myCircles ?? [])
+  // Decision and header parsing both live in lib/mapView so they can be
+  // tested without a request; this only supplies the inputs.
+  const h = await headers()
+  const { view: initialView, place } = resolveMapView(
+    myCircles ?? [],
+    geoFromHeaders((name) => h.get(name))
+  )
 
   if (!circles) return (
     <>

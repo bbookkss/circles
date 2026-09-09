@@ -76,3 +76,68 @@ export function viewForPoints(
   const zoom = Math.log2(360 / span) - 0.5
   return { longitude, latitude, zoom: Math.min(Math.max(zoom, minZoom), maxZoom) }
 }
+
+
+/** City-level position from an IP lookup. */
+export type Geo = { latitude: number; longitude: number; city: string | null }
+
+/**
+ * Read a Geo out of request headers, or null if they are not there.
+ *
+ * Vercel's edge sets these; nothing sets them locally, so null is the normal
+ * case under `npm run dev` rather than an error. Takes a getter rather than a
+ * Headers object so it can be exercised without a request.
+ */
+export function geoFromHeaders(get: (name: string) => string | null): Geo | null {
+  const latitude = Number(get('x-vercel-ip-latitude'))
+  const longitude = Number(get('x-vercel-ip-longitude'))
+
+  // A missing header reads as 0 through Number(), and null island is not a
+  // place anyone is exploring circles from.
+  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return null
+  if (latitude === 0 && longitude === 0) return null
+  if (Math.abs(latitude) > 90 || Math.abs(longitude) > 180) return null
+
+  const raw = get('x-vercel-ip-city')
+  let city: string | null = null
+  if (raw) {
+    // Percent-encoded at the edge ("San%20Francisco"). A malformed value is
+    // not worth throwing a whole page over.
+    try {
+      city = decodeURIComponent(raw)
+    } catch {
+      city = raw
+    }
+  }
+
+  return { latitude, longitude, city }
+}
+
+/**
+ * Where the explore map should open, and what to call that place.
+ *
+ * `place` is only set when the IP lookup is what decided it — the name is used
+ * in "No circles in X yet", and claiming a city when the view came from the
+ * user's own circles would be guessing.
+ */
+export function resolveMapView(
+  circlePoints: { latitude: number | null; longitude: number | null }[],
+  geo: Geo | null
+): { view: MapView; place: string | null } {
+  const known = circlePoints.filter(
+    (c): c is { latitude: number; longitude: number } =>
+      typeof c.latitude === 'number' && typeof c.longitude === 'number'
+  )
+
+  const fromCircles = viewForPoints(known)
+  if (fromCircles) return { view: fromCircles, place: null }
+
+  if (geo) {
+    return {
+      view: { latitude: geo.latitude, longitude: geo.longitude, zoom: 11 },
+      place: geo.city,
+    }
+  }
+
+  return { view: SF_VIEW, place: null }
+}
