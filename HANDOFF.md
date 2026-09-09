@@ -1,5 +1,9 @@
 # Handoff — 2026-09-06
 
+> **Open production tasks now live in [PRODUCTION.md](PRODUCTION.md).**
+> This file stays as the record of what happened and why; that one is the
+> running checklist.
+
 Session covered Vercel env setup, a git identity fix, and an RLS security audit
 of the Supabase database. **Read `supabase/rls-applied-2026-09-06.sql` first** —
 it is the consolidated live policy state and explains the reasoning.
