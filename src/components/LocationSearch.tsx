@@ -1,13 +1,16 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { extractFromFeature } from '@/lib/geocoding'
+import { extractFromSearchBox } from '@/lib/geocoding'
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN!
 const SF_PROXIMITY = '-122.4194,37.7749'
 
 type Suggestion = {
-  place_name: string
+  /** "Mission Dolores Park" — the thing you were looking for. */
+  name: string
+  /** "Dolores Street, San Francisco, California 94114" — where it is. */
+  address: string
   center: [number, number]
   neighborhood: string | null
   city: string | null
@@ -43,14 +46,31 @@ export default function LocationSearch({ onSelect }: Props) {
     debounceRef.current = setTimeout(async () => {
       setLoading(true)
       try {
+        // Search Box, not the Geocoding API. Geocoding has no POI data at
+        // all any more -- v6 rejects `types=poi` outright -- so searching
+        // "dolores park" there returned streets named Dolores in Houston and
+        // never the park itself. Circles meet at parks, cafes and bars, so
+        // POIs are the whole point of this box.
         const res = await fetch(
-          `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(value)}.json?autocomplete=true&country=us&proximity=${SF_PROXIMITY}&types=address,poi,neighborhood,locality&access_token=${MAPBOX_TOKEN}`
+          `https://api.mapbox.com/search/searchbox/v1/forward?q=${encodeURIComponent(value)}&proximity=${SF_PROXIMITY}&country=us&limit=6&access_token=${MAPBOX_TOKEN}`
         )
         const json = await res.json()
         const results: Suggestion[] = (json.features ?? []).map((f: any) => {
-          const { neighborhood, city } = extractFromFeature(f)
-          return { place_name: f.place_name, center: f.center, neighborhood, city }
-        })
+          const { neighborhood, city } = extractFromSearchBox(f)
+          const props = f.properties ?? {}
+          const name: string = props.name ?? props.full_address ?? ''
+          const full: string = props.full_address ?? props.place_formatted ?? ''
+          // For an address result the name is the head of full_address; don't
+          // print it twice.
+          const address = full.startsWith(name) ? full.slice(name.length).replace(/^,\s*/, '') : full
+          return {
+            name,
+            address,
+            center: f.geometry?.coordinates as [number, number],
+            neighborhood,
+            city,
+          }
+        }).filter((s: Suggestion) => Array.isArray(s.center))
         setSuggestions(results)
         setOpen(results.length > 0)
       } finally {
@@ -60,7 +80,7 @@ export default function LocationSearch({ onSelect }: Props) {
   }
 
   function handleSelect(s: Suggestion) {
-    setQuery(s.place_name)
+    setQuery(s.address ? `${s.name}, ${s.address}` : s.name)
     setOpen(false)
     setSuggestions([])
     onSelect({
@@ -68,7 +88,7 @@ export default function LocationSearch({ onSelect }: Props) {
       latitude: s.center[1],
       neighborhood: s.neighborhood,
       city: s.city,
-      placeName: s.place_name,
+      placeName: s.address ? `${s.name}, ${s.address}` : s.name,
     })
   }
 
@@ -97,10 +117,10 @@ export default function LocationSearch({ onSelect }: Props) {
                 onMouseDown={() => handleSelect(s)}
                 className="w-full text-left px-3 py-2 text-sm hover:bg-muted transition-colors"
               >
-                <span className="font-medium">{s.place_name.split(',')[0]}</span>
-                <span className="text-muted-foreground text-xs block truncate">
-                  {s.place_name.split(',').slice(1).join(',').trim()}
-                </span>
+                <span className="font-medium">{s.name}</span>
+                {s.address && (
+                  <span className="text-muted-foreground text-xs block truncate">{s.address}</span>
+                )}
               </button>
             </li>
           ))}
