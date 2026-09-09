@@ -69,6 +69,116 @@ feature; the parsing is plumbing.
 
 ---
 
+## Check-ins (yes / no / maybe)
+
+**Status:** not started. Sized 2026-09-08. **Blocked on the schedule anchor
+below — read that first.**
+
+Within 24 hours of a circle's next meet, members say whether they are coming.
+Circles live or die on whether enough people show up, so the point is turning
+"there is a schedule" into "six people are actually going".
+
+- Public circle: any signed-in user can see who checked in.
+- Private circle: members only.
+- Your feed shows check-ins from people you are friends with.
+
+### Prerequisite: schedules have no anchor date
+
+`circle_schedules` stores `days_of_week`, `start_time`, `end_time` and
+`frequency` ('weekly' | 'biweekly' | 'monthly'). It stores nothing to anchor
+the recurrence, so **biweekly is undefined** — nothing says which week is the
+"on" week, and monthly + `days_of_week` is worse. A check-in attaches to a
+specific date, so this has to be settled first.
+
+Also a live bug: the "this week" calculation in `src/app/home/page.tsx`
+ignores `frequency` completely and just finds the nearest matching weekday, so
+a biweekly circle currently displays as if it met every week.
+
+Fix: add `anchor_date date` to `circle_schedules`, backfill it to `created_at`,
+expose it in the create and edit forms, and write one shared occurrence helper
+that every surface uses.
+
+### The work
+
+- `circle_check_ins(circle_id, user_id, occurs_on date, status, created_at)`,
+  primary key `(circle_id, user_id, occurs_on)` so a person has one answer per
+  occurrence and changing it is an upsert.
+- Read policy is `can_read_circle_content(circle_id, auth.uid())` — the helper
+  already encodes public-means-signed-in and private-means-member.
+- Write policy: own rows only. Validate in a trigger that `occurs_on` is a
+  real occurrence of that circle's schedule and inside the 24-hour window,
+  since a server action alone is not a boundary.
+- UI: yes/no/maybe control plus a "who is going" list on the circle page, and
+  the same control on the home schedule pills.
+
+**Rough size:** the largest of the three. The table and policies are small;
+the occurrence maths and the UI surfaces are the work.
+
+---
+
+## Friends (mutual follows)
+
+**Status:** not started. Sized 2026-09-08.
+
+`follows` is directional. A friend is a mutual follow — both rows exist. Needed
+because the activity feed should only show people you are actually reciprocal
+with, not everyone you happen to follow.
+
+A `security definer` helper `are_friends(a, b)` plus a view over the self-join.
+Cheap on its own; it exists to be used by the feed below.
+
+**Rough size:** small — under an hour.
+
+---
+
+## Friend activity in the feed
+
+**Status:** not started. Sized 2026-09-08. Depends on friends, and is much
+better with check-ins.
+
+See what people you are friends with are doing: joining a circle, checking in
+to a meet.
+
+No activity table needed for v1. Both facts are already timestamped —
+`circle_members.joined_at` and the check-in rows — so this is a union query
+over two tables filtered to friends, ordered by time.
+
+### The trap
+
+**"Ada joined Beach Volleyball" leaks that the circle exists, and that Ada is
+in it.** For a private circle that is a real disclosure to someone who is not
+a member. Every activity row must be filtered through
+`circle_is_visible` / `can_read_circle_content`, not merely through friendship.
+Get this wrong and the feature quietly undoes the RLS audit.
+
+**Rough size:** medium. The query is straightforward; the visibility filtering
+and the empty states are the care.
+
+---
+
+## Home page — design history
+
+Keep this so the next rework does not repeat the last one.
+
+- **Original:** three stacked sections — "This week", "Latest", "Your circles".
+  Read as a digest rather than a feed: posts were the smallest element,
+  sandwiched between two directory lists, with no avatars and nothing
+  actionable on the page. "Your circles" duplicated `/profile` and, at nine
+  rows, pushed the posts off screen.
+- **2026-09-08 rework** (`652ffa3`): feed became the page. Posts render through
+  the same `PostItem` as inside a circle (avatars, likes, inline comments), a
+  composer with a circle picker sits at the top, the schedule shrank to a row
+  of pills, and "Your circles" moved into the previously empty left rail.
+  Options considered and rejected at the time: a feed with a sticky right
+  rail; one merged stream interleaving posts and meets chronologically; and
+  leaning in to a weekly digest.
+- **Verdict:** Ben was not sold on the result — kept for now, not settled.
+  Known rough edge: circle names truncate in the 190px rail. If this gets
+  revisited, the merged-stream option is the one that was never tried, and
+  check-ins would give the page something to be about beyond posts.
+
+---
+
 ## Ideas not yet specced
 
 Capture things here as they come up, even one line. Better than a chat log.
