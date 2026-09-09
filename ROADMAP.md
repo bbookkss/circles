@@ -177,10 +177,19 @@ Keep this so the next rework does not repeat the last one.
   Options considered and rejected at the time: a feed with a sticky right
   rail; one merged stream interleaving posts and meets chronologically; and
   leaning in to a weekly digest.
-- **Verdict:** Ben was not sold on the result — kept for now, not settled.
-  Known rough edge: circle names truncate in the 190px rail. If this gets
-  revisited, the merged-stream option is the one that was never tried, and
-  check-ins would give the page something to be about beyond posts.
+- **2026-09-09 rework:** agenda-first. The week became the page: every meet in
+  the next seven days is a card carrying its own check-in control, a live
+  "N going", and the names of who is coming, so home answers "where am I meant
+  to be and who else is going" without opening a circle. Posts kept the full
+  `PostItem` treatment but moved below, under a "Chatter" label. Rail widened
+  190px → 230px.
+- **On the merged stream**, which the note above nominated: it does not
+  survive contact with the layout. Posts run newest-first, meets run
+  soonest-first, so a single chronological column has to choose a direction
+  and the other half then reads backwards. Anchoring at *now* — meets above,
+  chatter below — is the coherent version, and that is what was built. Treat
+  the merged stream as tried and rejected rather than untried.
+- **Verdict:** not yet reviewed by Ben.
 
 ---
 

@@ -12,7 +12,7 @@ import Circled from '@/components/Circled'
 import BackButton from '@/components/BackButton'
 import CircleLocationMap from '@/components/map/CircleLocationMap'
 import CheckInControl from '@/components/CheckInControl'
-import { relativeDayLabel, daysBetweenISO } from '@/lib/schedule'
+import { relativeDayLabel, checkInWindow } from '@/lib/schedule'
 
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 const FREQ_LABELS: Record<string, string> = {
@@ -419,15 +419,24 @@ export default async function CirclePage({ params }: { params: Promise<{ id: str
 
               {isMember ? (
                 (() => {
-                  const daysAway = circleToday ? daysBetweenISO(circleToday, nextMeet) : 99
-                  const open = daysAway <= 1
+                  // Hours, not calendar days -- see checkInWindow. This used
+                  // to offer an enabled button for a meet 31 hours out, which
+                  // the trigger then refused.
+                  const { open, reason } = schedules?.[0]
+                    ? checkInWindow(
+                        nextMeet,
+                        schedules[0].start_time,
+                        schedules[0].end_time,
+                        circle.timezone
+                      )
+                    : { open: false, reason: undefined }
                   return (
                     <CheckInControl
                       circleId={id}
                       occursOn={nextMeet}
                       initialStatus={myCheckIn as 'yes' | 'no' | 'maybe' | null}
                       disabled={!open}
-                      disabledReason={open ? undefined : 'Check-in opens 24 hours before the meet.'}
+                      disabledReason={reason}
                     />
                   )
                 })()
