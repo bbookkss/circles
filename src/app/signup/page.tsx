@@ -6,6 +6,7 @@ import { signup } from '@/app/actions/auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import DemoWheel from '@/components/DemoWheel'
 
 export default function SignupPage() {
   const [error, setError] = useState<string | null>(null)
@@ -35,7 +36,7 @@ export default function SignupPage() {
         />
         <div className="relative max-w-sm mx-auto w-full fade-rise">
           {/* Wordmark with a circle drawing itself around it */}
-          <div className="relative w-fit mb-24">
+          <div className="relative w-fit mb-20">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/circle-draw.gif"
@@ -51,20 +52,7 @@ export default function SignupPage() {
           <p className="text-background/70 text-base mb-8">
             Circles connects you with recurring local groups: the people who show up to the same beach, park, or coffee shop every week.
           </p>
-          <ul className="space-y-3 text-sm text-background/80">
-            <li className="flex items-start gap-3">
-              <span className="text-background/40 select-none">·</span>
-              <span>Join existing circles or start your own</span>
-            </li>
-            <li className="flex items-start gap-3">
-              <span className="text-background/40 select-none">·</span>
-              <span>Every circle has a real place and a regular time</span>
-            </li>
-            <li className="flex items-start gap-3">
-              <span className="text-background/40 select-none">·</span>
-              <span>Private circles let you control who gets in</span>
-            </li>
-          </ul>
+          <DemoWheel />
         </div>
       </div>
 

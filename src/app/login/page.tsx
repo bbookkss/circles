@@ -6,6 +6,7 @@ import { login } from '@/app/actions/auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import DemoWheel from '@/components/DemoWheel'
 
 export default function LoginPage() {
   const [error, setError] = useState<string | null>(null)
@@ -39,7 +40,7 @@ export default function LoginPage() {
         />
         <div className="relative max-w-sm mx-auto w-full fade-rise">
           {/* Wordmark with a circle drawing itself around it */}
-          <div className="relative w-fit mb-24">
+          <div className="relative w-fit mb-20">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/circle-draw.gif"
@@ -55,20 +56,7 @@ export default function LoginPage() {
           <p className="text-background/70 text-base mb-8">
             Recurring local gatherings: pickup sports, music sessions, neighborhood dinners, and more.
           </p>
-          <ul className="space-y-3 text-sm text-background/80">
-            <li className="flex items-start gap-3">
-              <span className="text-background/40 select-none">·</span>
-              <span>Browse circles near you on an interactive map</span>
-            </li>
-            <li className="flex items-start gap-3">
-              <span className="text-background/40 select-none">·</span>
-              <span>Join groups with regular schedules, not one-off events</span>
-            </li>
-            <li className="flex items-start gap-3">
-              <span className="text-background/40 select-none">·</span>
-              <span>Public circles anyone can join. Private ones by invite.</span>
-            </li>
-          </ul>
+          <DemoWheel />
         </div>
       </div>
 

@@ -165,6 +165,19 @@
   .stagger-4 { animation-delay: 0.2s; }
   .stagger-5 { animation-delay: 0.25s; }
 
+  /* Looping demo column on the signed-out hero. The track holds the cards
+     twice and travels exactly half its height, so the seam is invisible. */
+  .marquee-up {
+    animation: marquee-up 38s linear infinite;
+  }
+  .marquee-up:hover {
+    animation-play-state: paused;
+  }
+  .marquee-mask {
+    -webkit-mask-image: linear-gradient(to bottom, transparent, black 10%, black 88%, transparent);
+    mask-image: linear-gradient(to bottom, transparent, black 10%, black 88%, transparent);
+  }
+
   /* Card lift on hover */
   .lift {
     transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
@@ -175,6 +188,11 @@
   }
 }
 
+@keyframes marquee-up {
+  from { transform: translateY(0); }
+  to   { transform: translateY(-50%); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .fade-rise,
   .fade-in {
@@ -182,6 +200,10 @@
   }
   .lift:hover {
     transform: none;
+  }
+  /* Motion off: the column simply sits still, still showing its cards. */
+  .marquee-up {
+    animation: none;
   }
 }
 
