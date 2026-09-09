@@ -52,6 +52,10 @@ export default function ExploreClient({ circles, people, initialView, place }: P
   const [sizeFilter, setSizeFilter] = useState<string | null>(null)
   const [kindFilter, setKindFilter] = useState<'social' | 'commercial' | null>(null)
   const [showFilters, setShowFilters] = useState(false)
+  // Phones get one or the other, full screen. A half-height map is too small
+  // to pan or pinch, and a squeezed list shows a circle and a half -- which is
+  // what this page was doing before. Desktop is unaffected.
+  const [mobileView, setMobileView] = useState<'map' | 'list'>('map')
 
   // Derive unique cities from actual circle data
   const cities = useMemo(() => {
@@ -104,9 +108,31 @@ export default function ExploreClient({ circles, people, initialView, place }: P
   }
 
   return (
-    <div className="flex h-screen w-full overflow-hidden pt-14">
+    <div className="flex flex-col md:flex-row h-screen w-full overflow-hidden pt-14">
+
+      {/* Map / List switch — phones only */}
+      <div className="md:hidden flex border-b flex-shrink-0">
+        {(['map', 'list'] as const).map((v) => (
+          <button
+            key={v}
+            type="button"
+            onClick={() => setMobileView(v)}
+            aria-pressed={mobileView === v}
+            className={`flex-1 py-2.5 text-sm font-medium capitalize transition-colors ${
+              mobileView === v
+                ? 'bg-foreground text-background'
+                : 'bg-background text-muted-foreground hover:bg-muted'
+            }`}
+          >
+            {v}
+          </button>
+        ))}
+      </div>
+
       {/* Sidebar */}
-      <aside className="w-72 flex-shrink-0 bg-background border-r flex flex-col">
+      <aside
+        className={`${mobileView === 'list' ? 'flex' : 'hidden'} md:flex w-full md:w-72 flex-1 md:flex-none flex-shrink-0 min-h-0 bg-background md:border-r flex-col`}
+      >
         {/* Search + filter toggle */}
         <div className="p-3 border-b space-y-2">
           <input
@@ -341,7 +367,7 @@ export default function ExploreClient({ circles, people, initialView, place }: P
       </aside>
 
       {/* Map */}
-      <main className="flex-1 relative">
+      <main className={`${mobileView === 'map' ? 'block' : 'hidden'} md:block flex-1 relative min-h-0`}>
         <CirclesMap
           circles={filtered}
           onCircleClick={setSelected}

@@ -97,9 +97,9 @@ export default function NewCircleClient({ isBusiness = false }: { isBusiness?: b
   }
 
   return (
-    <div className="flex h-full w-full overflow-hidden">
+    <div className="flex flex-col-reverse md:flex-row h-full w-full overflow-hidden">
       {/* Form sidebar */}
-      <aside className="w-96 flex-shrink-0 bg-background border-r flex flex-col">
+      <aside className="w-full md:w-96 flex-1 md:flex-none flex-shrink-0 min-h-0 bg-background md:border-r flex flex-col">
         <div className="p-4 border-b flex items-center gap-3">
           <BackButton fallback="/explore" />
           <h1 className="text-lg font-semibold lowercase">new circle</h1>
@@ -381,7 +381,10 @@ export default function NewCircleClient({ isBusiness = false }: { isBusiness?: b
       </aside>
 
       {/* Map pin picker */}
-      <main className="flex-1 relative">
+      {/* Phones stack this above the form at a usable height. Side by side,
+          the fixed w-96 form left about 6px of map on a 390px screen --
+          enough to see it exists, not to drop a pin on it. */}
+      <main className="h-[38vh] md:h-auto flex-shrink-0 md:flex-1 relative border-b md:border-b-0">
         <Map
           initialViewState={SF_CENTER}
           style={{ width: '100%', height: '100%' }}

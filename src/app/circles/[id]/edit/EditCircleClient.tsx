@@ -110,8 +110,8 @@ export default function EditCircleClient({ circle, schedule }: { circle: Circle;
   const mapCenter = pin ?? SF_CENTER
 
   return (
-    <div className="flex h-full w-full overflow-hidden">
-      <aside className="w-96 flex-shrink-0 bg-background border-r flex flex-col">
+    <div className="flex flex-col-reverse md:flex-row h-full w-full overflow-hidden">
+      <aside className="w-full md:w-96 flex-1 md:flex-none flex-shrink-0 min-h-0 bg-background md:border-r flex flex-col">
         <div className="p-4 border-b flex items-center gap-3">
           <BackButton fallback={`/circles/${circle.id}`} />
           <h1 className="text-lg font-semibold lowercase">edit circle</h1>
@@ -316,7 +316,10 @@ export default function EditCircleClient({ circle, schedule }: { circle: Circle;
         </form>
       </aside>
 
-      <main className="flex-1 relative">
+      {/* Phones stack this above the form at a usable height. Side by side,
+          the fixed w-96 form left about 6px of map on a 390px screen --
+          enough to see it exists, not to drop a pin on it. */}
+      <main className="h-[38vh] md:h-auto flex-shrink-0 md:flex-1 relative border-b md:border-b-0">
         <Map
           initialViewState={{ ...mapCenter, zoom: 13 }}
           style={{ width: '100%', height: '100%' }}
