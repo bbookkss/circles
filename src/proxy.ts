@@ -33,6 +33,8 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith('/signup') ||
     pathname.startsWith('/auth') ||
     pathname.startsWith('/check-email') ||
+    // Reached while signed out, by definition.
+    pathname.startsWith('/forgot-password') ||
     // Circle detail pages are publicly viewable (page handles the unauthed state)
     /^\/circles\/[^/]+$/.test(pathname)
 

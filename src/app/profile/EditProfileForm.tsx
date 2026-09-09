@@ -10,19 +10,28 @@ export default function EditProfileForm({
   fullName,
   bio,
   instagram,
+  username,
 }: {
   fullName: string
   bio: string | null
   instagram: string | null
+  username: string | null
 }) {
   const [editing, setEditing] = useState(false)
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   async function handleSubmit(formData: FormData) {
     setLoading(true)
-    await updateProfile(formData)
+    setError(null)
+    const result = await updateProfile(formData)
     setLoading(false)
+    // A taken username has to surface, not vanish into a "Saved!" that lied.
+    if (result?.error) {
+      setError(result.error)
+      return
+    }
     setEditing(false)
     setSuccess(true)
     setTimeout(() => setSuccess(false), 3000)
@@ -47,6 +56,23 @@ export default function EditProfileForm({
       <div className="space-y-1">
         <Label htmlFor="full_name">Full name</Label>
         <Input id="full_name" name="full_name" defaultValue={fullName} required />
+      </div>
+      <div className="space-y-1">
+        <Label htmlFor="username">
+          Username <span className="text-muted-foreground font-normal">(optional)</span>
+        </Label>
+        <Input
+          id="username"
+          name="username"
+          defaultValue={username ?? ''}
+          placeholder="yourname"
+          autoCapitalize="none"
+          autoCorrect="off"
+          spellCheck={false}
+          pattern="[A-Za-z0-9_]{3,20}"
+          title="3-20 characters: letters, numbers or underscores"
+        />
+        <p className="text-xs text-muted-foreground">Sign in with this instead of your email.</p>
       </div>
       <div className="space-y-1">
         <Label htmlFor="instagram">Instagram</Label>
@@ -77,6 +103,7 @@ export default function EditProfileForm({
           className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring resize-none"
         />
       </div>
+      {error && <p className="text-sm text-destructive">{error}</p>}
       <div className="flex gap-2">
         <Button type="submit" size="sm" disabled={loading}>
           {loading ? 'Saving...' : 'Save'}

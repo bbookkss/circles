@@ -102,6 +102,25 @@ export default function SignupPage() {
               <p className="text-xs text-muted-foreground">so other people know you are real :)</p>
             </div>
             <div className="space-y-2">
+              <Label htmlFor="username">
+                Username <span className="text-muted-foreground font-normal">(optional)</span>
+              </Label>
+              <Input
+                id="username"
+                name="username"
+                type="text"
+                autoCapitalize="none"
+                spellCheck={false}
+                pattern="[A-Za-z0-9_]{3,20}"
+                title="3-20 characters: letters, numbers or underscores"
+                placeholder="yourname"
+              />
+              <p className="text-xs text-muted-foreground">
+                Sign in with this instead of your email. You can add or change
+                it later.
+              </p>
+            </div>
+            <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input id="email" name="email" type="email" placeholder="you@example.com" required />
             </div>

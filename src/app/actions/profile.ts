@@ -20,9 +20,26 @@ export async function updateProfile(formData: FormData) {
     ? rawIg.replace(/^https?:\/\/(www\.)?instagram\.com\//i, '').replace(/^@/, '').replace(/\/+$/, '').trim() || null
     : null
 
-  await supabase.from('profiles').update({ full_name, bio, instagram }).eq('id', user.id)
+  const rawUsername = (formData.get('username') as string | null)?.trim().toLowerCase() ?? ''
+  if (rawUsername && !/^[a-z0-9_]{3,20}$/.test(rawUsername)) {
+    return { error: 'Username must be 3-20 characters: letters, numbers or underscores' }
+  }
+  const username = rawUsername || null
+
+  const { error } = await supabase
+    .from('profiles')
+    .update({ full_name, bio, instagram, username })
+    .eq('id', user.id)
+
+  // 23505 is the unique index on lower(username).
+  if (error) {
+    if (error.code === '23505') return { error: 'That username is taken' }
+    return { error: error.message }
+  }
+
   revalidatePath('/profile')
   revalidatePath('/home')
+  return { success: true }
 }
 
 export async function backfillNeighborhoods(): Promise<{ updated: number; errors: number }> {

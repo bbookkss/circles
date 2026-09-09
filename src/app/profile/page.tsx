@@ -13,7 +13,7 @@ export default async function ProfilePage() {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('full_name, bio, instagram')
+    .select('full_name, bio, instagram, username')
     .eq('id', user.id)
     .maybeSingle()
 
@@ -60,7 +60,7 @@ export default async function ProfilePage() {
                   @{profile.instagram}
                 </a>
               )}
-              <EditProfileForm fullName={profile?.full_name ?? ''} bio={profile?.bio ?? null} instagram={profile?.instagram ?? null} />
+              <EditProfileForm fullName={profile?.full_name ?? ''} bio={profile?.bio ?? null} instagram={profile?.instagram ?? null} username={profile?.username ?? null} />
             </div>
           </div>
 
