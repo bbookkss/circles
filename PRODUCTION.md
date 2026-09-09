@@ -55,6 +55,16 @@ works fine from this machine.
       **TRUNCATE is not subject to RLS at all**, and the rest become live the
       moment anyone adds a permissive anon policy.
 
+- [ ] **Buy a custom domain and point Vercel at it.** Vercel → project →
+      Settings → Domains. Do this *before* the two items at the top of this
+      section, not after: both hardcode `circles-rho-sand.vercel.app`, so
+      doing them first means doing them twice.
+      - Mapbox URL restriction has to list the new domain.
+      - Supabase Site URL and Redirect URLs both have to be updated, or
+        password reset and signup confirmation links bounce.
+      - The flyer QR codes point at whatever domain is live when they are
+        printed, so the domain wants to be settled before any flyer goes up.
+
 ## Environment
 
 - [ ] **`SUPABASE_SERVICE_ROLE_KEY` in `.env.local`.** Username sign-in
