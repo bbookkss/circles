@@ -10,7 +10,8 @@ export default async function ExplorePage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const [{ data: circles }, { data: people }] = await Promise.all([
+  // Wave 1 — nothing here needs anything from the others.
+  const [{ data: circles }, { data: people }, { data: myMemberships }] = await Promise.all([
     supabase
       .from('circles')
       .select('id, name, description, category, emoji, location, neighborhood, city, latitude, longitude, kind')
@@ -20,31 +21,43 @@ export default async function ExplorePage() {
       .from('profiles')
       .select('id, full_name, instagram')
       .neq('id', user.id),
+    // The circles this user is already in are the best guess at where they are.
+    supabase.from('circle_members').select('circle_id').eq('user_id', user.id),
   ])
 
   const peopleList = (people ?? []).filter((p) => p.full_name)
-
-  // The circles this user is already in are the best guess at where they are.
-  const { data: myMemberships } = await supabase
-    .from('circle_members')
-    .select('circle_id')
-    .eq('user_id', user.id)
-
   const myCircleIds = (myMemberships ?? []).map((m) => m.circle_id)
-  const { data: myCircles } = myCircleIds.length > 0
-    ? await supabase
-        .from('circles')
-        .select('latitude, longitude')
-        .in('id', myCircleIds)
-        .not('latitude', 'is', null)
-        .not('longitude', 'is', null)
-    : { data: [] as { latitude: number | null; longitude: number | null }[] }
+  const circleIds = (circles ?? []).map((c) => c.id)
+
+  // Wave 2 — member counts and schedules for the pins, plus the coordinates of
+  // this user's own circles for the initial view.
+  //
+  // Counts come from one grouped RPC. This used to be a query per circle: fine
+  // at seven, ruinous at two hundred, and an explore page exists to have more
+  // than seven. The function is invoker-rights, so the numbers stay
+  // RLS-filtered exactly as the per-circle counts were.
+  const [countsResult, schedulesResult, myCirclesResult] = await Promise.all([
+    circleIds.length > 0
+      ? supabase.rpc('circle_member_counts', { cids: circleIds })
+      : Promise.resolve({ data: [] as { circle_id: string; member_count: number }[] }),
+    circleIds.length > 0
+      ? supabase.from('circle_schedules').select('circle_id, days_of_week').in('circle_id', circleIds)
+      : Promise.resolve({ data: [] as { circle_id: string; days_of_week: number[] }[] }),
+    myCircleIds.length > 0
+      ? supabase
+          .from('circles')
+          .select('latitude, longitude')
+          .in('id', myCircleIds)
+          .not('latitude', 'is', null)
+          .not('longitude', 'is', null)
+      : Promise.resolve({ data: [] as { latitude: number | null; longitude: number | null }[] }),
+  ])
 
   // Decision and header parsing both live in lib/mapView so they can be
   // tested without a request; this only supplies the inputs.
   const h = await headers()
   const { view: initialView, place } = resolveMapView(
-    myCircles ?? [],
+    myCirclesResult.data ?? [],
     geoFromHeaders((name) => h.get(name))
   )
 
@@ -55,26 +68,12 @@ export default async function ExplorePage() {
     </>
   )
 
-  // Fetch member counts and schedules for all circles in parallel
-  const [memberCounts, schedules] = await Promise.all([
-    Promise.all(
-      circles.map((c) =>
-        supabase
-          .from('circle_members')
-          .select('*', { count: 'exact', head: true })
-          .eq('circle_id', c.id)
-          .then(({ count }) => ({ id: c.id, count: count ?? 0 }))
-      )
-    ),
-    supabase
-      .from('circle_schedules')
-      .select('circle_id, days_of_week')
-      .in('circle_id', circles.map((c) => c.id)),
-  ])
-
-  const countMap = Object.fromEntries(memberCounts.map(({ id, count }) => [id, count]))
+  const countMap = Object.fromEntries(
+    ((countsResult.data ?? []) as { circle_id: string; member_count: number }[])
+      .map((r) => [r.circle_id, Number(r.member_count)])
+  )
   const scheduleMap: Record<string, number[]> = {}
-  for (const s of schedules.data ?? []) {
+  for (const s of schedulesResult.data ?? []) {
     scheduleMap[s.circle_id] = s.days_of_week
   }
 
