@@ -13,51 +13,62 @@ export default async function HomePage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('full_name')
-    .eq('id', user.id)
-    .maybeSingle()
+  // ---------------------------------------------------------------------
+  // Fetching is arranged in waves rather than one query after another.
+  //
+  // Every query here takes ~34ms against Supabase, so ten in series is ~340ms
+  // of the page doing nothing but waiting. Each wave below is one round trip's
+  // worth of latency, and a query only sits in a later wave when it genuinely
+  // needs something the earlier one produced.
+  // ---------------------------------------------------------------------
 
-  const { data: memberships } = await supabase
-    .from('circle_members')
-    .select('circle_id, role')
-    .eq('user_id', user.id)
+  // Wave 1 — both keyed off the user id, neither needs the other.
+  const [{ data: profile }, { data: memberships }] = await Promise.all([
+    supabase.from('profiles').select('full_name').eq('id', user.id).maybeSingle(),
+    supabase.from('circle_members').select('circle_id, role').eq('user_id', user.id),
+  ])
 
   const circleIds = memberships?.map((m) => m.circle_id) ?? []
+  const hasCircles = circleIds.length > 0
+  const today = todayISO()
 
-  const [circlesResult, schedulesResult] = await Promise.all([
-    circleIds.length > 0
+  // Wave 2 — everything that needs only the circle ids. The recurrence maths
+  // stays in the database, so biweekly and monthly are honoured; this page
+  // used to just find the nearest matching weekday and ignore frequency.
+  const [circlesResult, schedulesResult, occurrencesResult, postsResult] = await Promise.all([
+    hasCircles
       ? supabase
           .from('circles')
           .select('id, name, emoji, category, location, neighborhood, visibility, kind, timezone')
           .in('id', circleIds)
       : Promise.resolve({ data: [] as any[] }),
-    circleIds.length > 0
+    hasCircles
       ? supabase
           .from('circle_schedules')
           .select('circle_id, days_of_week, start_time, end_time, frequency')
           .in('circle_id', circleIds)
       : Promise.resolve({ data: [] as any[] }),
+    hasCircles
+      ? supabase.rpc('circles_next_occurrence', { cids: circleIds })
+      : Promise.resolve({ data: [] as { circle_id: string; occurs_on: string }[] }),
+    hasCircles
+      ? supabase
+          .from('posts')
+          .select('id, content, created_at, user_id, circle_id')
+          .in('circle_id', circleIds)
+          .order('created_at', { ascending: false })
+          .limit(20)
+      : Promise.resolve({ data: [] as any[] }),
   ])
 
   const circles = circlesResult.data ?? []
   const schedules = schedulesResult.data ?? []
+  const nextOccurrences = occurrencesResult.data ?? []
+  const feedPosts = postsResult.data ?? []
+  const postIds = feedPosts.map((p: { id: string }) => p.id)
 
   const scheduleMap = Object.fromEntries(schedules.map((s) => [s.circle_id, s]))
   const circleMap = Object.fromEntries(circles.map((c) => [c.id, c]))
-
-  // ---------------------------------------------------------------------
-  // The week. This is the page now, so it is fetched before the posts.
-  //
-  // The recurrence maths is in the database, so biweekly and monthly are
-  // honoured — this page used to just find the nearest matching weekday and
-  // ignore frequency entirely.
-  // ---------------------------------------------------------------------
-  const today = todayISO()
-  const { data: nextOccurrences } = circleIds.length > 0
-    ? await supabase.rpc('circles_next_occurrence', { cids: circleIds })
-    : { data: [] as { circle_id: string; occurs_on: string }[] }
 
   type Upcoming = {
     circle: any
@@ -66,7 +77,7 @@ export default async function HomePage() {
     daysAway: number
   }
 
-  const upcoming: Upcoming[] = ((nextOccurrences ?? []) as { circle_id: string; occurs_on: string }[])
+  const upcoming: Upcoming[] = (nextOccurrences as { circle_id: string; occurs_on: string }[])
     .map((n) => ({
       circle: circleMap[n.circle_id],
       schedule: scheduleMap[n.circle_id],
@@ -84,44 +95,18 @@ export default async function HomePage() {
   const ahead = upcoming.filter((u) => !isOver(u))
   const over = upcoming.filter(isOver)
 
-  // Who is coming to each of those. Fetched by date as well as circle, so a
-  // check-in against some other occurrence never lands on this week's card.
   const upcomingDates = [...new Set(upcoming.map((u) => u.occursOn))]
-  const { data: checkInRows } = upcoming.length > 0
-    ? await supabase
-        .from('circle_check_ins')
-        .select('circle_id, user_id, occurs_on, status')
-        .in('circle_id', upcoming.map((u) => u.circle.id))
-        .in('occurs_on', upcomingDates)
-    : { data: [] as { circle_id: string; user_id: string; occurs_on: string; status: string }[] }
 
-  const meetKey = (circleId: string, occursOn: string) => `${circleId}|${occursOn}`
-  const checkInsByMeet: Record<string, { user_id: string; status: string }[]> = {}
-  for (const r of checkInRows ?? []) {
-    ;(checkInsByMeet[meetKey(r.circle_id, r.occurs_on)] ??= []).push({
-      user_id: r.user_id,
-      status: r.status,
-    })
-  }
-
-  // ---------------------------------------------------------------------
-  // Chatter. Recent posts from the circles this user belongs to.
-  // ---------------------------------------------------------------------
-  const { data: feedPostsRaw } = circleIds.length > 0
-    ? await supabase
-        .from('posts')
-        .select('id, content, created_at, user_id, circle_id')
-        .in('circle_id', circleIds)
-        .order('created_at', { ascending: false })
-        .limit(20)
-    : { data: [] as any[] }
-
-  const feedPosts = feedPostsRaw ?? []
-  const postIds = feedPosts.map((p) => p.id)
-
-  // Likes and comments, so the feed carries the same affordances as a circle
-  // page rather than being a read-only digest.
-  const [{ data: likeRows }, { data: commentRows }] = await Promise.all([
+  // Wave 3 — check-ins need the occurrences, likes and comments need the post
+  // ids. Different inputs, same wave, because none of them needs another.
+  const [{ data: checkInRows }, { data: likeRows }, { data: commentRows }] = await Promise.all([
+    upcoming.length > 0
+      ? supabase
+          .from('circle_check_ins')
+          .select('circle_id, user_id, occurs_on, status')
+          .in('circle_id', upcoming.map((u) => u.circle.id))
+          .in('occurs_on', upcomingDates)
+      : Promise.resolve({ data: [] as { circle_id: string; user_id: string; occurs_on: string; status: string }[] }),
     postIds.length > 0
       ? supabase.from('post_likes').select('post_id, user_id').in('post_id', postIds)
       : Promise.resolve({ data: [] as { post_id: string; user_id: string }[] }),
@@ -134,24 +119,37 @@ export default async function HomePage() {
       : Promise.resolve({ data: [] as any[] }),
   ])
 
+  const meetKey = (circleId: string, occursOn: string) => `${circleId}|${occursOn}`
+  const checkInsByMeet: Record<string, { user_id: string; status: string }[]> = {}
+  for (const r of checkInRows ?? []) {
+    ;(checkInsByMeet[meetKey(r.circle_id, r.occurs_on)] ??= []).push({
+      user_id: r.user_id,
+      status: r.status,
+    })
+  }
+
   const commentIds = (commentRows ?? []).map((c) => c.id)
-  const { data: commentLikeRows } = commentIds.length > 0
-    ? await supabase.from('comment_likes').select('comment_id, user_id').in('comment_id', commentIds)
-    : { data: [] as { comment_id: string; user_id: string }[] }
 
   // One profile lookup covering post authors, commenters and everyone who has
   // checked in. Null author = the account was deleted; the post was kept.
   const authorIds = [
     ...new Set([
-      ...feedPosts.map((p) => p.user_id),
+      ...feedPosts.map((p: { user_id: string | null }) => p.user_id),
       ...(commentRows ?? []).map((c) => c.user_id),
       ...(checkInRows ?? []).map((r) => r.user_id),
     ]),
   ].filter((v): v is string => !!v)
 
-  const { data: authors } = authorIds.length > 0
-    ? await supabase.from('profiles').select('id, full_name').in('id', authorIds)
-    : { data: [] as { id: string; full_name: string }[] }
+  // Wave 4 — comment likes need the comment ids, profiles need the author ids
+  // gathered from all three of the above.
+  const [{ data: commentLikeRows }, { data: authors }] = await Promise.all([
+    commentIds.length > 0
+      ? supabase.from('comment_likes').select('comment_id, user_id').in('comment_id', commentIds)
+      : Promise.resolve({ data: [] as { comment_id: string; user_id: string }[] }),
+    authorIds.length > 0
+      ? supabase.from('profiles').select('id, full_name').in('id', authorIds)
+      : Promise.resolve({ data: [] as { id: string; full_name: string }[] }),
+  ])
 
   const authorMap = Object.fromEntries((authors ?? []).map((a) => [a.id, a.full_name]))
   const authorName = (uid: string | null) => (uid ? authorMap[uid] ?? 'Someone' : 'Deleted user')
