@@ -49,12 +49,6 @@ works fine from this machine.
       on it, so it will silently fail the moment more than one person signs up
       at once.
 
-- [ ] **Run `supabase/revoke-anon-writes-2026-09-08.sql`.** Strips
-      INSERT/UPDATE/DELETE/TRUNCATE from `anon` on every public table, keeping
-      SELECT. RLS blocks all of these today (probed: zero rows), but
-      **TRUNCATE is not subject to RLS at all**, and the rest become live the
-      moment anyone adds a permissive anon policy.
-
 - [ ] **Buy a custom domain and point Vercel at it.** Vercel → project →
       Settings → Domains. Do this *before* the two items at the top of this
       section, not after: both hardcode `circles-rho-sand.vercel.app`, so
@@ -145,3 +139,8 @@ never been exercised through the UI by a real person.
 - [x] Account deletion, with content anonymised and circles handed over
 - [x] Commercial circles behind manual business verification
 - [x] Password reset and optional usernames
+- [x] `anon` write privileges revoked on every public table
+      (`revoke-anon-writes-2026-09-08.sql`, applied 2026-09-09). Probed live:
+      an anon INSERT now fails with `42501 permission denied` rather than
+      falling through to RLS, and anon SELECT still returns 200 on circles and
+      on the profile columns the logged-out circle page reads.
