@@ -56,6 +56,18 @@ works fine from this machine.
       create. The Default public token has no such control, which is why this
       needed a new token rather than an edit.
 
+- [ ] **DKIM — blocked until 2026-09-10 at the earliest, do not forget.**
+      Gmail on hicircles.com went live 2026-09-09 and Google refuses to
+      generate a DKIM key for 24-72 hours after that ("You must wait 24 to 72
+      hours after enabling Gmail with a registered domain"). Nothing is wrong;
+      it just cannot be done yet.
+      When it can: Admin console → Apps → Google Workspace → Gmail →
+      Authenticate email → Generate new record (2048-bit, prefix `google`),
+      then add the TXT at host `google._domainkey` and click Start
+      authentication. MX, SPF and DMARC are already live and verified.
+      Until DKIM lands, leave DMARC at `p=none` — tightening to quarantine or
+      reject without DKIM would start sending your own mail to spam.
+
 - [ ] **Real SMTP.** The default Supabase mailer is rate-limited to a couple
       of messages an hour. Password reset and signup confirmation both depend
       on it, so it will silently fail the moment more than one person signs up
