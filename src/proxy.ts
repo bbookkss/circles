@@ -23,9 +23,18 @@ export async function proxy(request: NextRequest) {
     }
   )
 
-  // This call also refreshes an expiring session, writing rotated auth cookies
-  // onto supabaseResponse.
-  const { data: { user } } = await supabase.auth.getUser()
+  // getClaims, not getUser. getUser posts to /auth/v1/user on every single
+  // request -- 130-180ms, on every page including static ones, which is why an
+  // empty /login cost as much as a data-heavy /home. getClaims verifies the
+  // token's signature locally against the project's ES256 public key, which is
+  // cached module-wide (GLOBAL_JWKS) and so survives across the per-request
+  // clients Next.js creates.
+  //
+  // The session refresh is preserved: getClaims calls getSession() first, and
+  // that is what rotates an expiring token and writes the new cookies onto
+  // supabaseResponse via setAll. Losing that would silently log people out.
+  const { data: claimsData } = await supabase.auth.getClaims()
+  const user = claimsData?.claims ? { id: claimsData.claims.sub } : null
 
   // Any response we return INSTEAD of supabaseResponse has to carry those
   // cookies over. Miss this and a refresh silently logs the user out: the
