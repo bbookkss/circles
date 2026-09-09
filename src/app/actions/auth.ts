@@ -57,3 +57,25 @@ export async function logout() {
   revalidatePath('/', 'layout')
   redirect('/login')
 }
+
+export async function deleteAccount(formData: FormData) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not signed in' }
+
+  // Typed confirmation, checked server-side so it cannot be skipped by
+  // posting to the action directly.
+  if ((formData.get('confirm') as string)?.trim().toLowerCase() !== 'delete') {
+    return { error: 'Type delete to confirm' }
+  }
+
+  // Hands off admin of any circle we are the last admin of, deletes circles
+  // we are the last member of, then removes the auth user. Everything else
+  // goes by cascade; posts and comments are kept and unattributed.
+  const { error } = await supabase.rpc('delete_own_account')
+  if (error) return { error: error.message }
+
+  await supabase.auth.signOut()
+  revalidatePath('/', 'layout')
+  redirect('/')
+}

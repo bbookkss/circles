@@ -76,7 +76,8 @@ export default async function HomePage() {
     : { data: [] as any[] }
 
   const feedPosts = feedPostsRaw ?? []
-  const feedAuthorIds = [...new Set(feedPosts.map((p) => p.user_id))]
+  // Null once the author deletes their account — the post is kept, unattributed.
+  const feedAuthorIds = [...new Set(feedPosts.map((p) => p.user_id))].filter((v): v is string => !!v)
   const { data: feedAuthors } = feedAuthorIds.length > 0
     ? await supabase.from('profiles').select('id, full_name').in('id', feedAuthorIds)
     : { data: [] as { id: string; full_name: string }[] }
@@ -86,7 +87,7 @@ export default async function HomePage() {
     const c = circleMap[p.circle_id]
     return {
       ...p,
-      author_name: authorMap[p.user_id] ?? 'Someone',
+      author_name: p.user_id ? authorMap[p.user_id] ?? 'Someone' : 'Deleted user',
       circle_name: c?.name ?? 'a circle',
       circle_emoji: c?.emoji ?? '●',
     }

@@ -51,7 +51,8 @@ export async function toggleLike(postId: string, circleId: string, like: boolean
 
     // Notify the post author
     const { data: post } = await supabase.from('posts').select('user_id').eq('id', postId).maybeSingle()
-    if (post && post.user_id !== user.id) {
+    // user_id is null once the author deletes their account — nobody to notify.
+    if (post && post.user_id && post.user_id !== user.id) {
       await supabase.from('notifications').insert({
         user_id: post.user_id, actor_id: user.id, type: 'post_like', circle_id: circleId, post_id: postId,
       })
@@ -75,7 +76,7 @@ export async function toggleCommentLike(commentId: string, circleId: string, lik
 
     // Notify the comment author
     const { data: comment } = await supabase.from('post_comments').select('user_id, post_id').eq('id', commentId).maybeSingle()
-    if (comment && comment.user_id !== user.id) {
+    if (comment && comment.user_id && comment.user_id !== user.id) {
       await supabase.from('notifications').insert({
         user_id: comment.user_id, actor_id: user.id, type: 'comment_like', circle_id: circleId, post_id: comment.post_id, comment_id: commentId,
       })
@@ -110,7 +111,7 @@ export async function addComment(formData: FormData) {
 
   // Notify the post author
   const { data: post } = await supabase.from('posts').select('user_id').eq('id', post_id).maybeSingle()
-  if (post && post.user_id !== user.id) {
+  if (post && post.user_id && post.user_id !== user.id) {
     await supabase.from('notifications').insert({
       user_id: post.user_id, actor_id: user.id, type: 'post_comment', circle_id, post_id, comment_id: inserted.id,
     })

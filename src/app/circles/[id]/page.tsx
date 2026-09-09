@@ -234,7 +234,10 @@ export default async function CirclePage({ params }: { params: Promise<{ id: str
   const memberUserIds = (memberRows ?? []).map((m) => m.user_id)
   const postAuthorIds = (rawPosts ?? []).map((p) => p.user_id)
   const commentAuthorIds = (commentRows ?? []).map((c) => c.user_id)
+  // A deleted account leaves user_id null on its posts and comments, and
+  // created_by null on its circles. Those must not reach the .in() filter.
   const allProfileIds = [...new Set([...memberUserIds, ...postAuthorIds, ...commentAuthorIds, circle.created_by])]
+    .filter((v): v is string => !!v)
 
   const [{ data: profiles }, { data: myFollows }, { data: myProfile }] = await Promise.all([
     allProfileIds.length > 0
@@ -247,6 +250,8 @@ export default async function CirclePage({ params }: { params: Promise<{ id: str
   ])
 
   const profileMap = Object.fromEntries((profiles ?? []).map((p) => [p.id, p.full_name]))
+  // Null author = the account was deleted; the post itself was kept.
+  const authorName = (uid: string | null) => (uid ? profileMap[uid] ?? 'Someone' : 'Deleted user')
   const followingSet = new Set((myFollows ?? []).map((f) => f.following_id))
 
   const members = (memberRows ?? []).map((m) => ({
@@ -277,7 +282,7 @@ export default async function CirclePage({ params }: { params: Promise<{ id: str
     ;(commentsByPost[c.post_id] ??= []).push({
       id: c.id,
       user_id: c.user_id,
-      author_name: profileMap[c.user_id] ?? 'Someone',
+      author_name: authorName(c.user_id),
       content: c.content,
       created_at: c.created_at,
       likeCount: commentLikeCount[c.id] ?? 0,
@@ -287,7 +292,7 @@ export default async function CirclePage({ params }: { params: Promise<{ id: str
 
   const posts = (rawPosts ?? []).map((p) => ({
     ...p,
-    author_name: profileMap[p.user_id] ?? 'Someone',
+    author_name: authorName(p.user_id),
     likeCount: likeCountMap[p.id] ?? 0,
     likedByMe: likedByMe.has(p.id),
     comments: commentsByPost[p.id] ?? [],

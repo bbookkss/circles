@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import TopNav from '@/components/TopNav'
 import EditProfileForm from './EditProfileForm'
 import BackfillButton from './BackfillButton'
+import DeleteAccountForm from './DeleteAccountForm'
 
 export default async function ProfilePage() {
   const supabase = await createClient()
@@ -110,6 +111,12 @@ export default async function ProfilePage() {
           <div className="pt-4 border-t space-y-2">
             <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Tools</p>
             <BackfillButton />
+          </div>
+
+          {/* Danger zone */}
+          <div className="pt-4 border-t space-y-2">
+            <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Account</p>
+            <DeleteAccountForm />
           </div>
 
         </div>

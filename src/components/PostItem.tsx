@@ -6,7 +6,8 @@ import { toggleLike, toggleCommentLike, addComment, deleteComment, deletePost } 
 
 type Comment = {
   id: string
-  user_id: string
+  // Null when the author deleted their account; the comment itself is kept.
+  user_id: string | null
   author_name: string
   content: string
   created_at: string
@@ -20,7 +21,7 @@ type Props = {
     circleId: string
     content: string
     created_at: string
-    user_id: string
+    user_id: string | null
     author_name: string
   }
   currentUserId: string
@@ -133,12 +134,16 @@ export default function PostItem({
         <Avatar name={post.author_name} />
         <div className="flex-1 min-w-0">
           <div className="flex items-baseline gap-2 mb-1">
-            <Link
-              href={isMyPost ? '/profile' : `/profile/${post.user_id}`}
-              className="text-sm font-medium hover:underline underline-offset-2"
-            >
-              {post.author_name}
-            </Link>
+            {post.user_id ? (
+              <Link
+                href={isMyPost ? '/profile' : `/profile/${post.user_id}`}
+                className="text-sm font-medium hover:underline underline-offset-2"
+              >
+                {post.author_name}
+              </Link>
+            ) : (
+              <span className="text-sm font-medium text-muted-foreground">{post.author_name}</span>
+            )}
             <span className="text-xs text-muted-foreground">{timeAgo(post.created_at)}</span>
           </div>
           <p className="text-sm whitespace-pre-wrap break-words">{post.content}</p>
@@ -179,12 +184,16 @@ export default function PostItem({
                     <Avatar name={c.author_name} size="xs" />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-baseline gap-2">
-                        <Link
-                          href={mine ? '/profile' : `/profile/${c.user_id}`}
-                          className="text-xs font-medium hover:underline underline-offset-2"
-                        >
-                          {c.author_name}
-                        </Link>
+                        {c.user_id ? (
+                          <Link
+                            href={mine ? '/profile' : `/profile/${c.user_id}`}
+                            className="text-xs font-medium hover:underline underline-offset-2"
+                          >
+                            {c.author_name}
+                          </Link>
+                        ) : (
+                          <span className="text-xs font-medium text-muted-foreground">{c.author_name}</span>
+                        )}
                         <span className="text-[10px] text-muted-foreground">{timeAgo(c.created_at)}</span>
                         {mine && (
                           <button
