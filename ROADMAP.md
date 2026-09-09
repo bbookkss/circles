@@ -71,8 +71,10 @@ feature; the parsing is plumbing.
 
 ## Check-ins (yes / no / maybe)
 
-**Status:** not started. Sized 2026-09-08. **Blocked on the schedule anchor
-below — read that first.**
+**Status:** BUILT 2026-09-08, migrations not yet applied — see the resume
+banner in PRODUCTION.md. Schedule anchor and per-circle timezones landed as
+prerequisites. What follows is the original spec, kept because the reasoning
+still explains the shape of the code.
 
 Within 24 hours of a circle's next meet, members say whether they are coming.
 Circles live or die on whether enough people show up, so the point is turning
@@ -118,7 +120,7 @@ the occurrence maths and the UI surfaces are the work.
 
 ## Friends (mutual follows)
 
-**Status:** not started. Sized 2026-09-08.
+**Status:** not started. Sized 2026-09-08. **This is the next thing to build.**
 
 `follows` is directional. A friend is a mutual follow — both rows exist. Needed
 because the activity feed should only show people you are actually reciprocal
@@ -133,8 +135,11 @@ Cheap on its own; it exists to be used by the feed below.
 
 ## Friend activity in the feed
 
-**Status:** not started. Sized 2026-09-08. Depends on friends, and is much
-better with check-ins.
+**Status:** not started. Sized 2026-09-08. Depends on friends. Check-ins now
+exist, so this can show both joins and "going" from day one.
+
+Ben's call on the visibility trap below: **filter by circle visibility**, err
+towards showing less.
 
 See what people you are friends with are doing: joining a circle, checking in
 to a meet.

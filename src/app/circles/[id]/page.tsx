@@ -11,6 +11,8 @@ import FollowButton from '@/components/FollowButton'
 import Circled from '@/components/Circled'
 import BackButton from '@/components/BackButton'
 import CircleLocationMap from '@/components/map/CircleLocationMap'
+import CheckInControl from '@/components/CheckInControl'
+import { relativeDayLabel, daysBetweenISO } from '@/lib/schedule'
 
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 const FREQ_LABELS: Record<string, string> = {
@@ -299,6 +301,27 @@ export default async function CirclePage({ params }: { params: Promise<{ id: str
     comments: commentsByPost[p.id] ?? [],
   }))
 
+  // Next meet and who has said they are coming. The RPC honours frequency and
+  // resolves "today" in the circle's own timezone.
+  const { data: nextOccurs } = await supabase.rpc('circle_next_occurrence', { cid: id })
+  const nextMeet: string | null = nextOccurs ?? null
+  const circleToday: string | null = nextMeet
+    ? ((await supabase.rpc('circle_today', { cid: id })).data ?? null)
+    : null
+
+  const { data: checkInRows } = nextMeet
+    ? await supabase
+        .from('circle_check_ins')
+        .select('user_id, status')
+        .eq('circle_id', id)
+        .eq('occurs_on', nextMeet)
+    : { data: [] as { user_id: string; status: string }[] }
+
+  const checkIns = checkInRows ?? []
+  const myCheckIn = checkIns.find((c) => c.user_id === user.id)?.status ?? null
+  const going = checkIns.filter((c) => c.status === 'yes')
+  const maybes = checkIns.filter((c) => c.status === 'maybe')
+
   const creatorName = profileMap[circle.created_by] ?? null
   const myName = myProfile?.full_name ?? 'You'
 
@@ -377,6 +400,53 @@ export default async function CirclePage({ params }: { params: Promise<{ id: str
           </div>
 
           {/* Schedule */}
+          {/* Next meet + check-in */}
+          {nextMeet && (
+            <div className="border rounded-xl p-4 space-y-3 bg-card fade-rise">
+              <div className="flex items-baseline justify-between gap-3 flex-wrap">
+                <p className="text-sm font-semibold">
+                  Next meet · {relativeDayLabel(nextMeet, circleToday ?? nextMeet)}
+                  {schedules?.[0] && (
+                    <span className="font-normal text-muted-foreground">
+                      {' · '}{formatTime(schedules[0].start_time)}
+                    </span>
+                  )}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {going.length} going{maybes.length > 0 ? ` · ${maybes.length} maybe` : ''}
+                </p>
+              </div>
+
+              {isMember ? (
+                (() => {
+                  const daysAway = circleToday ? daysBetweenISO(circleToday, nextMeet) : 99
+                  const open = daysAway <= 1
+                  return (
+                    <CheckInControl
+                      circleId={id}
+                      occursOn={nextMeet}
+                      initialStatus={myCheckIn as 'yes' | 'no' | 'maybe' | null}
+                      disabled={!open}
+                      disabledReason={open ? undefined : 'Check-in opens 24 hours before the meet.'}
+                    />
+                  )
+                })()
+              ) : (
+                <p className="text-xs text-muted-foreground">Join this circle to check in.</p>
+              )}
+
+              {going.length > 0 && (
+                <div className="flex flex-wrap gap-x-3 gap-y-1 pt-1 border-t">
+                  {going.map((c) => (
+                    <span key={c.user_id} className="text-xs text-muted-foreground pt-2">
+                      {profileMap[c.user_id] ?? 'Someone'}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           {schedules && schedules.length > 0 && (
             <div className="border rounded-xl p-4 space-y-2 bg-card fade-rise stagger-1">
               <p className="text-sm font-semibold">Schedule</p>

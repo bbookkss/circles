@@ -6,9 +6,13 @@
 -- believes it is tomorrow from ~5pm local onward. Harmless-looking on a
 -- schedule list, fatal for "check in within 24 hours of the meet".
 --
--- Circles are physical places, so the correct answer is a timezone per circle.
--- Every circle today is Pacific, so the column defaults to that and nothing
--- has to be decided per circle until a circle exists outside it.
+-- Circles are physical places, so the timezone comes from the pin. The app
+-- resolves it from latitude/longitude with tz-lookup whenever a circle is
+-- created or its location moves; the backfill below does the same for rows
+-- that already existed.
+--
+-- The default only applies to a circle with no coordinates at all, which today
+-- means the two untitled test rows.
 -- ---------------------------------------------------------------------------
 
 alter table public.circles
@@ -92,3 +96,25 @@ revoke all on function public.circles_next_occurrence(uuid[], date) from public;
 grant execute on function public.circle_today(uuid) to anon, authenticated;
 grant execute on function public.circle_next_occurrence(uuid, date) to anon, authenticated;
 grant execute on function public.circles_next_occurrence(uuid[], date) to anon, authenticated;
+
+
+-- ---------------------------------------------------------------------------
+-- Backfill existing circles from their coordinates.
+--
+-- Resolved with tz-lookup against each circle's stored latitude/longitude.
+-- Note TEST Florida: a blanket Pacific default would already have been wrong
+-- for it, which is why this is derived from the pin rather than assumed.
+-- Circles with no coordinates keep the default.
+-- ---------------------------------------------------------------------------
+update public.circles set timezone = 'America/New_York'
+where id = '0787fe73-6d35-4b68-9b01-c867d4b8b51e';   -- TEST Florida, Longboat Key
+
+update public.circles set timezone = 'America/Los_Angeles'
+where id in (
+  '9ebceb00-fc30-4738-8fc5-8e32ddb4e9c4',  -- basketball, SF
+  'bcd4d428-6e2b-42d2-910e-cae381a48920',  -- Beach volleyball (baker beach), SF
+  'e75d0453-a2b8-4a10-8c63-f1e7dfa7e944',  -- SAMO beach volleyball, Santa Monica
+  'b10d2c5e-7348-4f84-8a97-962c1278d92c',  -- Surf Club, SF
+  '56f8b442-b1ce-4812-a25c-3f18d3364f1f',  -- TEST Street autofill, SF
+  '5350d7ef-9f6e-457c-bb6c-0b29c0bcf117'   -- WIne club, SF
+);

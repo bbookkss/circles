@@ -1,7 +1,25 @@
 'use server'
 
 import { redirect } from 'next/navigation'
+import tzLookup from 'tz-lookup'
 import { createClient } from '@/lib/supabase/server'
+
+/**
+ * A circle's timezone comes from its pin, not from the server's locale. It
+ * decides what "today" means for schedules and for the check-in window, so a
+ * Florida circle must not be evaluated in Pacific time.
+ *
+ * Falls back rather than throwing: a circle with no pin is still a valid
+ * circle, and tz-lookup can be given a coordinate it cannot place.
+ */
+function timezoneFor(latitude: number, longitude: number): string {
+  if (isNaN(latitude) || isNaN(longitude)) return 'America/Los_Angeles'
+  try {
+    return tzLookup(latitude, longitude)
+  } catch {
+    return 'America/Los_Angeles'
+  }
+}
 
 export async function createCircle(formData: FormData) {
   const supabase = await createClient()
@@ -39,6 +57,7 @@ export async function createCircle(formData: FormData) {
       city: city?.trim() || null,
       latitude: isNaN(latitude) ? null : latitude,
       longitude: isNaN(longitude) ? null : longitude,
+      timezone: timezoneFor(latitude, longitude),
       created_by: user.id,
     })
     .select('id')
@@ -115,6 +134,8 @@ export async function updateCircle(formData: FormData) {
     city: city?.trim() || null,
     latitude: isNaN(latitude) ? null : latitude,
     longitude: isNaN(longitude) ? null : longitude,
+    // Moving the pin can move the circle across a timezone boundary.
+    timezone: timezoneFor(latitude, longitude),
   }).eq('id', circle_id)
 
   // Replace schedule if days provided

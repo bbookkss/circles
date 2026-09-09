@@ -1,5 +1,24 @@
 # Production readiness
 
+> ## ▶ RESUME HERE — two migrations are written but NOT applied
+>
+> The working tree and production database are out of step. Run this first:
+>
+> ```bash
+> cd ~/circles
+> URL=$(grep '^SUPABASE_DB_URL=' .env.local | cut -d= -f2- | tr -d '"')
+> PW="${${URL#*://}%%@*}"; PW="${PW#*:}"
+> PSQL="/opt/homebrew/opt/libpq/bin/psql postgresql://postgres:${PW}@db.vkmzsseilmahguqlgiok.supabase.co:5432/postgres"
+> $PSQL -f supabase/schedule-timezone-2026-09-08.sql
+> $PSQL -f supabase/check-ins-2026-09-08.sql
+> ```
+>
+> Until then the circle page degrades rather than crashes: `circle_today` and
+> `circle_check_ins` do not exist, so every next-meet card shows "0 going" with
+> the check-in buttons disabled, and the day label is wrong. Nothing errors
+> visibly, which is exactly why it is easy to miss.
+
+
 Running list of what still needs doing before real users arrive. Add to it as
 things come up; tick things off as they land. Newest features append to the
 bottom of each section.
@@ -70,6 +89,13 @@ never been exercised through the UI by a real person.
 - [ ] **Account deletion, actually submitted.** The panel and its disabled
       confirm button render correctly; nothing has ever been deleted through
       it. Best tested with a throwaway account, not yours.
+- [ ] **Check-ins.** Table, trigger and UI are written and the SQL is verified
+      in a rolled-back transaction, but nobody has ever pressed Going. Needs
+      the migrations above applied first. Test inside the 24-hour window —
+      outside it the buttons are correctly disabled.
+- [ ] **Timezone from coordinates.** tz-lookup resolves a circle's zone from
+      its pin at write time. Verified for the existing nine (TEST Florida →
+      America/New_York), never exercised by creating a new circle.
 - [ ] **Business approve/reject.** `/admin` renders and gates correctly, but
       the queue has never had a row in it. Submit a request from
       `Test user 2`, approve it, and create a commercial circle.
