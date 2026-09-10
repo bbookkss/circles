@@ -5,7 +5,7 @@ import type { ReactNode } from 'react'
 import Map, { Marker, Popup, NavigationControl, GeolocateControl } from 'react-map-gl/mapbox'
 import type { Map as MapboxMap, LngLatBounds } from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
-import { applyCoffeeTheme } from '@/lib/mapTheme'
+import { keepCoffeeTheme } from '@/lib/mapTheme'
 import { SF_VIEW, type MapView } from '@/lib/mapView'
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN!
@@ -81,7 +81,7 @@ export default function CirclesMap({
       mapStyle="mapbox://styles/mapbox/light-v11"
       mapboxAccessToken={MAPBOX_TOKEN}
       onLoad={(e) => {
-        applyCoffeeTheme(e.target)
+        keepCoffeeTheme(e.target)
         setMap(e.target)
         setBounds(e.target.getBounds())
       }}

@@ -13,6 +13,8 @@ type StyledMap = {
   getStyle: () => { layers?: { id: string; type: string }[] } | undefined
   // Loose signature so Mapbox's strongly-typed setPaintProperty is assignable.
   setPaintProperty: (...args: any[]) => unknown
+  isStyleLoaded?: () => boolean
+  on?: (event: string, cb: () => void) => unknown
 }
 
 export function applyCoffeeTheme(map: StyledMap) {
@@ -43,4 +45,24 @@ export function applyCoffeeTheme(map: StyledMap) {
       // layer doesn't support this paint property — skip it
     }
   }
+}
+
+/**
+ * Apply the theme and keep it applied.
+ *
+ * `applyCoffeeTheme` on the map's load event is not enough on its own. Paint
+ * properties live on the style, so anything that reloads or extends the style
+ * afterwards — a late-arriving sprite or glyph set, a source finishing, the
+ * style being swapped — puts the stock light-v11 colours back, and the map
+ * silently returns to grey with no error anywhere. That is the failure this
+ * function exists to prevent.
+ *
+ * `styledata` fires on each of those, so re-applying there holds the theme.
+ * The work is a few dozen setPaintProperty calls against values that are
+ * usually already set, which Mapbox no-ops, so this is cheap enough to run on
+ * every such event.
+ */
+export function keepCoffeeTheme(map: StyledMap) {
+  applyCoffeeTheme(map)
+  map.on?.('styledata', () => applyCoffeeTheme(map))
 }
