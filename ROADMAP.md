@@ -196,6 +196,59 @@ Keep this so the next rework does not repeat the last one.
 
 ---
 
+## Explore as the front door — QR lands on the map, not the pitch
+
+Ben's idea, 2026-09-09. The flyer's QR code points at `/explore` rather
+than `/`. A stranger scanning it in their own neighbourhood sees a map
+with real circles on it before being asked for anything. The pitch is the
+data. Signing up is what happens when they reach for something.
+
+**Why this is worth doing.** The landing page argues that people nearby
+meet regularly. The map *shows* it, in the place they are standing, which
+is the same "show don't tell" that drove the demo wheel. It also fits how
+a flyer is actually read: someone scans it on a lamppost and wants to know
+whether this is real and near them, not what the product philosophy is.
+
+**The gate.** Browsing is free. Reaching is not. Signing out of the map is
+the wrong moment to stop someone; the right moment is when they show
+intent:
+
+- panning and zooming the map — free
+- seeing pins and rough areas — free
+- clicking a pin for the name and category — free
+- opening a circle, filtering, searching, seeing schedules, member names,
+  or posts — sign up
+
+Send them to `/signup?next=<what they were doing>` and return them there
+afterwards, so the gate never costs them their place.
+
+**What a signed-out visitor may see.** This is the part to get right,
+because the same data that entices is the data that endangers.
+
+- Coarse areas only, never pins. `approxArea` already exists and is what
+  the circle page uses; signed-out explore must use it for every circle
+  without exception, since there are no memberships to exempt.
+- Counts rather than identities: "7 circles meet within a mile", "12 going
+  this week". Aggregates are the enticement and carry no personal data.
+- Cluster at low zoom so the shape of a neighbourhood's activity is
+  visible without any single group being locatable.
+- No names of people, ever, before sign-up. Circle names and categories
+  are fine; who attends is not.
+
+**Watch out for.** Making explore public changes its threat model
+completely: today every viewer is at least signed in, and after this
+anyone with the URL can enumerate what is in an area. Before shipping,
+check that the anon Postgres role can read only what this page needs —
+`supabase/revoke-anon-writes-2026-09-08.sql` removed anon's writes, but
+reads for this are a fresh decision and want their own RLS review. Rate
+limit it too: a public map endpoint is a scraping target, and the whole
+point of the blur is defeated by an attacker who can request every
+circle in a city and correlate.
+
+**Open question.** Whether a private circle appears at all to a signed-out
+visitor. Leaning no: its existence is arguably the thing its members
+would not want published.
+
 ## Ideas not yet specced
 
 Capture things here as they come up, even one line. Better than a chat log.
