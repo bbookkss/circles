@@ -59,7 +59,7 @@ const GROUPS: Group[] = [
 function CircleGroup({ g }: { g: Group }) {
   return (
     <div>
-      <div className="rounded-xl border border-background/15 bg-background/[0.06] p-3.5">
+      <div className="rounded-xl border border-background/15 bg-foreground/70 backdrop-blur-[2px] p-3.5">
         <div className="flex items-baseline justify-between gap-3">
           <p className="font-semibold text-sm flex items-center gap-2 min-w-0">
             <span aria-hidden>{g.emoji}</span>
@@ -83,7 +83,7 @@ function CircleGroup({ g }: { g: Group }) {
         // circle above it rather than sitting beside it.
         <div className="ml-5 mt-2 pl-3 border-l border-background/15 space-y-2">
           {g.posts.map((post, i) => (
-            <div key={i} className="rounded-lg border border-background/10 bg-background/[0.03] px-3 py-2.5 space-y-1.5">
+            <div key={i} className="rounded-lg border border-background/10 bg-foreground/60 backdrop-blur-[2px] px-3 py-2.5 space-y-1.5">
               {/* Name and message at the same size: the speaker is the subject
                   of the line, not a footnote to it. */}
               <p className="text-sm leading-snug">

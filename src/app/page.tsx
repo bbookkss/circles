@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation'
 import { createClient, getAuthUser } from '@/lib/supabase/server'
 import { Button } from '@/components/ui/button'
 import DemoWheel from '@/components/DemoWheel'
-import AsciiCircles from '@/components/AsciiCircles'
+import AsciiField from '@/components/AsciiField'
 
 const STEPS = [
   {
@@ -36,7 +36,7 @@ export default async function Landing() {
           Hero. Dark, so the demo column reads as a lit screen against it.
           --------------------------------------------------------------- */}
       <section className="relative overflow-hidden bg-foreground text-background">
-        <AsciiCircles />
+        <AsciiField />
 
         <header className="relative mx-auto max-w-6xl px-6 py-6 flex items-center justify-between">
           <p className="font-bold text-lg tracking-tight lowercase">circles</p>

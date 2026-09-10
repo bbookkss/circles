@@ -178,21 +178,6 @@
     mask-image: linear-gradient(to bottom, transparent, black 10%, black 88%, transparent);
   }
 
-  /* Ambient ASCII circles. Two nested animations so drift and pop do not
-     fight over the same transform: the wrapper travels, the glyphs breathe. */
-  .ascii-drift {
-    animation-name: ascii-drift;
-    animation-timing-function: ease-in-out;
-    animation-iteration-count: infinite;
-    animation-direction: alternate;
-  }
-  .ascii-pop {
-    animation-name: ascii-pop;
-    animation-timing-function: ease-in-out;
-    animation-iteration-count: infinite;
-    opacity: 0;
-  }
-
   /* Card lift on hover */
   .lift {
     transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
@@ -201,18 +186,6 @@
     transform: translateY(-2px);
     box-shadow: 0 6px 20px -8px oklch(0.26 0.012 62 / 0.22);
   }
-}
-
-@keyframes ascii-drift {
-  from { transform: translate(0, 0); }
-  to   { transform: translate(28px, -34px); }
-}
-
-@keyframes ascii-pop {
-  0%   { transform: scale(0.8);  opacity: 0; }
-  30%  { opacity: var(--ascii-opacity, 0.05); }
-  65%  { opacity: var(--ascii-opacity, 0.05); }
-  100% { transform: scale(1.45); opacity: 0; }
 }
 
 @keyframes marquee-up {
@@ -231,15 +204,6 @@
   /* Motion off: the column simply sits still, still showing its cards. */
   .marquee-up {
     animation: none;
-  }
-  /* The circles stop travelling and settle at their resting opacity rather
-     than vanishing -- the texture stays, the movement goes. */
-  .ascii-drift {
-    animation: none;
-  }
-  .ascii-pop {
-    animation: none;
-    opacity: var(--ascii-opacity, 0.05);
   }
 }
 
