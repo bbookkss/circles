@@ -50,11 +50,12 @@ export default function LoginPage() {
             />
             <p className="relative text-3xl font-bold tracking-tight lowercase px-7 py-3">circles</p>
           </div>
-          <h1 className="text-4xl font-bold leading-tight mb-4 lowercase">
-            find your people.
+          <h1 className="text-4xl font-bold leading-[1.1] mb-4 lowercase">
+            find your people.<br />
+            <span className="text-background/55">create your circle.</span>
           </h1>
           <p className="text-background/70 text-base mb-8">
-            Recurring local gatherings: pickup sports, music sessions, neighborhood dinners, and more.
+            Groups that meet on a schedule, close enough to walk to. See who&apos;s coming before you go.
           </p>
           <DemoWheel />
         </div>

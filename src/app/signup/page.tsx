@@ -46,11 +46,12 @@ export default function SignupPage() {
             />
             <p className="relative text-3xl font-bold tracking-tight lowercase px-7 py-3">circles</p>
           </div>
-          <h1 className="text-4xl font-bold leading-tight mb-4 lowercase">
-            your neighborhood is more interesting than you think.
+          <h1 className="text-4xl font-bold leading-[1.1] mb-4 lowercase">
+            find your people.<br />
+            <span className="text-background/55">create your circle.</span>
           </h1>
           <p className="text-background/70 text-base mb-8">
-            Circles connects you with recurring local groups: the people who show up to the same beach, park, or coffee shop every week.
+            Groups that meet on a schedule, close enough to walk to. See who&apos;s coming before you go.
           </p>
           <DemoWheel />
         </div>

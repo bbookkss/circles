@@ -55,13 +55,12 @@ export default async function Landing() {
 
         <div className="relative mx-auto max-w-6xl px-6 pb-16 pt-6 md:pb-24 md:pt-10 grid md:grid-cols-2 gap-12 md:gap-16 items-center">
           <div className="fade-rise">
-            <h1 className="text-4xl md:text-5xl font-bold leading-[1.1] lowercase">
-              the same people,<br />every week.
+            <h1 className="text-4xl md:text-[2.5rem] font-bold leading-[1.1] lowercase text-balance">
+              find your people.<br />
+              <span className="text-background/55">create your circle.</span>
             </h1>
             <p className="text-background/70 text-base md:text-lg mt-5 max-w-md">
-              Circles are the standing plans in your neighbourhood — pickup games,
-              morning coffee, porch sessions. They happen on a schedule, and you can
-              see who is coming before you go.
+              Groups that meet on a schedule, close enough to walk to. See who&apos;s coming before you go.
             </p>
             <div className="flex flex-wrap gap-3 mt-8">
               <Link href="/signup">
