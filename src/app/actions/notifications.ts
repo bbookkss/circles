@@ -1,11 +1,11 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createClient, getAuthUser } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase/server'
 
 export async function markAllNotificationsRead() {
   const supabase = await createClient()
-  const user = await getAuthUser(supabase)
+  const { data: { user } } = await supabase.auth.getUser()
   if (!user) return
 
   await supabase

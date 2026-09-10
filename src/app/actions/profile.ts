@@ -1,12 +1,12 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createClient, getAuthUser } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase/server'
 import { reverseGeocode } from '@/lib/geocoding'
 
 export async function updateProfile(formData: FormData) {
   const supabase = await createClient()
-  const user = await getAuthUser(supabase)
+  const { data: { user } } = await supabase.auth.getUser()
   if (!user) return
 
   const full_name = (formData.get('full_name') as string).trim()
@@ -44,7 +44,7 @@ export async function updateProfile(formData: FormData) {
 
 export async function backfillNeighborhoods(): Promise<{ updated: number; errors: number }> {
   const supabase = await createClient()
-  const user = await getAuthUser(supabase)
+  const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { updated: 0, errors: 0 }
 
   // Find this user's circles that have coordinates but no neighborhood or city

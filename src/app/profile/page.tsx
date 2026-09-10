@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { createClient, getAuthUser } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase/server'
 import TopNav from '@/components/TopNav'
 import EditProfileForm from './EditProfileForm'
 import BackfillButton from './BackfillButton'
@@ -8,7 +8,7 @@ import DeleteAccountForm from './DeleteAccountForm'
 
 export default async function ProfilePage() {
   const supabase = await createClient()
-  const user = await getAuthUser(supabase)
+  const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
   const { data: profile } = await supabase

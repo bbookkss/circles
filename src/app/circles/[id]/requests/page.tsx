@@ -1,6 +1,6 @@
 import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
-import { createClient, getAuthUser } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase/server'
 import { Button } from '@/components/ui/button'
 import { approveRequest, rejectRequest } from '@/app/actions/circles'
 import TopNav from '@/components/TopNav'
@@ -8,7 +8,7 @@ import TopNav from '@/components/TopNav'
 export default async function RequestsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const supabase = await createClient()
-  const user = await getAuthUser(supabase)
+  const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
   // Only admins can view this page

@@ -1,11 +1,11 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createClient, getAuthUser } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase/server'
 
 export async function createPost(formData: FormData) {
   const supabase = await createClient()
-  const user = await getAuthUser(supabase)
+  const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }
 
   const circle_id = formData.get('circle_id') as string
@@ -28,7 +28,7 @@ export async function createPost(formData: FormData) {
 
 export async function deletePost(formData: FormData) {
   const supabase = await createClient()
-  const user = await getAuthUser(supabase)
+  const { data: { user } } = await supabase.auth.getUser()
   if (!user) return
 
   const post_id = formData.get('post_id') as string
@@ -41,7 +41,7 @@ export async function deletePost(formData: FormData) {
 
 export async function toggleLike(postId: string, circleId: string, like: boolean) {
   const supabase = await createClient()
-  const user = await getAuthUser(supabase)
+  const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }
 
   if (like) {
@@ -67,7 +67,7 @@ export async function toggleLike(postId: string, circleId: string, like: boolean
 
 export async function toggleCommentLike(commentId: string, circleId: string, like: boolean) {
   const supabase = await createClient()
-  const user = await getAuthUser(supabase)
+  const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }
 
   if (like) {
@@ -91,7 +91,7 @@ export async function toggleCommentLike(commentId: string, circleId: string, lik
 
 export async function addComment(formData: FormData) {
   const supabase = await createClient()
-  const user = await getAuthUser(supabase)
+  const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }
 
   const post_id = formData.get('post_id') as string
@@ -123,7 +123,7 @@ export async function addComment(formData: FormData) {
 
 export async function deleteComment(formData: FormData) {
   const supabase = await createClient()
-  const user = await getAuthUser(supabase)
+  const { data: { user } } = await supabase.auth.getUser()
   if (!user) return
 
   const comment_id = formData.get('comment_id') as string

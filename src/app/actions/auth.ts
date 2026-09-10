@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { headers } from 'next/headers'
-import { createClient, getAuthUser } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 // Not exported: a 'use server' module may only export async functions.
@@ -89,7 +89,7 @@ export async function updatePassword(formData: FormData) {
 
   // Following the emailed link establishes a session; without one the link has
   // expired or was never followed.
-  const user = await getAuthUser(supabase)
+  const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'This link has expired. Request a new one.' }
 
   const { error } = await supabase.auth.updateUser({ password })
@@ -158,7 +158,7 @@ export async function logout() {
 
 export async function deleteAccount(formData: FormData) {
   const supabase = await createClient()
-  const user = await getAuthUser(supabase)
+  const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not signed in' }
 
   // Typed confirmation, checked server-side so it cannot be skipped by

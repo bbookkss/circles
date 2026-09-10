@@ -1,11 +1,11 @@
 import { redirect } from 'next/navigation'
-import { createClient, getAuthUser } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase/server'
 import TopNav from '@/components/TopNav'
 import NewCircleClient from './NewCircleClient'
 
 export default async function NewCirclePage() {
   const supabase = await createClient()
-  const user = await getAuthUser(supabase)
+  const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
   const { data: profile } = await supabase

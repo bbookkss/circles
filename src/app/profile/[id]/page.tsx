@@ -1,6 +1,6 @@
 import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
-import { createClient, getAuthUser } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase/server'
 import TopNav from '@/components/TopNav'
 import { followUser, unfollowUser } from '@/app/actions/follows'
 import { Button } from '@/components/ui/button'
@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 export default async function UserProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const supabase = await createClient()
-  const user = await getAuthUser(supabase)
+  const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
   // Redirect to own profile

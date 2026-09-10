@@ -27,8 +27,8 @@ const SPEED = 13
 /** Seconds a drop lives before it has faded to nothing. */
 const LIFE = 6
 /** Half-width of the wave packet, in cells. Wider = more rings per drop. */
-const PACKET = 7
-const MAX_DROPS = 30
+const PACKET = 5
+const MAX_DROPS = 12
 
 type Drop = { x: number; y: number; born: number; amp: number }
 
@@ -86,7 +86,7 @@ export default function AsciiField() {
 
       // Rain. Irregular intervals so it never falls on a beat.
       if (t > nextDrop) {
-        nextDrop = t + 0.09 + Math.random() * 0.22
+        nextDrop = t + 0.28 + Math.random() * 0.5
         drops.push({
           x: Math.random() * cols,
           y: Math.random() * rows,
@@ -127,10 +127,10 @@ export default function AsciiField() {
 
           v = Math.abs(v) * (0.55 + seeds[i] * 0.7)
 
-          if (v > 0.11) {
+          if (v > 0.13) {
             if (Math.random() < 0.08) seeds[i] = Math.random()
             const g = GLYPHS[Math.floor(seeds[i] * GLYPHS.length)]
-            if (v > 0.26) {
+            if (v > 0.30) {
               brightOut += g
               dimOut += ' '
             } else {
@@ -180,11 +180,11 @@ export default function AsciiField() {
     >
       <pre
         ref={dimRef}
-        className="absolute inset-0 m-0 font-mono text-[7px] md:text-[9px] leading-[1.05] whitespace-pre text-background/[0.05]"
+        className="absolute inset-0 m-0 font-mono text-[7px] md:text-[9px] leading-[1.05] whitespace-pre text-background/[0.085]"
       />
       <pre
         ref={brightRef}
-        className="absolute inset-0 m-0 font-mono text-[7px] md:text-[9px] leading-[1.05] whitespace-pre text-background/[0.11]"
+        className="absolute inset-0 m-0 font-mono text-[7px] md:text-[9px] leading-[1.05] whitespace-pre text-background/[0.26]"
       />
     </div>
   )

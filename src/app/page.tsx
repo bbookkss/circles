@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
-import { createClient, getAuthUser } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase/server'
 import { Button } from '@/components/ui/button'
 import DemoWheel from '@/components/DemoWheel'
 import AsciiField from '@/components/AsciiField'
@@ -26,7 +26,7 @@ const STEPS = [
 export default async function Landing() {
   // Someone signed in does not need the pitch.
   const supabase = await createClient()
-  const user = await getAuthUser(supabase)
+  const { data: { user } } = await supabase.auth.getUser()
   if (user) redirect('/home')
 
   return (

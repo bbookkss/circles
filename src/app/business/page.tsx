@@ -1,13 +1,13 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { createClient, getAuthUser } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase/server'
 import TopNav from '@/components/TopNav'
 import { Button } from '@/components/ui/button'
 import BusinessRequestForm from './BusinessRequestForm'
 
 export default async function BusinessPage() {
   const supabase = await createClient()
-  const user = await getAuthUser(supabase)
+  const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
   const [{ data: profile }, { data: existing }] = await Promise.all([

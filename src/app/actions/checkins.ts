@@ -1,7 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createClient, getAuthUser } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase/server'
 
 /**
  * Say whether you are coming to the next meet.
@@ -13,7 +13,7 @@ import { createClient, getAuthUser } from '@/lib/supabase/server'
  */
 export async function setCheckIn(formData: FormData) {
   const supabase = await createClient()
-  const user = await getAuthUser(supabase)
+  const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not signed in' }
 
   const circle_id = formData.get('circle_id') as string
@@ -39,7 +39,7 @@ export async function setCheckIn(formData: FormData) {
 
 export async function clearCheckIn(formData: FormData) {
   const supabase = await createClient()
-  const user = await getAuthUser(supabase)
+  const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not signed in' }
 
   const circle_id = formData.get('circle_id') as string
