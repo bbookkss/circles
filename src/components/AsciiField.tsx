@@ -3,12 +3,13 @@
 import { useEffect, useRef } from 'react'
 
 /**
- * Full-bleed character field for the dark hero.
+ * Full-bleed character field for the dark hero: light rain on a pond.
  *
- * The shape is not drawn — it emerges from which cells are lit. A field
- * function decides each cell's intensity, and intensity decides whether a
- * glyph appears and in which of two brightness layers. That is why it reads as
- * a form made of text rather than text arranged in a shape.
+ * Drops land at random and each sends out a packet of expanding rings that
+ * decays as it travels. Nothing is drawn — every cell sums the waves passing
+ * through it, and the picture emerges from where they reinforce and cancel.
+ * Overlapping ripples are the whole point, so drops are deliberately frequent
+ * enough that several are always in flight.
  *
  * Two `<pre>` layers because a single text node can only be one colour: dim
  * cells go in one, bright cells in the other, and the difference is what gives
@@ -20,7 +21,16 @@ import { useEffect, useRef } from 'react'
  */
 
 const GLYPHS = 'abcdefghijklmnopqrstuvwxyz0123456789'
-const FPS = 8
+const FPS = 16
+/** Cells per second a ring front travels. */
+const SPEED = 13
+/** Seconds a drop lives before it has faded to nothing. */
+const LIFE = 6
+/** Half-width of the wave packet, in cells. Wider = more rings per drop. */
+const PACKET = 7
+const MAX_DROPS = 30
+
+type Drop = { x: number; y: number; born: number; amp: number }
 
 export default function AsciiField() {
   const wrapRef = useRef<HTMLDivElement>(null)
@@ -64,17 +74,28 @@ export default function AsciiField() {
     let raf = 0
     let last = 0
     let t = 0
+    let drops: Drop[] = []
+    let nextDrop = 0
 
     const draw = (now: number) => {
       raf = requestAnimationFrame(draw)
       if (now - last < 1000 / FPS) return
+      const dt = last ? Math.min((now - last) / 1000, 0.1) : 0.05
       last = now
-      t += 0.016
+      t += dt
 
-      const cx = cols / 2
-      const cy = rows / 2
-      // Character cells are about twice as tall as wide.
-      const scale = 1 / Math.min(cols / 2.2, rows * 1.9)
+      // Rain. Irregular intervals so it never falls on a beat.
+      if (t > nextDrop) {
+        nextDrop = t + 0.09 + Math.random() * 0.22
+        drops.push({
+          x: Math.random() * cols,
+          y: Math.random() * rows,
+          born: t,
+          amp: 0.7 + Math.random() * 0.6,
+        })
+        if (drops.length > MAX_DROPS) drops.shift()
+      }
+      drops = drops.filter((d) => t - d.born < LIFE)
 
       let dimOut = ''
       let brightOut = ''
@@ -82,30 +103,34 @@ export default function AsciiField() {
       for (let y = 0; y < rows; y++) {
         for (let x = 0; x < cols; x++) {
           const i = y * cols + x
-          const dx = (x - cx) * scale
-          const dy = (y - cy) * 2 * scale
-          const d = Math.hypot(dx, dy)
 
-          // Concentric rings that breathe outward, so the form is a set of
-          // circles rather than a disc -- this is a site called circles.
-          // Two ring sets at different frequencies, breathing outward at
-          // different rates, so the interference keeps it from reading as a
-          // printed contour map.
-          const wave = Math.sin(d * 7 - t * 1.2) * 0.6 + Math.sin(d * 17 - t * 0.7) * 0.4
+          let v = 0
+          for (let k = 0; k < drops.length; k++) {
+            const d = drops[k]
+            const age = t - d.born
+            const dx = x - d.x
+            // Cells are about twice as tall as wide, so vertical distance
+            // counts double or the ripples come out as ellipses.
+            const dy = (y - d.y) * 2
+            const dist = Math.sqrt(dx * dx + dy * dy)
 
-          // Gentle enough that the field still reaches the corners: dense in
-          // the middle, thinning outward, never a hard edge.
-          const falloff = Math.max(0, 1 - d * 0.42)
-          let v = (wave * 0.5 + 0.5) * (0.35 + falloff * 0.8)
+            const front = age * SPEED
+            const phase = dist - front
+            if (phase > PACKET || phase < -PACKET) continue
 
-          // Per-cell noise keeps the rings from looking like printed contours.
-          v *= 0.5 + seeds[i] * 0.95
+            // A packet of rings inside a decaying envelope: several crests per
+            // drop rather than one expanding circle.
+            const envelope = 1 - Math.abs(phase) / PACKET
+            const fade = (1 - age / LIFE) / (1 + front * 0.028)
+            v += Math.cos(phase * 1.15) * envelope * fade * d.amp
+          }
 
-          if (v > 0.40) {
-            // Shimmer: a few percent of lit cells take a new glyph each frame.
-            if (Math.random() < 0.06) seeds[i] = Math.random()
+          v = Math.abs(v) * (0.55 + seeds[i] * 0.7)
+
+          if (v > 0.11) {
+            if (Math.random() < 0.08) seeds[i] = Math.random()
             const g = GLYPHS[Math.floor(seeds[i] * GLYPHS.length)]
-            if (v > 0.62) {
+            if (v > 0.26) {
               brightOut += g
               dimOut += ' '
             } else {
@@ -126,7 +151,15 @@ export default function AsciiField() {
     }
 
     if (reduced) {
-      // One frame, then nothing moves.
+      // A still pond is a blank screen, so lay down a few drops mid-life and
+      // render exactly one frame of them.
+      t = 1.2
+      drops = [
+        { x: cols * 0.25, y: rows * 0.3, born: 0.15, amp: 1 },
+        { x: cols * 0.7, y: rows * 0.6, born: 0.5, amp: 0.9 },
+        { x: cols * 0.45, y: rows * 0.85, born: 0.85, amp: 0.8 },
+      ]
+      nextDrop = Infinity
       draw(performance.now())
       cancelAnimationFrame(raf)
     } else {
@@ -147,11 +180,11 @@ export default function AsciiField() {
     >
       <pre
         ref={dimRef}
-        className="absolute inset-0 m-0 font-mono text-[7px] md:text-[9px] leading-[1.05] whitespace-pre text-background/[0.035]"
+        className="absolute inset-0 m-0 font-mono text-[7px] md:text-[9px] leading-[1.05] whitespace-pre text-background/[0.05]"
       />
       <pre
         ref={brightRef}
-        className="absolute inset-0 m-0 font-mono text-[7px] md:text-[9px] leading-[1.05] whitespace-pre text-background/[0.075]"
+        className="absolute inset-0 m-0 font-mono text-[7px] md:text-[9px] leading-[1.05] whitespace-pre text-background/[0.11]"
       />
     </div>
   )
