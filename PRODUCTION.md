@@ -68,10 +68,38 @@ works fine from this machine.
       Until DKIM lands, leave DMARC at `p=none` — tightening to quarantine or
       reject without DKIM would start sending your own mail to spam.
 
-- [ ] **Real SMTP.** The default Supabase mailer is rate-limited to a couple
-      of messages an hour. Password reset and signup confirmation both depend
-      on it, so it will silently fail the moment more than one person signs up
-      at once.
+- [x] **Signup no longer depends on email.** Confirmation was the thing that
+      made the default mailer a launch blocker: every signup sent one, and at
+      a couple of messages an hour the fourth person to scan a flyer on the
+      same evening would simply never get in, with nothing looking broken from
+      our side. `Confirm email` is now off (2026-09-09, verified at
+      `/auth/v1/settings`: `mailer_autoconfirm: true`), so `signUp` returns a
+      session immediately. No code change was needed — `signup()` already
+      branched on `if (!data.session)` and now falls through to `/welcome`.
+
+      What this costs, and it is a real cost: addresses are unverified. Anyone
+      can sign up with an email they do not own, which both squats that
+      address against its real owner and points password reset at a stranger.
+      Accepted for launch because the Instagram handle is the actual "is this
+      person real" signal here, and because the alternative was losing most of
+      the first evening's signups. Revisit when volume justifies Resend.
+
+- [ ] **Real SMTP, for password reset only now.** Reset still uses the default
+      mailer. That is low-volume enough to survive the rate limit, so it is no
+      longer blocking, but it fails silently when it does fail. Resend on the
+      `send.hicircles.com` subdomain is the plan — a subdomain rather than the
+      root because a domain may have exactly one SPF record, and adding a
+      second TXT breaks every existing sender including Google Workspace.
+
+- [ ] **Phone auth via Twilio — decide early, not on launch week.** Assessed
+      2026-09-09. Supabase's side is config and takes minutes; the lift is US
+      A2P 10DLC brand and campaign registration, which needs an EIN and takes
+      days to weeks, and unregistered traffic is filtered by carriers rather
+      than rejected loudly. Roughly $0.013 a message plus ~$15/month, so the
+      first per-unit cost in the stack. Code is about a day: an OTP screen,
+      signup and login reworked, and the username sign-in path currently
+      resolves username to email so it would need to resolve to phone. Worth
+      it for a flyer-to-phone product; not worth starting the week of launch.
 
 ## Environment
 
