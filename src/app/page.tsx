@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { createClient, getAuthUser } from '@/lib/supabase/server'
 import { Button } from '@/components/ui/button'
 import DemoWheel from '@/components/DemoWheel'
+import AsciiCircles from '@/components/AsciiCircles'
 
 const STEPS = [
   {
@@ -35,13 +36,7 @@ export default async function Landing() {
           Hero. Dark, so the demo column reads as a lit screen against it.
           --------------------------------------------------------------- */}
       <section className="relative overflow-hidden bg-foreground text-background">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/circle-draw.gif"
-          alt=""
-          aria-hidden
-          className="pointer-events-none select-none absolute -right-32 -bottom-40 w-[560px] max-w-none opacity-[0.07]"
-        />
+        <AsciiCircles />
 
         <header className="relative mx-auto max-w-6xl px-6 py-6 flex items-center justify-between">
           <p className="font-bold text-lg tracking-tight lowercase">circles</p>
