@@ -6,7 +6,7 @@ import { login } from '@/app/actions/auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import DemoWheel from '@/components/DemoWheel'
+import AuthShell from '@/components/AuthShell'
 
 export default function LoginPage() {
   const [error, setError] = useState<string | null>(null)
@@ -21,105 +21,69 @@ export default function LoginPage() {
     if (result?.error) {
       const isInvalidCreds = result.error.toLowerCase().includes('invalid login credentials')
       setNotFound(isInvalidCreds)
-      setError(isInvalidCreds ? "No account found, or password is incorrect." : result.error)
+      setError(isInvalidCreds ? 'No account found, or password is incorrect.' : result.error)
       setLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row">
-      {/* Left panel — hero */}
-      <div className="relative overflow-hidden bg-foreground text-background flex flex-col justify-center px-8 py-12 md:w-1/2 md:min-h-screen">
-        {/* Ambient hand-drawn circle in the background */}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/circle-draw.gif"
-          alt=""
-          aria-hidden
-          className="pointer-events-none select-none absolute -right-24 -bottom-28 w-[520px] max-w-none opacity-[0.08]"
-        />
-        <div className="relative max-w-sm mx-auto w-full fade-rise">
-          {/* Wordmark with a circle drawing itself around it */}
-          <div className="relative w-fit mb-20">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/circle-draw.gif"
-              alt=""
-              aria-hidden
-              className="pointer-events-none select-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-48 max-w-none opacity-90"
+    <AuthShell altHref="/signup" altLabel="Create an account">
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-2xl font-bold lowercase">welcome back</h2>
+          <p className="text-muted-foreground text-sm mt-1">Sign in to your account</p>
+        </div>
+
+        <form action={handleSubmit} className="space-y-4">
+          {error && (
+            <div className="text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-md space-y-1">
+              <p>{error}</p>
+              {notFound && (
+                <p>
+                  <Link href="/signup" className="underline underline-offset-4 font-medium">
+                    Create an account instead?
+                  </Link>
+                </p>
+              )}
+            </div>
+          )}
+          <div className="space-y-2">
+            <Label htmlFor="identifier">Email or username</Label>
+            <Input
+              id="identifier"
+              name="identifier"
+              type="text"
+              autoComplete="username"
+              autoCapitalize="none"
+              spellCheck={false}
+              placeholder="you@example.com or yourname"
+              required
             />
-            <p className="relative text-3xl font-bold tracking-tight lowercase px-7 py-3">circles</p>
           </div>
-          <h1 className="text-4xl font-bold leading-[1.1] mb-4 lowercase">
-            find your people.<br />
-            <span className="text-background/55">create your circle.</span>
-          </h1>
-          <p className="text-background/70 text-base mb-8">
-            Groups that meet on a schedule, close enough to walk to. See who&apos;s coming before you go.
-          </p>
-          <DemoWheel />
-        </div>
-      </div>
-
-      {/* Right panel — form */}
-      <div className="flex flex-col justify-center px-8 py-12 md:w-1/2 md:min-h-screen bg-background">
-        <div className="max-w-sm mx-auto w-full space-y-6 fade-rise stagger-1">
-          <div>
-            <h2 className="text-2xl font-bold lowercase">welcome back</h2>
-            <p className="text-muted-foreground text-sm mt-1">Sign in to your account</p>
+          <div className="space-y-2">
+            <div className="flex items-baseline justify-between">
+              <Label htmlFor="password">Password</Label>
+              <Link
+                href="/forgot-password"
+                className="text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground"
+              >
+                Forgot password?
+              </Link>
+            </div>
+            <Input id="password" name="password" type="password" placeholder="••••••••" required />
           </div>
+          <Button type="submit" className="w-full" disabled={loading}>
+            {loading ? 'Signing in...' : 'Sign in'}
+          </Button>
+        </form>
 
-          <form action={handleSubmit} className="space-y-4">
-            {error && (
-              <div className="text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-md space-y-1">
-                <p>{error}</p>
-                {notFound && (
-                  <p>
-                    <Link href="/signup" className="underline underline-offset-4 font-medium">
-                      Create an account instead?
-                    </Link>
-                  </p>
-                )}
-              </div>
-            )}
-            <div className="space-y-2">
-              <Label htmlFor="identifier">Email or username</Label>
-              <Input
-                id="identifier"
-                name="identifier"
-                type="text"
-                autoComplete="username"
-                autoCapitalize="none"
-                spellCheck={false}
-                placeholder="you@example.com or yourname"
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <div className="flex items-baseline justify-between">
-                <Label htmlFor="password">Password</Label>
-                <Link
-                  href="/forgot-password"
-                  className="text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground"
-                >
-                  Forgot password?
-                </Link>
-              </div>
-              <Input id="password" name="password" type="password" placeholder="••••••••" required />
-            </div>
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Signing in...' : 'Sign in'}
-            </Button>
-          </form>
-
-          <p className="text-sm text-muted-foreground text-center">
-            New to Circles?{' '}
-            <Link href="/signup" className="underline underline-offset-4 hover:text-foreground">
-              Create an account
-            </Link>
-          </p>
-        </div>
+        <p className="text-sm text-muted-foreground text-center">
+          New to Circles?{' '}
+          <Link href="/signup" className="underline underline-offset-4 hover:text-foreground">
+            Create an account
+          </Link>
+        </p>
       </div>
-    </div>
+    </AuthShell>
   )
 }

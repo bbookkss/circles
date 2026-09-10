@@ -6,7 +6,7 @@ import { signup } from '@/app/actions/auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import DemoWheel from '@/components/DemoWheel'
+import AuthShell from '@/components/AuthShell'
 
 export default function SignupPage() {
   const [error, setError] = useState<string | null>(null)
@@ -23,43 +23,8 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row">
-      {/* Left panel — hero */}
-      <div className="relative overflow-hidden bg-foreground text-background flex flex-col justify-center px-8 py-12 md:w-1/2 md:min-h-screen">
-        {/* Ambient hand-drawn circle in the background */}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/circle-draw.gif"
-          alt=""
-          aria-hidden
-          className="pointer-events-none select-none absolute -right-24 -bottom-28 w-[520px] max-w-none opacity-[0.08]"
-        />
-        <div className="relative max-w-sm mx-auto w-full fade-rise">
-          {/* Wordmark with a circle drawing itself around it */}
-          <div className="relative w-fit mb-20">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/circle-draw.gif"
-              alt=""
-              aria-hidden
-              className="pointer-events-none select-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-48 max-w-none opacity-90"
-            />
-            <p className="relative text-3xl font-bold tracking-tight lowercase px-7 py-3">circles</p>
-          </div>
-          <h1 className="text-4xl font-bold leading-[1.1] mb-4 lowercase">
-            find your people.<br />
-            <span className="text-background/55">create your circle.</span>
-          </h1>
-          <p className="text-background/70 text-base mb-8">
-            Groups that meet on a schedule, close enough to walk to. See who&apos;s coming before you go.
-          </p>
-          <DemoWheel />
-        </div>
-      </div>
-
-      {/* Right panel — form */}
-      <div className="flex flex-col justify-center px-8 py-12 md:w-1/2 md:min-h-screen bg-background">
-        <div className="max-w-sm mx-auto w-full space-y-6 fade-rise stagger-1">
+    <AuthShell altHref="/login" altLabel="Sign in">
+      <div className="space-y-6">
           <div>
             <h2 className="text-2xl font-bold lowercase">create your account</h2>
             <p className="text-muted-foreground text-sm mt-1">Free. No spam. Just your local circles.</p>
@@ -128,8 +93,7 @@ export default function SignupPage() {
               Sign in
             </Link>
           </p>
-        </div>
       </div>
-    </div>
+    </AuthShell>
   )
 }
