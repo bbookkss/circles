@@ -21,6 +21,8 @@ type Group = {
   where: string
   when: string
   going: number
+  /** The first few checked in, as the circle page itself lists them. */
+  goingNames: string[]
   posts?: Post[]
 }
 
@@ -31,17 +33,26 @@ type Group = {
  */
 const GROUPS: Group[] = [
   {
-    emoji: '🏐', name: 'Beach volleyball', where: 'Baker Beach', when: 'Tue & Thu · 5:30pm', going: 8,
+    emoji: '🏐', name: 'Beach volleyball', where: 'Baker Beach', when: 'Tue & Thu · 5:30pm',
+    going: 8, goingNames: ['Olivia', 'Jack', 'Priya'],
     posts: [{ who: 'Maya', body: 'bringing an extra ball and the speaker' }],
   },
-  { emoji: '☕', name: 'Morning pages', where: 'Valencia St', when: 'Weekdays · 7am', going: 5 },
   {
-    emoji: '🏀', name: 'Panhandle pickup', where: 'The Panhandle', when: 'Wed · 6:30pm', going: 11,
+    emoji: '☕', name: 'Morning pages', where: 'Valencia St', when: 'Weekdays · 7am',
+    going: 5, goingNames: ['Rachel', 'Eli', 'Nadia'],
+  },
+  {
+    emoji: '🏀', name: 'Panhandle pickup', where: 'The Panhandle', when: 'Wed · 6:30pm',
+    going: 11, goingNames: ['Brandon', 'Simone', 'Thomas'],
     posts: [{ who: 'Devin', body: 'anyone around thursday? short a few', reply: { who: 'Rosa', body: "i'm in" } }],
   },
-  { emoji: '🍜', name: 'Ramen club', where: 'Japantown', when: 'First Sunday · 1pm', going: 12 },
   {
-    emoji: '🎸', name: 'Porch sessions', where: 'Bernal Heights', when: 'Sundays · 4pm', going: 6,
+    emoji: '🍜', name: 'Ramen club', where: 'Japantown', when: 'First Sunday · 1pm',
+    going: 12, goingNames: ['Bella', 'Benjamin', 'Jasper'],
+  },
+  {
+    emoji: '🎸', name: 'Porch sessions', where: 'Bernal Heights', when: 'Sundays · 4pm',
+    going: 6, goingNames: ['Theo', 'Maya', 'Olivia'],
     posts: [{ who: 'Theo', body: 'same time next week, bring something to play' }],
   },
 ]
@@ -63,6 +74,10 @@ function CircleGroup({ g }: { g: Group }) {
           <span className="rounded-full border border-background/25 text-[11px] px-2.5 py-1 text-background/70">Maybe</span>
           <span className="ml-auto text-[11px] text-background/60 tabular-nums">{g.when}</span>
         </div>
+        <p className="text-[11px] text-background/45 mt-2.5 pt-2.5 border-t border-background/10 truncate">
+          {g.goingNames.join(', ')}
+          {g.going > g.goingNames.length ? ` +${g.going - g.goingNames.length}` : ''}
+        </p>
       </div>
 
       {g.posts?.length ? (
