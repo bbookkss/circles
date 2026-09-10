@@ -36,7 +36,7 @@ export default function SignupPage() {
             )}
             <div className="space-y-2">
               <Label htmlFor="full_name">Full name</Label>
-              <Input id="full_name" name="full_name" type="text" placeholder="Ben Bookstaver" required />
+              <Input id="full_name" name="full_name" type="text" placeholder="Your name" required />
             </div>
             <div className="space-y-2">
               <Label htmlFor="instagram">Instagram</Label>
