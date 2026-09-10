@@ -128,6 +128,28 @@ never been exercised through the UI by a real person.
 
 ## Known issues
 
+- [ ] **The coffee map theme is not applying; the map renders stock grey.**
+      `applyCoffeeTheme` recolours every layer on the map's load event, and
+      the map is plainly not tan any more at any zoom. Confirmed 2026-09-09
+      that the code is not the missing piece: the compiled chunk served to the
+      browser does contain the palette, so it ships and loads. Confirmed too
+      that the style is still the classic kind — fetched
+      `styles/v1/mapbox/light-v11` from the API and it has 50 layers with a
+      background layer and ordinary fills and lines, not the newer
+      import-based architecture that would have made per-layer recolouring
+      inert.
+
+      So it runs and does nothing visible. The untested explanation is that
+      `setPaintProperty` is throwing for every layer and being swallowed by
+      the `try {} catch {}` inside the loop, which would look exactly like
+      this. Next step is to count successes and failures in that catch rather
+      than guess again.
+
+      Re-applying on the `styledata` event was tried and does not fix it, so
+      that was reverted. Note for whoever picks this up: `setPaintProperty`
+      itself fires `styledata`, so any listener there needs a re-entrancy
+      guard or it freezes the renderer.
+
 - [ ] **Confirm psql can reach the database before the pre-launch data reset.**
       The reset has to be surgical, and right now the tool that would do it is
       unreliable. `psql` through the Supavisor pooler fails intermittently
