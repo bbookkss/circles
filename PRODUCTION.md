@@ -128,6 +128,35 @@ never been exercised through the UI by a real person.
 
 ## Known issues
 
+- [ ] **Confirm psql can reach the database before the pre-launch data reset.**
+      The reset has to be surgical, and right now the tool that would do it is
+      unreliable. `psql` through the Supavisor pooler fails intermittently
+      with `FATAL: (ENOTFOUND) tenant/user postgres.<ref> not found`, which is
+      not what it sounds like: the connection string is byte-identical between
+      the runs that work and the runs that fail, so nothing is misconfigured
+      here. Observed 2026-09-09: 14 consecutive successes, then 12 consecutive
+      failures, no change in between.
+
+      Two explanations tested and ruled out. It is not one bad node behind the
+      load balancer (both IPs fail when pinned individually with SNI intact,
+      via `host=... hostaddr=...` — note `PGHOSTADDR` alone is not a valid
+      test, it breaks the SNI that Supavisor routes tenants by). It is not a
+      cold cache after idle (0s/30s/60s/90s gaps, 12/12 failed). A per-IP
+      connection throttle from ~40 rapid debug attempts is the remaining
+      guess, weakened by a 120s quiet period still failing.
+
+      Root cause not established, and it is on Supabase's side. What matters:
+      the app is unaffected, since it reaches the database over PostgREST, not
+      Postgres. Only hand-applied migrations and the data reset use this path,
+      and a migration that half-applies is worse than one that never ran.
+
+      Before the reset: connect, run something trivial, and only proceed if it
+      is reliable across several minutes. If it still flaps, do the reset
+      through the Supabase dashboard's SQL editor instead, which goes over
+      HTTPS and does not touch the pooler. Wrap the reset in an explicit
+      `begin; ... commit;` either way, so a mid-connection drop rolls back
+      instead of leaving the data half-deleted.
+
 - [ ] **5 circles have no admin.** `WIne club`, `test`, `Surf Club`,
       `test 2`, `Beach volleyball (baker beach)`. They predate the
       `role: 'admin'` line in `createCircle`, so nobody can edit them or
