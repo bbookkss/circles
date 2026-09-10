@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import type { ReactNode } from 'react'
 import Map, { Marker, Popup, NavigationControl, GeolocateControl } from 'react-map-gl/mapbox'
 import type { Map as MapboxMap, LngLatBounds } from 'mapbox-gl'
@@ -32,9 +32,11 @@ type Props = {
   /**
    * Shown over the map whenever no pin falls inside the visible area. Given a
    * `showAll` helper, because escaping an empty area needs the map instance
-   * and only this component has one.
+   * and only this component has one, and `areaName` for wherever the map is
+   * currently looking — null while unknown, so callers can fall back to
+   * something that is true regardless.
    */
-  emptyOverlay?: (helpers: { showAll: () => void }) => ReactNode
+  emptyOverlay?: (helpers: { showAll: () => void; areaName: string | null }) => ReactNode
 }
 
 export default function CirclesMap({
@@ -48,6 +50,7 @@ export default function CirclesMap({
   const [map, setMap] = useState<MapboxMap | null>(null)
   const [bounds, setBounds] = useState<LngLatBounds | null>(null)
   const [popupCircle, setPopupCircle] = useState<CirclePin | null>(null)
+  const [areaName, setAreaName] = useState<string | null>(null)
 
   const handleMarkerClick = useCallback((circle: CirclePin) => {
     setPopupCircle(circle)
@@ -61,6 +64,49 @@ export default function CirclesMap({
     !!emptyOverlay &&
     bounds !== null &&
     !circles.some((c) => bounds.contains([c.longitude, c.latitude]))
+
+  /**
+   * Name whatever is on screen now.
+   *
+   * The explore page used to label this with a place derived from the
+   * visitor's IP once, on the server. That is wrong twice over: it names
+   * where the *visitor* is rather than where the *map* is, and being a prop
+   * it can never change, so panning from Palm Springs to Sacramento still
+   * read "no circles in Desert Hot Springs". Worse when a VPN puts the IP in
+   * a city the person has never been to.
+   *
+   * Reverse geocoding the centre fixes both, and is only run while the empty
+   * state is actually showing and after movement has settled, so panning
+   * around a populated map costs nothing.
+   */
+  useEffect(() => {
+    if (!nothingInView || !map) {
+      setAreaName(null)
+      return
+    }
+    let cancelled = false
+    const timer = setTimeout(async () => {
+      const c = map.getCenter()
+      try {
+        const res = await fetch(
+          `https://api.mapbox.com/search/geocode/v6/reverse?longitude=${c.lng}` +
+            `&latitude=${c.lat}&types=place&limit=1&access_token=${MAPBOX_TOKEN}`
+        )
+        if (!res.ok) return
+        const json = await res.json()
+        const name = json?.features?.[0]?.properties?.name
+        if (!cancelled && typeof name === 'string') setAreaName(name)
+      } catch {
+        // Offline, rate limited, or mid-ocean. The overlay reads fine without
+        // a name, so failing quietly is the right behaviour here.
+      }
+    }, 600)
+    return () => {
+      cancelled = true
+      clearTimeout(timer)
+    }
+    // bounds is the dependency that matters: it changes on every settled move.
+  }, [nothingInView, map, bounds])
 
   /** Pull back until every circle is on screen, wherever they are. */
   const showAll = useCallback(() => {
@@ -168,9 +214,11 @@ export default function CirclesMap({
         </Popup>
       )}
 
+      {/* Bottom, not centre: dead centre is exactly where someone is looking
+          and dragging, so it covered the map and followed them around. */}
       {emptyOverlay && nothingInView && (
-        <div className="absolute inset-0 flex items-center justify-center p-6 pointer-events-none">
-          <div className="pointer-events-auto">{emptyOverlay({ showAll })}</div>
+        <div className="absolute inset-x-0 bottom-0 flex justify-center p-4 pointer-events-none">
+          <div className="pointer-events-auto">{emptyOverlay({ showAll, areaName })}</div>
         </div>
       )}
     </Map>

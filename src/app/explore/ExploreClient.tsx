@@ -39,10 +39,9 @@ type Props = {
   people: Person[]
   initialView?: MapView
   /** City name from the IP lookup, when that is what decided the view. */
-  place?: string | null
 }
 
-export default function ExploreClient({ circles, people, initialView, place }: Props) {
+export default function ExploreClient({ circles, people, initialView }: Props) {
   const [selected, setSelected] = useState<CircleWithMeta | null>(null)
   const [search, setSearch] = useState('')
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null)
@@ -374,10 +373,12 @@ export default function ExploreClient({ circles, people, initialView, place }: P
           initialView={initialView}
           // Suppressed while filtering: an empty view is then the filters
           // doing their job, not an area with nothing in it.
-          emptyOverlay={hasFilters ? undefined : ({ showAll }) => (
+          emptyOverlay={hasFilters ? undefined : ({ showAll, areaName }) => (
             <div className="bg-background/95 backdrop-blur border rounded-xl px-5 py-4 text-center shadow-lg max-w-xs">
+              {/* areaName tracks the map, not the visitor's IP. Falls back to
+                  "here", which is true wherever they have panned to. */}
               <p className="text-sm font-medium">
-                No circles {place ? `in ${place}` : 'here'} yet
+                No circles {areaName ? `in ${areaName}` : 'here'} yet
               </p>
               <p className="text-xs text-muted-foreground mt-1">
                 Someone has to be first. It may as well be you.

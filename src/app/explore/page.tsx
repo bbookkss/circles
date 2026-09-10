@@ -65,7 +65,7 @@ export default async function ExplorePage() {
   if (!circles) return (
     <>
       <TopNav />
-      <ExploreClient circles={[]} people={peopleList} initialView={initialView} place={place} />
+      <ExploreClient circles={[]} people={peopleList} initialView={initialView} />
     </>
   )
 
@@ -103,7 +103,7 @@ export default async function ExplorePage() {
   return (
     <>
       <TopNav />
-      <ExploreClient circles={enriched} people={peopleList} initialView={initialView} place={place} />
+      <ExploreClient circles={enriched} people={peopleList} initialView={initialView} />
     </>
   )
 }
