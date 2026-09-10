@@ -2,7 +2,7 @@
 
 import Map, { Marker } from 'react-map-gl/mapbox'
 import 'mapbox-gl/dist/mapbox-gl.css'
-import { keepCoffeeTheme } from '@/lib/mapTheme'
+import { applyCoffeeTheme } from '@/lib/mapTheme'
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN!
 
@@ -23,7 +23,7 @@ export default function CircleLocationMap({
       style={{ width: '100%', height: '100%' }}
       mapStyle="mapbox://styles/mapbox/light-v11"
       mapboxAccessToken={MAPBOX_TOKEN}
-      onLoad={(e) => keepCoffeeTheme(e.target)}
+      onLoad={(e) => applyCoffeeTheme(e.target)}
       scrollZoom={false}
       dragRotate={false}
       attributionControl={false}
