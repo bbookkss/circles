@@ -52,32 +52,17 @@ export function applyCoffeeTheme(map: StyledMap) {
  *
  * `applyCoffeeTheme` on the map's load event is not enough on its own. Paint
  * properties live on the style, so anything that reloads or extends the style
- * afterwards — a late-arriving sprite or glyph set, a source finishing — puts
- * the stock light-v11 colours back, and the map silently returns to grey with
- * no error anywhere.
+ * afterwards — a late-arriving sprite or glyph set, a source finishing, the
+ * style being swapped — puts the stock light-v11 colours back, and the map
+ * silently returns to grey with no error anywhere. That is the failure this
+ * function exists to prevent.
  *
  * `styledata` fires on each of those, so re-applying there holds the theme.
- * The re-entrancy guard is not optional: setPaintProperty itself mutates style
- * data and so fires `styledata`, and without the flag the handler calls itself
- * forever and freezes the renderer. It did exactly that when this was first
- * written — the map went blank rather than grey, which is how it announced
- * itself.
+ * The work is a few dozen setPaintProperty calls against values that are
+ * usually already set, which Mapbox no-ops, so this is cheap enough to run on
+ * every such event.
  */
 export function keepCoffeeTheme(map: StyledMap) {
-  let applying = false
-  const reapply = () => {
-    if (applying) return
-    applying = true
-    try {
-      applyCoffeeTheme(map)
-    } finally {
-      // Cleared after the current task, so the styledata events our own
-      // setPaintProperty calls emit are swallowed rather than re-entering.
-      setTimeout(() => {
-        applying = false
-      }, 0)
-    }
-  }
-  reapply()
-  map.on?.('styledata', reapply)
+  applyCoffeeTheme(map)
+  map.on?.('styledata', () => applyCoffeeTheme(map))
 }
