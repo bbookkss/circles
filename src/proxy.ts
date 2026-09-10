@@ -52,8 +52,6 @@ export async function proxy(request: NextRequest) {
     // The landing page has to be readable by someone who has never heard of
     // this, which is the entire point of having one.
     pathname === '/' ||
-    // TEMP: art style comparison page, delete with src/app/art
-    pathname === '/art' ||
     pathname.startsWith('/login') ||
     pathname.startsWith('/signup') ||
     pathname.startsWith('/auth') ||
