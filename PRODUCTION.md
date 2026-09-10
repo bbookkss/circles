@@ -35,22 +35,34 @@ works fine from this machine.
 
 ## Blocking — do before anyone real signs up
 
-- [ ] **Cap Mapbox spend, and refresh the old default token.** The token is
-      now rotated: `hicircles.com web (URL-restricted)` is live everywhere,
-      restricted to hicircles.com, www, circles-rho-sand.vercel.app and
-      localhost:3000. Two things remain, and the first matters more than the
-      restriction does:
-      - **Set a usage/spend limit** in the Mapbox account. Probed 2026-09-09:
-        the URL restriction is enforced on the **geocoding** endpoint (403
-        from a disallowed origin) but **not** on styles, fonts or iconset —
-        those return 200 from any origin, with `access-control-allow-origin:
-        *`. So a copied token can still load maps and bill you. A spend cap is
-        the actual guard, not the URL list.
-      - **Refresh the Default public token** (console → Tokens → Refresh).
-        It is unrestricted, was in the public bundle for days, and cannot be
-        deleted — only refreshed. Nothing uses it any more: production and
-        `.env.local` both carry the new token, verified by grepping the
-        deployed chunks.
+- [ ] **Refresh the old Mapbox default token.** Console → home → Tokens →
+      Refresh. It is unrestricted, sat in the public bundle for days, and
+      cannot be deleted, only refreshed. Nothing uses it: production and
+      `.env.local` both carry `hicircles.com web (URL-restricted)`. This is
+      the one remaining live hole, and it is one click.
+
+- [x] **Mapbox usage alerts set** (2026-09-09): Map Loads for Web at 25,000
+      and 40,000 monthly, against a 50,000 free tier, so both fire before any
+      charge. Sent to benjaminabookstaver@gmail.com.
+
+      **Correction to what this list said before: Mapbox has no spend cap.**
+      The earlier note called a spend limit "the actual guard". There is no
+      such control on pay-as-you-go. The console says it outright, in bold:
+      "Notifications help you monitor usage — they never pause your service.
+      Usage beyond the free tier is billed as usual." A card is on file with
+      Automatic Payments on, so overage is charged, not blocked.
+
+      So the real position is: alerts are early warning, not a limit. What
+      actually bounds the exposure is the free tier being generous (50,000
+      map loads a month against current usage in the tens of requests), and
+      the token restriction covering geocoding. Styles, fonts and iconsets
+      remain fetchable from any origin with a copied token, which is the
+      uncapped path.
+
+      If a hard ceiling is ever wanted, the only lever is removing the payment
+      method, which stops service at the free tier instead of billing past it.
+      That trades a surprise bill for a broken map, so it is a real decision
+      rather than an obvious win.
 
       Note for next time: URL restrictions can only be set on tokens you
       create. The Default public token has no such control, which is why this
