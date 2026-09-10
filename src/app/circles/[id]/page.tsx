@@ -11,6 +11,7 @@ import FollowButton from '@/components/FollowButton'
 import Circled from '@/components/Circled'
 import BackButton from '@/components/BackButton'
 import CircleLocationMap from '@/components/map/CircleLocationMap'
+import { approxArea } from '@/lib/approxLocation'
 import CheckInControl from '@/components/CheckInControl'
 import { relativeDayLabel, checkInWindow } from '@/lib/schedule'
 
@@ -93,6 +94,14 @@ export default async function CirclePage({ params }: { params: Promise<{ id: str
 
   // Unauthenticated, or signed in without access — show preview card
   if (!user || isPreviewOnly) {
+    // Nobody on this branch is a member, so the location is always coarse.
+    // Computed here, on the server, so the precise figures never reach the
+    // page: a blur drawn in the browser over real coordinates protects
+    // nothing from anyone who opens the source.
+    const previewArea =
+      circle.latitude != null && circle.longitude != null
+        ? approxArea(circle.latitude, circle.longitude, circle.id)
+        : null
     return (
       <>
         {user ? <TopNav /> : (
@@ -143,16 +152,20 @@ export default async function CirclePage({ params }: { params: Promise<{ id: str
             {circle.latitude != null && circle.longitude != null && (
               <div className="fade-rise stagger-2">
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-2">Location</p>
+                {/* Signed out: never the precise point. The blurred centre is
+                    computed here, on the server, so the real coordinates are
+                    not in what gets sent to the browser. */}
                 <div className="h-56 rounded-xl overflow-hidden border">
-                  <CircleLocationMap longitude={circle.longitude} latitude={circle.latitude} emoji={circle.emoji} />
+                  <CircleLocationMap
+                    longitude={previewArea!.longitude}
+                    latitude={previewArea!.latitude}
+                    radiusM={previewArea!.radiusM}
+                    emoji={circle.emoji}
+                  />
                 </div>
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-xs text-muted-foreground">
                   {(circle.neighborhood || circle.location) && <span>{circle.neighborhood ?? circle.location}</span>}
-                  <span className="flex items-center gap-3">
-                    <span>Directions:</span>
-                    <a href={`https://maps.apple.com/?daddr=${circle.latitude},${circle.longitude}`} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 hover:text-foreground">Apple Maps</a>
-                    <a href={`https://www.google.com/maps/dir/?api=1&destination=${circle.latitude},${circle.longitude}`} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 hover:text-foreground">Google Maps</a>
-                  </span>
+                  <span>Members see the exact spot.</span>
                 </div>
               </div>
             )}
@@ -187,7 +200,7 @@ export default async function CirclePage({ params }: { params: Promise<{ id: str
                 ) : (
                   <>
                     <Link href={`/signup`}>
-                      <Button>{isPrivate ? 'Create account to request' : 'Create account to join'}</Button>
+                      <Button>Create account</Button>
                     </Link>
                     <Link href="/login">
                       <Button variant="outline">Sign in</Button>
@@ -326,6 +339,11 @@ export default async function CirclePage({ params }: { params: Promise<{ id: str
   const myName = myProfile?.full_name ?? 'You'
 
   const isMember = !!membership
+  // Same rule for signed-in non-members: an area, never the point.
+  const area =
+    circle.latitude != null && circle.longitude != null
+      ? approxArea(circle.latitude, circle.longitude, circle.id)
+      : null
   const isAdmin = membership?.role === 'admin'
   const hasPendingRequest = joinRequest?.status === 'pending'
   const totalMembers = memberCount ?? 0
@@ -476,16 +494,28 @@ export default async function CirclePage({ params }: { params: Promise<{ id: str
           {circle.latitude != null && circle.longitude != null && (
             <div className="fade-rise stagger-2">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-2">Location</p>
+              {/* Members get the place; everyone else gets an area. The
+                  choice is made here rather than in the component, so the
+                  precise coordinates are never sent to a non-member at all. */}
               <div className="h-56 rounded-xl overflow-hidden border">
-                <CircleLocationMap longitude={circle.longitude} latitude={circle.latitude} emoji={circle.emoji} />
+                {isMember ? (
+                  <CircleLocationMap
+                    longitude={circle.longitude}
+                    latitude={circle.latitude}
+                    emoji={circle.emoji}
+                  />
+                ) : (
+                  <CircleLocationMap
+                    longitude={area!.longitude}
+                    latitude={area!.latitude}
+                    radiusM={area!.radiusM}
+                    emoji={circle.emoji}
+                  />
+                )}
               </div>
               <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-xs text-muted-foreground">
                 {(circle.neighborhood || circle.location) && <span>{circle.neighborhood ?? circle.location}</span>}
-                <span className="flex items-center gap-3">
-                  <span>Directions:</span>
-                  <a href={`https://maps.apple.com/?daddr=${circle.latitude},${circle.longitude}`} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 hover:text-foreground">Apple Maps</a>
-                  <a href={`https://www.google.com/maps/dir/?api=1&destination=${circle.latitude},${circle.longitude}`} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 hover:text-foreground">Google Maps</a>
-                </span>
+                {!isMember && <span>Members see the exact spot.</span>}
               </div>
             </div>
           )}

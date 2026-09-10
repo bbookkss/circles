@@ -128,6 +128,14 @@ never been exercised through the UI by a real person.
 
 ## Known issues
 
+- [ ] **Explore map pins are still exact.** The circle page now shows
+      non-members an offset area rather than the meeting point, but
+      `/explore` plots every public circle at its real coordinates, so the
+      thing the blur protects against is still available one page over. Same
+      treatment needed there: blur server-side in `page.tsx` before the pins
+      reach `CirclesMap`, using the same `approxArea`, and show the precise
+      pin only for circles the viewer belongs to.
+
 - [ ] **The coffee map theme is not applying; the map renders stock grey.**
       `applyCoffeeTheme` recolours every layer on the map's load event, and
       the map is plainly not tan any more at any zoom. Confirmed 2026-09-09
