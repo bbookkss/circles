@@ -98,10 +98,20 @@ export default function CirclesMap({
           anchor="center"
           onClick={() => handleMarkerClick(circle)}
         >
+          {/* Paper disc with an ink edge, not a white puck with a drop
+              shadow. bg-card was lighter than anything else on screen and
+              border-card made the ring the same colour as the fill, so the
+              pins read as generic pasted-on circles rather than part of this
+              map. The shadow is small and warm for the same reason: on a
+              muted tan basemap a large neutral one just looks grey. */}
           <button
             title={circle.kind === 'commercial' ? `${circle.name} · business` : circle.name}
-            className={`w-10 h-10 rounded-full bg-card shadow-lg flex items-center justify-center hover:scale-110 transition-transform cursor-pointer text-xl border-2 ${
-              circle.kind === 'commercial' ? 'border-amber-600' : 'border-card'
+            className={`w-9 h-9 rounded-full bg-background flex items-center justify-center text-lg cursor-pointer transition-transform hover:scale-110 shadow-[0_1px_4px_rgba(58,42,35,0.28)] border ${
+              // Businesses get a heavier ring rather than an off-palette
+              // amber, so they stand out without introducing a new colour.
+              circle.kind === 'commercial'
+                ? 'border-foreground/70 ring-1 ring-foreground/25'
+                : 'border-foreground/30'
             }`}
           >
             {circle.emoji ?? '●'}

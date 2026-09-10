@@ -29,7 +29,8 @@ export default function CircleLocationMap({
       attributionControl={false}
     >
       <Marker longitude={longitude} latitude={latitude} anchor="center">
-        <div className="w-9 h-9 rounded-full bg-card border-2 border-card shadow-lg flex items-center justify-center text-lg">
+        {/* Matches the pin on the explore map: paper fill, ink edge. */}
+        <div className="w-9 h-9 rounded-full bg-background border border-foreground/30 shadow-[0_1px_4px_rgba(58,42,35,0.28)] flex items-center justify-center text-lg">
           {emoji ?? '●'}
         </div>
       </Marker>
