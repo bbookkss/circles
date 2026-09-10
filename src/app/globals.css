@@ -51,23 +51,23 @@
 :root {
   /* Warm "bone" paper palette — deeper, tan-leaning */
   --background: oklch(0.928 0.022 82);
-  --foreground: oklch(0.30 0.025 45);
+  --foreground: oklch(0.26 0.012 62);
   --card: oklch(0.955 0.018 83);
-  --card-foreground: oklch(0.30 0.025 45);
+  --card-foreground: oklch(0.26 0.012 62);
   --popover: oklch(0.955 0.018 83);
-  --popover-foreground: oklch(0.30 0.025 45);
-  --primary: oklch(0.30 0.025 45);
+  --popover-foreground: oklch(0.26 0.012 62);
+  --primary: oklch(0.26 0.012 62);
   --primary-foreground: oklch(0.95 0.02 82);
   --secondary: oklch(0.89 0.024 81);
-  --secondary-foreground: oklch(0.30 0.025 45);
+  --secondary-foreground: oklch(0.26 0.012 62);
   --muted: oklch(0.892 0.024 81);
-  --muted-foreground: oklch(0.54 0.022 46);
+  --muted-foreground: oklch(0.5 0.016 64);
   --accent: oklch(0.89 0.024 81);
-  --accent-foreground: oklch(0.30 0.025 45);
+  --accent-foreground: oklch(0.26 0.012 62);
   --destructive: oklch(0.577 0.245 27.325);
   --border: oklch(0.84 0.026 80);
   --input: oklch(0.84 0.026 80);
-  --ring: oklch(0.66 0.022 46);
+  --ring: oklch(0.66 0.02 72);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
