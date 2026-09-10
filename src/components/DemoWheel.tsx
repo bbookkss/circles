@@ -85,15 +85,17 @@ function CircleGroup({ g }: { g: Group }) {
         // circle above it rather than sitting beside it.
         <div className="ml-5 mt-2 pl-3 border-l border-background/15 space-y-2">
           {g.posts.map((post, i) => (
-            <div key={i} className="rounded-lg border border-background/10 bg-background/[0.03] px-3 py-2.5">
-              <p className="text-sm">
-                <span className="text-background/55 text-[11px] mr-1.5">{post.who}</span>
-                {post.body}
+            <div key={i} className="rounded-lg border border-background/10 bg-background/[0.03] px-3 py-2.5 space-y-1.5">
+              {/* Name and message at the same size: the speaker is the subject
+                  of the line, not a footnote to it. */}
+              <p className="text-sm leading-snug">
+                <span className="font-semibold text-background/90">{post.who}:</span>{' '}
+                <span className="text-background/75">{post.body}</span>
               </p>
               {post.reply && (
-                <p className="text-[13px] mt-1.5 text-background/65">
-                  <span className="text-background/45 text-[11px] mr-1.5">{post.reply.who}</span>
-                  {post.reply.body}
+                <p className="text-sm leading-snug pl-2.5 border-l border-background/15">
+                  <span className="font-semibold text-background/75">{post.reply.who}:</span>{' '}
+                  <span className="text-background/60">{post.reply.body}</span>
                 </p>
               )}
             </div>
