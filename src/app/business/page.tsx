@@ -32,8 +32,8 @@ export default async function BusinessPage() {
           <div className="space-y-2">
             <h1 className="text-xl font-semibold">For restaurants and businesses</h1>
             <p className="text-sm text-muted-foreground">
-              Run a circle for your venue — taco Tuesdays, live music, trivia
-              nights — and it shows up on the map alongside everything else
+              Run a circle for your venue. Taco Tuesdays, live music, trivia
+              nights. It shows up on the map alongside everything else
               happening nearby.
             </p>
           </div>

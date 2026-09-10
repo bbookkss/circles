@@ -8,18 +8,18 @@ import AsciiField from '@/components/AsciiField'
 const STEPS = [
   {
     n: '01',
-    title: 'find one near you',
-    body: 'Every circle has a real place on the map and a regular time. Not a feed of events across the city — things happening close enough to walk or bike to.',
+    title: 'find circles.',
+    body: 'Every circle has a place on the map and a time it meets. Close enough to walk or bike to, not scattered across the city.',
   },
   {
     n: '02',
-    title: 'say if you are coming',
-    body: 'Check in the day before. Everyone sees who else is in, which is the difference between a plan and a group chat that goes quiet.',
+    title: 'check in.',
+    body: 'The day before, you say yes or no. Everyone sees who else is in. That is what separates a plan from a group chat that went quiet.',
   },
   {
     n: '03',
-    title: 'show up. then again.',
-    body: 'Nobody makes a friend at a one-off event. You make them by turning up to the same thing until the people there know your name.',
+    title: 'be a regular.',
+    body: 'Nobody makes a friend at a one-off. You make them by turning up to the same thing until the people there know your name.',
   },
 ]
 
@@ -106,10 +106,10 @@ export default async function Landing() {
       <section className="border-t">
         <div className="mx-auto max-w-6xl px-6 py-16 md:py-20 text-center">
           <h2 className="text-2xl md:text-3xl font-bold lowercase">
-            there is probably one six blocks away.
+            start with one circle.
           </h2>
           <p className="text-muted-foreground text-sm mt-3">
-            And if there is not, starting one takes about a minute.
+            Join one that already meets near you, or start your own in about a minute.
           </p>
           <div className="flex flex-wrap gap-3 justify-center mt-7">
             <Link href="/signup"><Button size="lg">Get started</Button></Link>
