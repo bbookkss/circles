@@ -65,7 +65,7 @@ export default async function Landing() {
             <div className="flex flex-wrap gap-3 mt-8">
               <Link href="/signup">
                 <Button size="lg" className="bg-background text-foreground hover:bg-background/90">
-                  Find circles near you
+                  Get started
                 </Button>
               </Link>
               <Link href="/login">
@@ -75,11 +75,10 @@ export default async function Landing() {
                   size="lg"
                   className="bg-transparent border border-background/30 text-background hover:bg-background/10"
                 >
-                  I have an account
+                  Sign in
                 </Button>
               </Link>
             </div>
-            <p className="text-xs text-background/45 mt-4">Free. San Francisco to start.</p>
           </div>
 
           <div className="fade-rise stagger-1">
