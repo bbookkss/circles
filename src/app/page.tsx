@@ -9,17 +9,17 @@ const STEPS = [
   {
     n: '01',
     title: 'find circles.',
-    body: 'Every circle has a place on the map and a time it meets. Close enough to walk or bike to, not scattered across the city.',
+    body: 'Every circle has a place on the map and a time it meets.',
   },
   {
     n: '02',
     title: 'check in.',
-    body: 'The day before, you say yes or no. Everyone sees who else is in. That is what separates a plan from a group chat that went quiet.',
+    body: 'The day before, you say yes or no. Everyone sees who else is in.',
   },
   {
     n: '03',
     title: 'become a regular.',
-    body: 'Nobody makes a friend at a one-off. You make them by turning up to the same thing until the people there know your name.',
+    body: 'Nobody makes a friend at a one-off. Then one week, someone saves you a seat.',
   },
 ]
 
