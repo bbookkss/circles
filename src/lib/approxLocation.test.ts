@@ -32,7 +32,7 @@ test('the area is not centred on the meeting point', () => {
   for (let i = 0; i < 200; i++) {
     const a = approxArea(SF.lat, SF.lng, `circle-${i}`)
     const d = metresBetween(SF.lat, SF.lng, a.latitude, a.longitude)
-    assert.ok(d > 150, `seed ${i}: centre only ${d.toFixed(0)}m from the real point`)
+    assert.ok(d > 280, `seed ${i}: centre only ${d.toFixed(0)}m from the real point`)
   }
 })
 
@@ -58,7 +58,7 @@ test('averaging many renders does not recover the true point', () => {
     sumLng += a.longitude
   }
   const d = metresBetween(SF.lat, SF.lng, sumLat / n, sumLng / n)
-  assert.ok(d > 150, `averaging landed ${d.toFixed(0)}m from the true point`)
+  assert.ok(d > 280, `averaging landed ${d.toFixed(0)}m from the true point`)
 })
 
 test('different circles at one venue get different areas', () => {
@@ -78,7 +78,7 @@ test('the offset holds its distance far from the equator', () => {
       const a = approxArea(lat, 10, `seed-${i}`)
       const d = metresBetween(lat, 10, a.latitude, a.longitude)
       assert.ok(
-        d > 150 && d < BLUR_RADIUS_M,
+        d > 280 && d < BLUR_RADIUS_M,
         `lat ${lat}, seed ${i}: offset was ${d.toFixed(0)}m`
       )
     }
@@ -90,6 +90,6 @@ test('works either side of the antimeridian and the equator', () => {
     const a = approxArea(lat, lng, 'edge')
     const d = metresBetween(lat, lng, a.latitude, a.longitude)
     assert.ok(Number.isFinite(a.latitude) && Number.isFinite(a.longitude))
-    assert.ok(d > 150 && d < BLUR_RADIUS_M, `at ${lat},${lng} offset was ${d.toFixed(0)}m`)
+    assert.ok(d > 280 && d < BLUR_RADIUS_M, `at ${lat},${lng} offset was ${d.toFixed(0)}m`)
   }
 })

@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import TopNav from '@/components/TopNav'
 import ExploreClient from './ExploreClient'
 import { geoFromHeaders, resolveMapView } from '@/lib/mapView'
+import { approxArea } from '@/lib/approxLocation'
 
 export default async function ExplorePage() {
   const supabase = await createClient()
@@ -77,11 +78,27 @@ export default async function ExplorePage() {
     scheduleMap[s.circle_id] = s.days_of_week
   }
 
-  const enriched = circles.map((c) => ({
-    ...c,
-    member_count: countMap[c.id] ?? 0,
-    days_of_week: scheduleMap[c.id] ?? [],
-  }))
+  // Only circles you belong to are plotted where they actually meet.
+  // Everything else is displaced onto its stable coarse area before it leaves
+  // the server, so a non-member's browser never receives the real
+  // coordinates. Doing this here rather than in the map component is the
+  // whole point: anything handed to the client is readable by the client.
+  const mine = new Set(myCircleIds)
+  const enriched = circles.map((c) => {
+    const exact = mine.has(c.id)
+    const area =
+      !exact && c.latitude != null && c.longitude != null
+        ? approxArea(c.latitude, c.longitude, c.id)
+        : null
+    return {
+      ...c,
+      latitude: area ? area.latitude : c.latitude,
+      longitude: area ? area.longitude : c.longitude,
+      approximate: !!area,
+      member_count: countMap[c.id] ?? 0,
+      days_of_week: scheduleMap[c.id] ?? [],
+    }
+  })
 
   return (
     <>

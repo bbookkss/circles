@@ -20,6 +20,8 @@ export type CirclePin = {
   emoji?: string | null
   memberCount?: number
   kind?: string | null
+  /** Coordinates are a coarse area, not the meeting place. */
+  approximate?: boolean
 }
 
 type Props = {
@@ -104,9 +106,23 @@ export default function CirclesMap({
               pins read as generic pasted-on circles rather than part of this
               map. The shadow is small and warm for the same reason: on a
               muted tan basemap a large neutral one just looks grey. */}
+          {/* A sharp pin on displaced coordinates would be a confident lie:
+              it looks precise, and it is not. The halo says roughly here. */}
+          {circle.approximate && (
+            <span
+              aria-hidden
+              className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 rounded-full bg-foreground/10 ring-1 ring-foreground/15"
+            />
+          )}
           <button
-            title={circle.kind === 'commercial' ? `${circle.name} · business` : circle.name}
-            className={`w-9 h-9 rounded-full bg-background flex items-center justify-center text-lg cursor-pointer transition-transform hover:scale-110 shadow-[0_1px_4px_rgba(58,42,35,0.28)] border ${
+            title={
+              circle.approximate
+                ? `${circle.name} · approximate area`
+                : circle.kind === 'commercial'
+                  ? `${circle.name} · business`
+                  : circle.name
+            }
+            className={`relative w-9 h-9 rounded-full bg-background flex items-center justify-center text-lg cursor-pointer transition-transform hover:scale-110 shadow-[0_1px_4px_rgba(58,42,35,0.28)] border ${
               // Businesses get a heavier ring rather than an off-palette
               // amber, so they stand out without introducing a new colour.
               circle.kind === 'commercial'

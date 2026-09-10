@@ -64,7 +64,9 @@ export default function CircleLocationMap({
         latitude,
         // Pull back for an area, so the disc reads as a neighbourhood rather
         // than filling the frame and implying more precision than it has.
-        zoom: radiusM ? 13 : 14,
+        // The disc grew, and at zoom 13 it filled the map, which made it look
+        // like a specific target again rather than a rough part of town.
+        zoom: radiusM ? 11.6 : 14,
       }}
       style={{ width: '100%', height: '100%' }}
       mapStyle="mapbox://styles/mapbox/light-v11"

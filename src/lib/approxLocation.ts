@@ -23,12 +23,25 @@
  *    it is the same on every render and averaging reveals nothing.
  */
 
-/** Radius of the shown area, in metres. About a quarter of a mile. */
-export const BLUR_RADIUS_M = 640
+/**
+ * Radius of the shown area, in metres. About two thirds of a mile.
+ *
+ * The first version used 640m and still read as a specific spot: a quarter
+ * mile is one or two blocks, which narrows a search rather than widening it.
+ * At this size the disc covers a neighbourhood, which is the intent — enough
+ * to know whether a circle is near you, not enough to stand and wait.
+ */
+export const BLUR_RADIUS_M = 1100
 
-/** How far the shown centre is displaced from the truth, in metres. */
-const OFFSET_MIN_M = 180
-const OFFSET_MAX_M = 380
+/**
+ * How far the shown centre is displaced from the truth, in metres.
+ *
+ * The floor keeps the centre from being a good guess at the point. The
+ * ceiling keeps the point comfortably inside the drawn area, so the disc is
+ * never a near miss that excludes the very place it is meant to contain.
+ */
+const OFFSET_MIN_M = 300
+const OFFSET_MAX_M = 700
 
 const EARTH_M = 6_378_137
 
