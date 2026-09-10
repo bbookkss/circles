@@ -189,7 +189,7 @@ export default async function HomePage() {
   return (
     <>
       <TopNav />
-      <main className="pt-14 min-h-screen">
+      <main className="pt-14 min-h-screen bg-background">
         <div className="mx-auto max-w-5xl px-6 py-8 md:py-12 grid grid-cols-1 md:grid-cols-[230px_1fr] gap-6 md:gap-14">
 
           {/* Left rail (becomes a compact header on mobile) */}

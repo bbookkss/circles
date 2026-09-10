@@ -18,61 +18,21 @@ import { useEffect, useRef } from 'react'
  * Written straight to textContent rather than through React state — this
  * repaints ~12k characters several times a second, and reconciling that would
  * be absurd. React owns the two nodes; the loop owns their text.
- *
- * Two variants, because the glyphs have to be drawn in whichever colour the
- * surface is not:
- *
- *   on-dark   bone glyphs on the hero's dark panel. The original.
- *   on-light  ink glyphs on bone, far fainter, and used as a fixed backdrop
- *             behind the signed-in app. It runs slower and with fewer drops
- *             on purpose: the hero is a page you look at, the app is a page
- *             you use, and a texture there must not compete for frames with
- *             scrolling or typing.
  */
 
 const GLYPHS = 'abcdefghijklmnopqrstuvwxyz0123456789'
+const FPS = 16
 /** Cells per second a ring front travels. */
 const SPEED = 13
 /** Seconds a drop lives before it has faded to nothing. */
 const LIFE = 6
 /** Half-width of the wave packet, in cells. Wider = more rings per drop. */
 const PACKET = 6
-
-type Variant = 'on-dark' | 'on-light'
-
-const TUNING: Record<
-  Variant,
-  { fps: number; maxDrops: number; gap: [number, number]; dim: string; bright: string }
-> = {
-  'on-dark': {
-    fps: 16,
-    maxDrops: 20,
-    gap: [0.15, 0.3],
-    dim: 'text-background/[0.085]',
-    bright: 'text-background/[0.26]',
-  },
-  'on-light': {
-    // Ink on paper reads much harder than bone on brown at the same alpha, so
-    // these are roughly a third of the dark values rather than a match.
-    fps: 10,
-    maxDrops: 10,
-    gap: [0.5, 0.8],
-    dim: 'text-foreground/[0.035]',
-    bright: 'text-foreground/[0.08]',
-  },
-}
+const MAX_DROPS = 20
 
 type Drop = { x: number; y: number; born: number; amp: number }
 
-export default function AsciiField({
-  variant = 'on-dark',
-  className = 'absolute inset-0',
-}: {
-  variant?: Variant
-  /** Positioning for the wrapper. The app backdrop passes a fixed one. */
-  className?: string
-} = {}) {
-  const tuning = TUNING[variant]
+export default function AsciiField() {
   const wrapRef = useRef<HTMLDivElement>(null)
   const dimRef = useRef<HTMLPreElement>(null)
   const brightRef = useRef<HTMLPreElement>(null)
@@ -119,21 +79,21 @@ export default function AsciiField({
 
     const draw = (now: number) => {
       raf = requestAnimationFrame(draw)
-      if (now - last < 1000 / tuning.fps) return
+      if (now - last < 1000 / FPS) return
       const dt = last ? Math.min((now - last) / 1000, 0.1) : 0.05
       last = now
       t += dt
 
       // Rain. Irregular intervals so it never falls on a beat.
       if (t > nextDrop) {
-        nextDrop = t + tuning.gap[0] + Math.random() * tuning.gap[1]
+        nextDrop = t + 0.15 + Math.random() * 0.3
         drops.push({
           x: Math.random() * cols,
           y: Math.random() * rows,
           born: t,
           amp: 0.7 + Math.random() * 0.6,
         })
-        if (drops.length > tuning.maxDrops) drops.shift()
+        if (drops.length > MAX_DROPS) drops.shift()
       }
       drops = drops.filter((d) => t - d.born < LIFE)
 
@@ -210,21 +170,21 @@ export default function AsciiField({
       cancelAnimationFrame(raf)
       ro.disconnect()
     }
-  }, [tuning])
+  }, [])
 
   return (
     <div
       ref={wrapRef}
       aria-hidden
-      className={`pointer-events-none select-none overflow-hidden ${className}`}
+      className="pointer-events-none select-none absolute inset-0 overflow-hidden"
     >
       <pre
         ref={dimRef}
-        className={`absolute inset-0 m-0 font-mono text-[7px] md:text-[9px] leading-[1.05] whitespace-pre ${tuning.dim}`}
+        className="absolute inset-0 m-0 font-mono text-[7px] md:text-[9px] leading-[1.05] whitespace-pre text-background/[0.085]"
       />
       <pre
         ref={brightRef}
-        className={`absolute inset-0 m-0 font-mono text-[7px] md:text-[9px] leading-[1.05] whitespace-pre ${tuning.bright}`}
+        className="absolute inset-0 m-0 font-mono text-[7px] md:text-[9px] leading-[1.05] whitespace-pre text-background/[0.26]"
       />
     </div>
   )

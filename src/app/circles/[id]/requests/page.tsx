@@ -42,7 +42,7 @@ export default async function RequestsPage({ params }: { params: Promise<{ id: s
   return (
     <>
     <TopNav />
-    <div className="pt-14 min-h-screen">
+    <div className="pt-14 min-h-screen bg-background">
       <div className="max-w-2xl mx-auto px-4 py-8">
         <div className="mb-6">
           <Link href={`/circles/${id}`} className="text-sm text-muted-foreground hover:text-foreground">

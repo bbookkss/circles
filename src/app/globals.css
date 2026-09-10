@@ -122,14 +122,11 @@
   * {
     @apply border-border outline-ring/50;
   }
-  html {
-    /* The page background lives here, not on body. A background on body is
-       propagated to the page canvas, which paints beneath negative z-index --
-       that made the fixed ascii backdrop in the root layout invisible. */
-    @apply font-sans bg-background;
-  }
   body {
-    @apply text-foreground;
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
   }
 }
 

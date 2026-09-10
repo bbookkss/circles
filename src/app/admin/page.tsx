@@ -23,7 +23,7 @@ export default async function AdminPage() {
   return (
     <>
       <TopNav />
-      <main className="pt-14 min-h-screen">
+      <main className="pt-14 min-h-screen bg-background">
         <div className="max-w-2xl mx-auto px-4 py-8 space-y-8">
 
           <div className="space-y-1">

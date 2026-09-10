@@ -100,7 +100,7 @@ export default async function CirclePage({ params }: { params: Promise<{ id: str
             <Link href="/login" className="font-bold text-lg lowercase tracking-tight">circles</Link>
           </nav>
         )}
-        <div className="pt-14 min-h-screen">
+        <div className="pt-14 min-h-screen bg-background">
           <div className="max-w-2xl mx-auto px-4 py-8 space-y-8">
 
             {/* Circle preview */}
@@ -334,7 +334,7 @@ export default async function CirclePage({ params }: { params: Promise<{ id: str
   return (
     <>
       <TopNav />
-      <div className="pt-14 min-h-screen">
+      <div className="pt-14 min-h-screen bg-background">
         <div className="max-w-2xl mx-auto px-4 py-8 space-y-8">
 
           {/* Back + admin links */}
