@@ -26,7 +26,7 @@ export default async function BusinessPage() {
   return (
     <>
       <TopNav />
-      <main className="pt-14 min-h-screen bg-background">
+      <main className="pt-14 min-h-screen">
         <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
 
           <div className="space-y-2">

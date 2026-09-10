@@ -39,7 +39,7 @@ export default async function ProfilePage() {
   return (
     <>
       <TopNav />
-      <main className="pt-14 min-h-screen bg-background">
+      <main className="pt-14 min-h-screen">
         <div className="max-w-2xl mx-auto px-4 py-8 space-y-8">
 
           {/* Avatar + name + bio */}
