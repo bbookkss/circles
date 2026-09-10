@@ -18,7 +18,7 @@ const STEPS = [
   },
   {
     n: '03',
-    title: 'be a regular.',
+    title: 'become a regular.',
     body: 'Nobody makes a friend at a one-off. You make them by turning up to the same thing until the people there know your name.',
   },
 ]
