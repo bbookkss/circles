@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button'
 import HomeCompose from '@/components/HomeCompose'
 import PostItem from '@/components/PostItem'
 import CheckInControl from '@/components/CheckInControl'
-import { todayISO, dayNameISO, daysBetweenISO, relativeDayLabel, formatTime, checkInWindow, meetPhase, tzAbbrev, sameWallClock } from '@/lib/schedule'
+import { todayISO, dayNameISO, daysBetweenISO, relativeDayLabel, formatTime, checkInWindow, meetPhase } from '@/lib/schedule'
+import MeetZone from '@/components/MeetZone'
 import { cookies } from 'next/headers'
 
 export default async function HomePage() {
@@ -32,13 +33,14 @@ export default async function HomePage() {
   const circleIds = memberships?.map((m) => m.circle_id) ?? []
   const hasCircles = circleIds.length > 0
 
-  // The device's own timezone, set by ViewerTimezone in the root layout. Used
-  // only to decide whether a meet needs its timezone spelled out; the times
-  // themselves stay in the circle's zone, because a meet happens where the
-  // meet is regardless of where the reader is standing.
-  const viewerTz = (await cookies()).get('viewer_tz')?.value || null
-  // "Sunday" in the greeting is about the reader, so it follows them.
-  const today = todayISO(viewerTz ?? undefined)
+  // The greeting's day name is about the reader, not any circle, so it
+  // follows them. Read from the cookie ViewerTimezone writes rather than
+  // resolved in the browser: this is server-rendered text, and swapping it
+  // after mount would flash a different weekday on every load. The cookie is
+  // written on a visitor's very first page, so only a first-ever visit inside
+  // the small hours can show the fallback zone's day.
+  const viewerTz = (await cookies()).get('viewer_tz')?.value || undefined
+  const today = todayISO(viewerTz)
 
   // Wave 2 — everything that needs only the circle ids. The recurrence maths
   // stays in the database, so biweekly and monthly are honoured; this page
@@ -304,9 +306,7 @@ export default async function HomePage() {
                               </span>
                               <span className="text-muted-foreground">
                                 {' '}{formatTime(schedule.start_time)}
-                                {viewerTz && !sameWallClock(viewerTz, circle.timezone) && (
-                                  <> {tzAbbrev(circle.timezone)}</>
-                                )}
+                                <MeetZone tz={circle.timezone} />
                               </span>
                             </p>
                           </div>

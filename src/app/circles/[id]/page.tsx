@@ -13,8 +13,8 @@ import BackButton from '@/components/BackButton'
 import CircleLocationMap from '@/components/map/CircleLocationMap'
 import { approxArea } from '@/lib/approxLocation'
 import CheckInControl from '@/components/CheckInControl'
-import { relativeDayLabel, checkInWindow, tzAbbrev, sameWallClock } from '@/lib/schedule'
-import { cookies } from 'next/headers'
+import { relativeDayLabel, checkInWindow } from '@/lib/schedule'
+import MeetZone from '@/components/MeetZone'
 
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 const FREQ_LABELS: Record<string, string> = {
@@ -323,10 +323,6 @@ export default async function CirclePage({ params }: { params: Promise<{ id: str
     ? ((await supabase.rpc('circle_today', { cid: id })).data ?? null)
     : null
 
-  // Only used to decide whether the time needs its zone spelled out. The day
-  // label above already comes from circle_today, which resolves in the
-  // circle's zone, so a traveller sees the meet's own calendar either way.
-  const viewerTz = (await cookies()).get('viewer_tz')?.value || null
 
   const { data: checkInRows } = nextMeet
     ? await supabase
@@ -433,9 +429,7 @@ export default async function CirclePage({ params }: { params: Promise<{ id: str
                   {schedules?.[0] && (
                     <span className="font-normal text-muted-foreground">
                       {' · '}{formatTime(schedules[0].start_time)}
-                      {viewerTz && !sameWallClock(viewerTz, circle.timezone) && (
-                        <> {tzAbbrev(circle.timezone)}</>
-                      )}
+                      <MeetZone tz={circle.timezone} />
                     </span>
                   )}
                 </p>
