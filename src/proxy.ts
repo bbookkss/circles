@@ -58,6 +58,10 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith('/check-email') ||
     // Reached while signed out, by definition.
     pathname.startsWith('/forgot-password') ||
+    // Reached from an email by someone who may not be able to sign in, and
+    // who is entitled to stop the email regardless. The token in the query
+    // string is the authorisation.
+    pathname.startsWith('/unsubscribe') ||
     // Circle detail pages are publicly viewable (page handles the unauthed state)
     /^\/circles\/[^/]+$/.test(pathname)
 
