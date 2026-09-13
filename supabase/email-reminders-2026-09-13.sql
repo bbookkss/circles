@@ -240,3 +240,38 @@ grant  update (email_reminders) on public.circle_members to authenticated;
 -- policy already, but granting the whole table would let someone edit columns
 -- that are not theirs to set. Only add the two new ones.
 grant update (email_reminders, unsubscribe_token) on public.profiles to authenticated;
+
+
+-- ---------------------------------------------------------------------------
+-- Verified 2026-09-13, against production, inside a transaction that was
+-- rolled back so no fixture survived.
+--
+-- Opting one member in and giving a circle a meet 20 hours out produced
+-- exactly one due row, of kind '24h' and not '3h'. That is the band doing its
+-- job: before the upper floor existed the same row matched both windows, and
+-- the person would have received "tomorrow" and "in 3 hours" together.
+--
+-- Claiming that row into email_reminder_sends dropped the due count to zero,
+-- which is the guarantee the scheduler depends on. It will see the same meet
+-- dozens of times between now and then and must send once.
+--
+-- Reproduce with:
+--
+--   begin;
+--   update public.profiles set email_reminders = true where id = '<user>';
+--   insert into public.circle_schedules (circle_id, days_of_week, start_time,
+--     end_time, frequency, starts_on)
+--   select m.circle_id,
+--          array[extract(dow from ((now() at time zone c.timezone)::date + 1))::int],
+--          ((now() at time zone c.timezone) + interval '20 hours')::time,
+--          ((now() at time zone c.timezone) + interval '22 hours')::time,
+--          'weekly', current_date
+--   from public.circle_members m
+--   join public.circles c on c.id = m.circle_id
+--   where m.user_id = '<user>' limit 1;
+--   select kind, count(*) from due_email_reminders() group by kind;
+--   insert into public.email_reminder_sends (circle_id, user_id, occurs_on, kind)
+--   select circle_id, user_id, occurs_on, kind from due_email_reminders();
+--   select count(*) as should_be_zero from due_email_reminders();
+--   rollback;
+-- ---------------------------------------------------------------------------
