@@ -82,6 +82,24 @@ export default function SignupPage() {
               <Label htmlFor="password">Password</Label>
               <Input id="password" name="password" type="password" placeholder="8+ characters" minLength={8} required />
             </div>
+            {/* Unchecked by default, and it stays that way. Opting people in
+                at signup is how a product ends up in spam folders, and the
+                whole consent chain behind this assumes the box was a choice. */}
+            <label className="flex gap-3 items-start pt-1 cursor-pointer">
+              <input
+                id="email_reminders"
+                name="email_reminders"
+                type="checkbox"
+                className="mt-0.5 size-4 accent-foreground cursor-pointer"
+              />
+              <span className="text-sm">
+                Email me before my circles meet
+                <span className="block text-xs text-muted-foreground mt-0.5">
+                  A day before and a few hours before. Nothing else, and you can
+                  stop them any time.
+                </span>
+              </span>
+            </label>
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? 'Creating account...' : 'Join Circles'}
             </Button>

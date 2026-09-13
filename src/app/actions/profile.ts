@@ -26,9 +26,12 @@ export async function updateProfile(formData: FormData) {
   }
   const username = rawUsername || null
 
+  // Same reasoning as signup: an unchecked box submits nothing.
+  const email_reminders = formData.get('email_reminders') === 'on'
+
   const { error } = await supabase
     .from('profiles')
-    .update({ full_name, bio, instagram, username })
+    .update({ full_name, bio, instagram, username, email_reminders })
     .eq('id', user.id)
 
   // 23505 is the unique index on lower(username).

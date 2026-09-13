@@ -134,6 +134,10 @@ export async function signup(formData: FormData) {
         full_name,
         instagram,
         username: rawUsername || null,
+        // An unchecked box submits nothing, so absence is a no. handle_new_user
+        // reads this to set profiles.email_reminders; without it the checkbox
+        // would look like it worked and change nothing.
+        email_reminders: formData.get('email_reminders') === 'on',
       },
     },
   })

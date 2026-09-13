@@ -11,11 +11,13 @@ export default function EditProfileForm({
   bio,
   instagram,
   username,
+  emailReminders,
 }: {
   fullName: string
   bio: string | null
   instagram: string | null
   username: string | null
+  emailReminders: boolean
 }) {
   const [editing, setEditing] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -91,6 +93,25 @@ export default function EditProfileForm({
         </div>
         <p className="text-xs text-muted-foreground">Links to your Instagram so people can find you.</p>
       </div>
+      {/* Checked state comes from the database, so what is shown is what is
+          stored. Unchecking and saving turns reminders off; it does not add a
+          suppression, which is the stronger, address-level opt-out the
+          unsubscribe link performs. */}
+      <label className="flex gap-3 items-start pt-1 cursor-pointer">
+        <input
+          id="email_reminders"
+          name="email_reminders"
+          type="checkbox"
+          defaultChecked={emailReminders}
+          className="mt-0.5 size-4 accent-foreground cursor-pointer"
+        />
+        <span className="text-sm">
+          Email me before my circles meet
+          <span className="block text-xs text-muted-foreground mt-0.5">
+            A day before and a few hours before.
+          </span>
+        </span>
+      </label>
       <div className="space-y-1">
         <Label htmlFor="bio">Bio <span className="text-muted-foreground font-normal">(optional)</span></Label>
         <textarea
