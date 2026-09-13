@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { emailConfigured, sendEmail } from '@/lib/email/send'
+import { reminderSubject, reminderText, reminderHtml } from '@/lib/email/reminder'
 
 /**
  * The endpoint pg_cron calls to send meet reminders.
@@ -28,6 +30,8 @@ export const dynamic = 'force-dynamic'
 type DueRow = {
   circle_id: string
   circle_name: string
+  timezone: string | null
+  place: string | null
   user_id: string
   email: string
   full_name: string | null
@@ -58,7 +62,7 @@ export async function POST(request: Request) {
   }
 
   const due = (data ?? []) as DueRow[]
-  const hasProvider = !!process.env.RESEND_API_KEY
+  const hasProvider = emailConfigured()
 
   if (!hasProvider) {
     return NextResponse.json({
@@ -106,11 +110,28 @@ export async function POST(request: Request) {
   return NextResponse.json({ mode: 'live', due: due.length, sent, skipped, failures })
 }
 
-/**
- * Not implemented until the Resend domain exists. Throwing rather than
- * silently succeeding keeps the claim honest: a failure here shows up in the
- * response instead of leaving a row marked sent that never was.
- */
-async function sendReminder(_row: DueRow): Promise<void> {
-  throw new Error('no mail provider wired up yet')
+async function sendReminder(row: DueRow): Promise<void> {
+  const site = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://hicircles.com'
+  const unsubscribeUrl = `${site}/api/unsubscribe?token=${row.unsubscribe_token}`
+
+  const input = {
+    circleName: row.circle_name,
+    fullName: row.full_name,
+    kind: row.kind,
+    startsAt: row.starts_at,
+    // The resolver already computed starts_at in the circle's zone; this is
+    // only used to name the zone in the copy.
+    timezone: row.timezone ?? 'America/Los_Angeles',
+    where: row.place ?? null,
+    unsubscribeUrl,
+    circleUrl: `${site}/circles/${row.circle_id}`,
+  }
+
+  await sendEmail({
+    to: row.email,
+    subject: reminderSubject(input),
+    html: reminderHtml(input),
+    text: reminderText(input),
+    unsubscribeUrl,
+  })
 }

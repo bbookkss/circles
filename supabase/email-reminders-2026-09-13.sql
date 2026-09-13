@@ -119,6 +119,8 @@ create or replace function public.due_email_reminders(
 returns table (
   circle_id   uuid,
   circle_name text,
+  timezone    text,
+  place       text,
   user_id     uuid,
   email       text,
   full_name   text,
@@ -134,6 +136,7 @@ language sql security definer set search_path = public, auth as $$
       c.id   as circle_id,
       c.name as circle_name,
       c.timezone,
+      coalesce(c.neighborhood, c.location) as place,
       d::date as occurs_on,
       cs.start_time,
       ((d::date + cs.start_time) at time zone c.timezone) as starts_at
@@ -163,6 +166,8 @@ language sql security definer set search_path = public, auth as $$
   select
     w.circle_id,
     w.circle_name,
+    w.timezone,
+    w.place,
     m.user_id,
     u.email::text,
     p.full_name,
