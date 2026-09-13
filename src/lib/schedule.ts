@@ -46,6 +46,39 @@ export function relativeDayLabel(iso: string, todayIso: string = todayISO()): st
   return parseISODate(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' })
 }
 
+/**
+ * Short name of `tz` at a given moment: PT, ET, GMT+2.
+ *
+ * Uses the short generic name rather than short specific, so a circle reads
+ * "PT" all year instead of flipping between PST and PDT twice a year for a
+ * meeting that never moved.
+ */
+export function tzAbbrev(tz: string, at: Date = new Date()): string {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: tz,
+    timeZoneName: 'shortGeneric',
+  }).formatToParts(at)
+  return parts.find((p) => p.type === 'timeZoneName')?.value ?? ''
+}
+
+/**
+ * Do these two zones show the same wall clock right now?
+ *
+ * Compared by what the clock reads rather than by zone name, because
+ * America/New_York and America/Toronto are different zones that never
+ * disagree, and labelling a Toronto viewer's New York meet with a timezone
+ * would be noise.
+ */
+export function sameWallClock(a: string, b: string, at: Date = new Date()): boolean {
+  const fmt = (tz: string) =>
+    new Intl.DateTimeFormat('en-CA', {
+      timeZone: tz,
+      year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit', hour12: false,
+    }).format(at)
+  return fmt(a) === fmt(b)
+}
+
 export function formatTime(t: string): string {
   const [h, m] = t.split(':').map(Number)
   const ampm = h >= 12 ? 'pm' : 'am'

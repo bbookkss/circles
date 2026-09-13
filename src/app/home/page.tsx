@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button'
 import HomeCompose from '@/components/HomeCompose'
 import PostItem from '@/components/PostItem'
 import CheckInControl from '@/components/CheckInControl'
-import { todayISO, dayNameISO, daysBetweenISO, relativeDayLabel, formatTime, checkInWindow, meetPhase } from '@/lib/schedule'
+import { todayISO, dayNameISO, daysBetweenISO, relativeDayLabel, formatTime, checkInWindow, meetPhase, tzAbbrev, sameWallClock } from '@/lib/schedule'
+import { cookies } from 'next/headers'
 
 export default async function HomePage() {
   const supabase = await createClient()
@@ -30,7 +31,14 @@ export default async function HomePage() {
 
   const circleIds = memberships?.map((m) => m.circle_id) ?? []
   const hasCircles = circleIds.length > 0
-  const today = todayISO()
+
+  // The device's own timezone, set by ViewerTimezone in the root layout. Used
+  // only to decide whether a meet needs its timezone spelled out; the times
+  // themselves stay in the circle's zone, because a meet happens where the
+  // meet is regardless of where the reader is standing.
+  const viewerTz = (await cookies()).get('viewer_tz')?.value || null
+  // "Sunday" in the greeting is about the reader, so it follows them.
+  const today = todayISO(viewerTz ?? undefined)
 
   // Wave 2 — everything that needs only the circle ids. The recurrence maths
   // stays in the database, so biweekly and monthly are honoured; this page
@@ -283,10 +291,22 @@ export default async function HomePage() {
                                 <p className="text-xs text-muted-foreground mt-0.5 truncate">{where}</p>
                               )}
                             </div>
+                            {/* Day labels are computed in the circle's own
+                                timezone, not the reader's. A Sunday 11am meet
+                                in San Francisco is still "Today" at 1am Monday
+                                in New York, where a reader-relative label would
+                                call it yesterday and bury it. The zone is only
+                                spelled out when the reader's clock disagrees,
+                                so nobody at home sees the clutter. */}
                             <p className="text-sm text-right flex-shrink-0 tabular-nums">
-                              <span className="font-medium">{relativeDayLabel(occursOn, today)}</span>
+                              <span className="font-medium">
+                                {relativeDayLabel(occursOn, todayISO(circle.timezone))}
+                              </span>
                               <span className="text-muted-foreground">
                                 {' '}{formatTime(schedule.start_time)}
+                                {viewerTz && !sameWallClock(viewerTz, circle.timezone) && (
+                                  <> {tzAbbrev(circle.timezone)}</>
+                                )}
                               </span>
                             </p>
                           </div>
