@@ -62,6 +62,9 @@ export async function proxy(request: NextRequest) {
     // who is entitled to stop the email regardless. The token in the query
     // string is the authorisation.
     pathname.startsWith('/unsubscribe') ||
+    // Called by pg_cron with a bearer token, not a session. The route checks
+    // the secret itself and refuses outright when it is unset.
+    pathname.startsWith('/api/cron') ||
     // Circle detail pages are publicly viewable (page handles the unauthed state)
     /^\/circles\/[^/]+$/.test(pathname)
 
