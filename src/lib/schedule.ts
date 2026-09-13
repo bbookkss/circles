@@ -155,7 +155,7 @@ export function checkInWindow(
     case 'before':
       return { open: false, reason: 'Check-in opens 24 hours before the meet.' }
     case 'finished':
-      return { open: false, reason: 'That meet has already finished.' }
+      return { open: false, reason: 'This meet has already finished.' }
     default:
       return { open: true }
   }
