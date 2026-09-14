@@ -180,11 +180,11 @@ export default function AsciiField() {
     >
       <pre
         ref={dimRef}
-        className="absolute inset-0 m-0 font-mono text-[7px] md:text-[9px] leading-[1.05] whitespace-pre text-pen/[0.16]"
+        className="absolute inset-0 m-0 font-mono text-[7px] md:text-[9px] leading-[1.05] whitespace-pre text-[rgba(43,92,138,0.11)]"
       />
       <pre
         ref={brightRef}
-        className="absolute inset-0 m-0 font-mono text-[7px] md:text-[9px] leading-[1.05] whitespace-pre text-pen/[0.42]"
+        className="absolute inset-0 m-0 font-mono text-[7px] md:text-[9px] leading-[1.05] whitespace-pre text-[rgba(43,92,138,0.34)]"
       />
     </div>
   )

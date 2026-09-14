@@ -59,20 +59,20 @@ const GROUPS: Group[] = [
 function CircleGroup({ g }: { g: Group }) {
   return (
     <div>
-      <div className="rounded-xl border border-background/15 bg-foreground/70 backdrop-blur-[2px] p-3.5">
+      <div className="border border-foreground bg-card p-3.5">
         <div className="flex items-baseline justify-between gap-3">
           <p className="font-semibold text-sm flex items-center gap-2 min-w-0">
             <span aria-hidden>{g.emoji}</span>
             <span className="truncate">{g.name}</span>
           </p>
-          <span className="text-[11px] text-background/50 whitespace-nowrap">{g.going} going</span>
+          <span className="label whitespace-nowrap">{g.going} going</span>
         </div>
         <div className="flex items-center gap-1.5 mt-3">
-          <span className="rounded-full bg-background text-foreground text-[11px] font-medium px-2.5 py-1">Going</span>
-          <span className="rounded-full border border-background/25 text-[11px] px-2.5 py-1 text-background/70">Maybe</span>
-          <span className="ml-auto text-[11px] text-background/60 tabular-nums">{g.when}</span>
+          <span className="rounded-full bg-pen text-white text-[11px] font-medium px-2.5 py-1">Going</span>
+          <span className="rounded-full border border-foreground text-[11px] px-2.5 py-1 text-foreground">Maybe</span>
+          <span className="ml-auto num text-[11px] text-foreground/75">{g.when}</span>
         </div>
-        <p className="text-[11px] text-background/45 mt-2.5 pt-2.5 border-t border-background/10 truncate">
+        <p className="text-[11px] text-foreground/70 mt-2.5 pt-2.5 border-t border-border truncate">
           {g.goingNames.join(', ')}
           {g.going > g.goingNames.length ? ` +${g.going - g.goingNames.length}` : ''}
         </p>
@@ -81,19 +81,19 @@ function CircleGroup({ g }: { g: Group }) {
       {g.posts?.length ? (
         // Indented and hung off a rule, so a post reads as belonging to the
         // circle above it rather than sitting beside it.
-        <div className="ml-5 mt-2 pl-3 border-l border-background/15 space-y-2">
+        <div className="ml-5 mt-2 pl-3 border-l border-border space-y-2">
           {g.posts.map((post, i) => (
-            <div key={i} className="rounded-lg border border-background/10 bg-foreground/60 backdrop-blur-[2px] px-3 py-2.5 space-y-1.5">
+            <div key={i} className="border border-border bg-card px-3 py-2.5 space-y-1.5">
               {/* Name and message at the same size: the speaker is the subject
                   of the line, not a footnote to it. */}
               <p className="text-sm leading-snug">
-                <span className="font-semibold text-background/90">{post.who}:</span>{' '}
-                <span className="text-background/75">{post.body}</span>
+                <span className="font-semibold text-foreground">{post.who}:</span>{' '}
+                <span className="text-foreground/80">{post.body}</span>
               </p>
               {post.reply && (
-                <p className="text-sm leading-snug pl-2.5 border-l border-background/15">
-                  <span className="font-semibold text-background/75">{post.reply.who}:</span>{' '}
-                  <span className="text-background/60">{post.reply.body}</span>
+                <p className="text-sm leading-snug pl-2.5 border-l border-border">
+                  <span className="font-semibold text-foreground/85">{post.reply.who}:</span>{' '}
+                  <span className="text-foreground/70">{post.reply.body}</span>
                 </p>
               )}
             </div>
