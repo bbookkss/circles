@@ -28,13 +28,18 @@ export default async function UserProfilePage({ params }: { params: Promise<{ id
     { count: followingCount },
     { data: followRow },
     { data: followsMeRow },
+    { data: reliability },
   ] = await Promise.all([
     supabase.from('circle_members').select('circle_id').eq('user_id', id),
     supabase.from('follows').select('*', { count: 'exact', head: true }).eq('following_id', id),
     supabase.from('follows').select('*', { count: 'exact', head: true }).eq('follower_id', id),
     supabase.from('follows').select('follower_id').eq('follower_id', user.id).eq('following_id', id).maybeSingle(),
     supabase.from('follows').select('follower_id').eq('follower_id', id).eq('following_id', user.id).maybeSingle(),
+    supabase.rpc('reliability', { uids: [id] }),
   ])
+
+  const rel = ((reliability ?? []) as { committed: number; attended: number }[])[0]
+  const showsUp = rel && rel.committed >= 3 ? rel : null
 
   const circleIds = memberships?.map((m) => m.circle_id) ?? []
 
@@ -113,6 +118,15 @@ export default async function UserProfilePage({ params }: { params: Promise<{ id
               <p className="text-muted-foreground">Circles</p>
             </a>
           </div>
+
+          {showsUp && (
+            <p className="text-sm">
+              <span className="font-display font-semibold text-pen">
+                Shows up {showsUp.attended} of {showsUp.committed}
+              </span>
+              <span className="text-foreground/70"> meets they said yes to.</span>
+            </p>
+          )}
 
           {/* Public circles */}
           <div id="circles" className="space-y-3 scroll-mt-20">

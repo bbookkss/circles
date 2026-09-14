@@ -20,11 +20,20 @@ export default async function ProfilePage() {
     { data: memberships },
     { count: followerCount },
     { count: followingCount },
+    { data: reliability },
   ] = await Promise.all([
     supabase.from('circle_members').select('circle_id, role').eq('user_id', user.id),
     supabase.from('follows').select('*', { count: 'exact', head: true }).eq('following_id', user.id),
     supabase.from('follows').select('*', { count: 'exact', head: true }).eq('follower_id', user.id),
+    // Aggregate only, and deliberately so: two integers say how reliable
+    // somebody is without saying which circles they go to.
+    supabase.rpc('reliability', { uids: [user.id] }),
   ])
+
+  // Under three confirmed meets a ratio is noise and an unlucky first week
+  // would follow someone around. Below the bar, say nothing.
+  const rel = ((reliability ?? []) as { committed: number; attended: number }[])[0]
+  const showsUp = rel && rel.committed >= 3 ? rel : null
 
   const circleIds = memberships?.map((m) => m.circle_id) ?? []
   const { data: circles } = circleIds.length > 0
@@ -79,6 +88,15 @@ export default async function ProfilePage() {
               <p className="text-muted-foreground">Circles</p>
             </a>
           </div>
+
+          {showsUp && (
+            <p className="text-sm">
+              <span className="font-display font-semibold text-pen">
+                Shows up {showsUp.attended} of {showsUp.committed}
+              </span>
+              <span className="text-foreground/70"> meets you said yes to.</span>
+            </p>
+          )}
 
           {/* Circles */}
           <div id="circles" className="space-y-3 scroll-mt-20">

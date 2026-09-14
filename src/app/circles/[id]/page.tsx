@@ -17,6 +17,7 @@ import CheckInControl from '@/components/CheckInControl'
 import { relativeDayLabel, dayNameISO, checkInWindow } from '@/lib/schedule'
 import MeetZone from '@/components/MeetZone'
 import DistanceFromYou from '@/components/DistanceFromYou'
+import AttendanceRegister from '@/components/AttendanceRegister'
 
 const DAY_LONG = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 
@@ -25,6 +26,13 @@ function formatTime(t: string) {
   const ampm = h >= 12 ? 'pm' : 'am'
   const hour = h % 12 || 12
   return m === 0 ? `${hour}${ampm}` : `${hour}:${String(m).padStart(2, '0')}${ampm}`
+}
+
+/** "Saturday 13 Sep". Noon UTC so a date-only value cannot slip a day. */
+function longDateISO(iso: string): string {
+  return new Date(`${iso}T12:00:00Z`).toLocaleDateString('en-US', {
+    weekday: 'long', day: 'numeric', month: 'short', timeZone: 'UTC',
+  })
 }
 
 function listJoin(xs: string[]) {
@@ -392,6 +400,46 @@ export default async function CirclePage({
     return rank(statusOf[a.user_id]) - rank(statusOf[b.user_id]) || a.full_name.localeCompare(b.full_name)
   })
 
+  // ---------------------------------------------------------------------
+  // Did they show?
+  //
+  // Two halves. The register for the meet that just finished, so there is
+  // something to count, and the ratio beside each name, so "5 going" stops
+  // being a number and starts being a claim you can weigh.
+  // ---------------------------------------------------------------------
+  const { data: lastMeetDate } = await supabase.rpc('circle_last_meet', { cid: id })
+  const lastMeet: string | null = lastMeetDate ?? null
+
+  const [{ data: lastCheckIns }, { data: lastAttendance }, { data: reliabilityRows }] = await Promise.all([
+    lastMeet
+      ? supabase.from('circle_check_ins').select('user_id, status').eq('circle_id', id).eq('occurs_on', lastMeet).eq('status', 'yes')
+      : Promise.resolve({ data: [] as { user_id: string; status: string }[] }),
+    lastMeet
+      ? supabase.from('circle_attendance').select('user_id, attended').eq('circle_id', id).eq('occurs_on', lastMeet)
+      : Promise.resolve({ data: [] as { user_id: string; attended: boolean }[] }),
+    memberUserIds.length > 0
+      ? supabase.rpc('reliability', { uids: memberUserIds })
+      : Promise.resolve({ data: [] as { user_id: string; committed: number; attended: number }[] }),
+  ])
+
+  const attendanceMap = Object.fromEntries((lastAttendance ?? []).map((a) => [a.user_id, a.attended]))
+  const register = (lastCheckIns ?? []).map((c) => ({
+    user_id: c.user_id,
+    full_name: profileMap[c.user_id] ?? 'Member',
+    attended: (attendanceMap[c.user_id] ?? null) as boolean | null,
+  }))
+  // Filed means every person who said yes has been accounted for either way.
+  const registerFiled = register.length > 0 && register.every((p) => p.attended !== null)
+
+  // Under three confirmed meets a ratio is noise, and an unlucky first week
+  // would follow someone around. Below the bar, say nothing.
+  const RELIABILITY_MIN = 3
+  const rateOf: Record<string, { committed: number; attended: number }> = Object.fromEntries(
+    ((reliabilityRows ?? []) as { user_id: string; committed: number; attended: number }[])
+      .filter((r) => r.committed >= RELIABILITY_MIN)
+      .map((r) => [r.user_id, { committed: r.committed, attended: r.attended }])
+  )
+
   return (
     <>
       <TopNav />
@@ -507,6 +555,20 @@ export default async function CirclePage({
                 </div>
               )}
 
+              {/* The register for the meet that just finished. Members only,
+                  and only while there is something to count. */}
+              {isMember && lastMeet && register.length > 0 && (
+                <div className="fade-rise">
+                  <AttendanceRegister
+                    circleId={id}
+                    occursOn={lastMeet}
+                    dateLabel={longDateISO(lastMeet)}
+                    people={register}
+                    alreadyFiled={registerFiled}
+                  />
+                </div>
+              )}
+
               {/* Who's coming, then everyone else */}
               {(isMember || !isPrivate) && members.length > 0 && (
                 <div className="fade-rise stagger-1">
@@ -517,13 +579,24 @@ export default async function CirclePage({
                       return (
                         <li key={m.user_id} className="flex items-center gap-3 py-2.5">
                           <Initials name={m.full_name} size="sm" />
-                          <Link
-                            href={m.isMe ? '/profile' : `/profile/${m.user_id}`}
-                            className="text-sm flex-1 min-w-0 truncate hover:underline underline-offset-4 decoration-pen-soft"
-                          >
-                            {m.full_name}
-                            {m.role === 'admin' && <span className="font-display italic text-muted-foreground ml-2">admin</span>}
-                          </Link>
+                          <span className="flex-1 min-w-0">
+                            <Link
+                              href={m.isMe ? '/profile' : `/profile/${m.user_id}`}
+                              className="text-sm block truncate hover:underline underline-offset-4 decoration-pen-soft"
+                            >
+                              {m.full_name}
+                              {m.role === 'admin' && <span className="font-display italic text-muted-foreground ml-2">admin</span>}
+                            </Link>
+                            {/* The point of the whole register: a yes from
+                                somebody who turns up 11 times out of 12 is
+                                worth more than a yes from somebody who does
+                                not, and until now they looked identical. */}
+                            {rateOf[m.user_id] && (
+                              <span className="label" title="Meets they said yes to, and turned up for">
+                                shows up {rateOf[m.user_id].attended} of {rateOf[m.user_id].committed}
+                              </span>
+                            )}
+                          </span>
                           {nextMeet && st && (
                             <span className={`label ${st === 'yes' ? 'text-pen' : ''}`}>
                               {st === 'yes' ? 'going' : st === 'maybe' ? 'maybe' : "can't"}

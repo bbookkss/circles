@@ -35,6 +35,27 @@ works fine from this machine.
 
 ## Blocking — do before anyone real signs up
 
+- [ ] **Run `supabase/attendance-2026-09-14.sql`.** The reliability record:
+      who actually showed, and "shows up 11 of 12" on a profile. Answers the
+      question Doug Hirsch asked and the product could not, which is how a
+      newcomer knows the people who said yes will turn up.
+
+      Rehearsed against production in a rolled-back transaction, eight
+      assertions, all passing. The rehearsal is checked in as
+      `supabase/attendance-2026-09-14.rehearsal.sql` and builds its own
+      fixture, so it can be re-run any time.
+
+      One thing the post-conditions caught and is worth remembering: Supabase's
+      default privileges hand `anon` and `authenticated` full DML on every new
+      table in `public`, so `create table` alone left `circle_attendance`
+      writable by anybody. It is explicitly revoked now, and the migration
+      fails if that is ever lost. A table where people can write their own
+      attendance record is worth nothing.
+
+      The app code for this is already deployed and degrades quietly until the
+      migration runs: the register does not appear and no ratios show.
+
+
 - [x] **AUDIT 2026-09-13: two confirmed breaks, FIXED. `security-fixes-2026-09-13.sql` applied; all 9 admin-keyed policies, the approval RPC and the visibility check confirmed live.** Original notes kept below for the record. Four pilot users signed up the same
       evening and one created a private circle, so both are live risks.
 
