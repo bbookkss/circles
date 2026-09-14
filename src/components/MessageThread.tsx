@@ -104,7 +104,7 @@ export default function MessageThread({ meId, otherUserId, otherName, initialMes
             </form>
           ) : (
             <p className="text-xs text-muted-foreground text-center py-2">
-              You can only message people who follow you back.
+              Follow {otherName} to send a message.
             </p>
           )}
           {error && <p className="text-xs text-destructive mt-1 text-center">{error}</p>}

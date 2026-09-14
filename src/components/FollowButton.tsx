@@ -5,7 +5,8 @@ import { followUser, unfollowUser } from '@/app/actions/follows'
 
 type Props = {
   targetId: string
-  circleId: string
+  /** Only for revalidating a circle page the button sits on. Optional elsewhere. */
+  circleId?: string
   initialIsFollowing: boolean
 }
 
@@ -17,7 +18,7 @@ export default function FollowButton({ targetId, circleId, initialIsFollowing }:
     setLoading(true)
     const formData = new FormData()
     formData.set('following_id', targetId)
-    formData.set('circle_id', circleId)
+    if (circleId) formData.set('circle_id', circleId)
 
     if (isFollowing) {
       setIsFollowing(false)

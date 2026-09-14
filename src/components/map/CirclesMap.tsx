@@ -47,6 +47,13 @@ type Props = {
     canShowAll: boolean
     areaName: string | null
   }) => ReactNode
+  /**
+   * A circle to fly to. Changing it moves the map; the same value twice does
+   * nothing, so a list that re-renders does not keep yanking the view. Set by
+   * the explore list so tapping a row shows where it is, which pilot users
+   * assumed it already did.
+   */
+  focus?: CirclePin | null
 }
 
 export default function CirclesMap({
@@ -54,6 +61,7 @@ export default function CirclesMap({
   onCircleClick,
   initialView = SF_VIEW,
   emptyOverlay,
+  focus = null,
 }: Props) {
   // Both live in state rather than refs: the overlay is handed a helper that
   // closes over the map, and "is anything visible" is derived during render.
@@ -61,6 +69,9 @@ export default function CirclesMap({
   const [bounds, setBounds] = useState<LngLatBounds | null>(null)
   const [popupCircle, setPopupCircle] = useState<CirclePin | null>(null)
   const [areaName, setAreaName] = useState<string | null>(null)
+  // The locate button fails silently by default: the icon just stops
+  // spinning. Pilot users read that as "doesn't work". Keep the reason.
+  const [locateError, setLocateError] = useState<string | null>(null)
 
   const handleMarkerClick = useCallback((circle: CirclePin) => {
     setPopupCircle(circle)
@@ -138,6 +149,20 @@ export default function CirclesMap({
     )
   }, [circles, map])
 
+  // Fly to whatever the caller focused. Never zoom *out* to do it: someone
+  // already zoomed in on a neighbourhood should not be pulled back to city
+  // level because they tapped a row.
+  useEffect(() => {
+    if (!map || !focus) return
+    map.flyTo({
+      center: [focus.longitude, focus.latitude],
+      zoom: Math.max(map.getZoom(), 13),
+      duration: 900,
+      essential: true,
+    })
+    // Only the identity matters; the same circle re-selected should not move.
+  }, [map, focus?.id]) // eslint-disable-line react-hooks/exhaustive-deps
+
   return (
     <Map
       initialViewState={initialView}
@@ -152,7 +177,31 @@ export default function CirclesMap({
       onMoveEnd={(e) => setBounds(e.target.getBounds())}
     >
       <NavigationControl position="top-right" />
-      <GeolocateControl position="top-right" trackUserLocation showUserHeading />
+      <GeolocateControl
+        position="top-right"
+        trackUserLocation
+        showUserHeading
+        positionOptions={{ enableHighAccuracy: true, timeout: 10000 }}
+        onGeolocate={() => setLocateError(null)}
+        onError={(e) => {
+          // PERMISSION_DENIED is 1, POSITION_UNAVAILABLE 2, TIMEOUT 3. The
+          // first is by far the common one on phones, and the fix is in the
+          // browser's site settings, not in this app, so say so.
+          setLocateError(
+            e.code === 1
+              ? 'Location is blocked for this site. Allow it in your browser settings, then try again.'
+              : e.code === 3
+                ? 'Could not get a fix in time. Try again outdoors or with Wi-Fi on.'
+                : 'Your device could not report a location.'
+          )
+        }}
+      />
+      {locateError && (
+        <div className="absolute top-3 left-3 right-16 md:left-auto md:right-14 md:max-w-xs z-10 bg-background/95 backdrop-blur border rounded-lg px-3 py-2 text-xs shadow-lg flex items-start gap-2">
+          <span className="flex-1">{locateError}</span>
+          <button type="button" onClick={() => setLocateError(null)} className="text-muted-foreground hover:text-foreground" aria-label="Dismiss">×</button>
+        </div>
+      )}
 
       {circles.map((circle) => (
         <Marker

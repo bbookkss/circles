@@ -64,24 +64,25 @@ export default async function ProfilePage() {
             </div>
           </div>
 
-          {/* Follower / following counts */}
+          {/* Follower / following counts. Links, because a number you cannot
+              open is a number you have to take on faith. */}
           <div className="flex gap-6 text-sm">
-            <div className="text-center">
+            <Link href={`/profile/${user.id}/followers`} className="text-center hover:underline underline-offset-4">
               <p className="font-bold text-lg">{followerCount ?? 0}</p>
               <p className="text-muted-foreground">Followers</p>
-            </div>
-            <div className="text-center">
+            </Link>
+            <Link href={`/profile/${user.id}/following`} className="text-center hover:underline underline-offset-4">
               <p className="font-bold text-lg">{followingCount ?? 0}</p>
               <p className="text-muted-foreground">Following</p>
-            </div>
-            <div className="text-center">
+            </Link>
+            <a href="#circles" className="text-center hover:underline underline-offset-4">
               <p className="font-bold text-lg">{circles?.length ?? 0}</p>
               <p className="text-muted-foreground">Circles</p>
-            </div>
+            </a>
           </div>
 
           {/* Circles */}
-          <div className="space-y-3">
+          <div id="circles" className="space-y-3 scroll-mt-20">
             <p className="text-sm font-semibold">Your circles</p>
             {circles && circles.length > 0 ? (
               <ul className="space-y-2">

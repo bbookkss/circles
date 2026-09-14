@@ -48,7 +48,11 @@ export default async function UserProfilePage({ params }: { params: Promise<{ id
     : { data: [] }
 
   const isFollowing = !!followRow
-  const canMessage = !!followRow && !!followsMeRow
+  // Following someone is enough to message them. Mutual follow was the old
+  // rule; pilot users found it and could not work out why Message was
+  // missing. The policy in dm-follow-2026-09-13.sql matches this.
+  const canMessage = !!followRow
+  void followsMeRow
 
   const initials = profile.full_name
     ? profile.full_name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
@@ -96,22 +100,22 @@ export default async function UserProfilePage({ params }: { params: Promise<{ id
 
           {/* Stats */}
           <div className="flex gap-6 text-sm">
-            <div className="text-center">
+            <Link href={`/profile/${id}/followers`} className="text-center hover:underline underline-offset-4">
               <p className="font-bold text-lg">{followerCount ?? 0}</p>
               <p className="text-muted-foreground">Followers</p>
-            </div>
-            <div className="text-center">
+            </Link>
+            <Link href={`/profile/${id}/following`} className="text-center hover:underline underline-offset-4">
               <p className="font-bold text-lg">{followingCount ?? 0}</p>
               <p className="text-muted-foreground">Following</p>
-            </div>
-            <div className="text-center">
+            </Link>
+            <a href="#circles" className="text-center hover:underline underline-offset-4">
               <p className="font-bold text-lg">{circles?.length ?? 0}</p>
               <p className="text-muted-foreground">Circles</p>
-            </div>
+            </a>
           </div>
 
           {/* Public circles */}
-          <div className="space-y-3">
+          <div id="circles" className="space-y-3 scroll-mt-20">
             <p className="text-sm font-semibold">Circles</p>
             {circles && circles.length > 0 ? (
               <ul className="space-y-2">

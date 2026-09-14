@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import Map, { Marker } from 'react-map-gl/mapbox'
+import Map, { Marker, NavigationControl, GeolocateControl } from 'react-map-gl/mapbox'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import { updateCircle } from '@/app/actions/circles'
 import { Button } from '@/components/ui/button'
@@ -329,6 +329,12 @@ export default function EditCircleClient({ circle, schedule }: { circle: Circle;
           onLoad={(e) => applyCoffeeTheme(e.target)}
           onClick={(e) => handleMapClick(e.lngLat.lng, e.lngLat.lat)}
         >
+          <NavigationControl position="top-right" showCompass={false} />
+          <GeolocateControl
+            position="top-right"
+            positionOptions={{ enableHighAccuracy: true, timeout: 10000 }}
+            fitBoundsOptions={{ zoom: 15 }}
+          />
           {pin && (
             <Marker longitude={pin.longitude} latitude={pin.latitude} anchor="center">
               <div className="flex items-center justify-center w-10 h-10 rounded-full shadow-lg border-2 border-white bg-white text-2xl">

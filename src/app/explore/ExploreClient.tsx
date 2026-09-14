@@ -331,7 +331,13 @@ export default function ExploreClient({ circles, people, initialView }: Props) {
               {filtered.map((circle) => (
                 <li key={circle.id}>
                   <button
-                    onClick={() => setSelected(circle)}
+                    onClick={() => {
+                      setSelected(circle)
+                      // On a phone the list and the map are separate screens,
+                      // so flying the map somewhere the person cannot see is
+                      // the same as doing nothing. Show it.
+                      setMobileView('map')
+                    }}
                     className={`w-full text-left px-4 py-3 border-b hover:bg-muted transition-colors ${
                       selected?.id === circle.id ? 'bg-muted' : ''
                     }`}
@@ -370,6 +376,7 @@ export default function ExploreClient({ circles, people, initialView }: Props) {
         <CirclesMap
           circles={filtered}
           onCircleClick={setSelected}
+          focus={selected}
           initialView={initialView}
           // Suppressed while filtering: an empty view is then the filters
           // doing their job, not an area with nothing in it.

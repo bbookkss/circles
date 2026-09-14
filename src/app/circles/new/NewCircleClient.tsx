@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import Map, { Marker } from 'react-map-gl/mapbox'
+import Map, { Marker, NavigationControl, GeolocateControl } from 'react-map-gl/mapbox'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import { createCircle } from '@/app/actions/circles'
 import { Button } from '@/components/ui/button'
@@ -404,6 +404,16 @@ export default function NewCircleClient({
           onLoad={(e) => applyCoffeeTheme(e.target)}
           onClick={(e) => handleMapClick(e.lngLat.lng, e.lngLat.lat)}
         >
+          {/* The explore map had a locate button; this one did not, and this
+              is the page where "where am I" matters most. Locating only moves
+              the view: the pin is still placed by tapping, since a phone's
+              fix can be a block off and the meeting spot should be exact. */}
+          <NavigationControl position="top-right" showCompass={false} />
+          <GeolocateControl
+            position="top-right"
+            positionOptions={{ enableHighAccuracy: true, timeout: 10000 }}
+            fitBoundsOptions={{ zoom: 15 }}
+          />
           {pin && (
             <Marker longitude={pin.longitude} latitude={pin.latitude} anchor="center">
               <div className={`flex items-center justify-center w-10 h-10 rounded-full shadow-lg border-2 border-white ${selectedEmoji ? 'bg-white text-2xl' : 'bg-white text-lg'}`}>

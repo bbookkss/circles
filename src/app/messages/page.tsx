@@ -49,8 +49,19 @@ export default async function MessagesPage() {
   const convs = [...convMap.values()]
 
   const otherIds = convs.map((c) => c.otherId)
-  const { data: profiles } = otherIds.length > 0
-    ? await supabase.from('profiles').select('id, full_name').in('id', otherIds)
+
+  // People you follow are the people you can message. Fetched here so the
+  // page can offer a "start a conversation" list instead of a dead end: the
+  // only way to open a thread before this was to find the person's profile
+  // and hope the Message button was there.
+  const { data: followRows } = await supabase
+    .from('follows').select('following_id').eq('follower_id', user.id)
+  const followingIds = (followRows ?? []).map((f) => f.following_id)
+  const startable = followingIds.filter((fid) => !convMap.has(fid))
+
+  const profileIds = [...new Set([...otherIds, ...followingIds])]
+  const { data: profiles } = profileIds.length > 0
+    ? await supabase.from('profiles').select('id, full_name').in('id', profileIds)
     : { data: [] as { id: string; full_name: string }[] }
   const nameMap = Object.fromEntries((profiles ?? []).map((p) => [p.id, p.full_name]))
 
@@ -58,13 +69,18 @@ export default async function MessagesPage() {
     <>
       <TopNav />
       <main className="pt-14 min-h-screen bg-background">
-        <div className="max-w-2xl mx-auto px-6 py-10">
+        <div className="max-w-2xl mx-auto px-6 py-10 space-y-10">
+          <div>
           <h1 className="text-2xl font-bold lowercase mb-6">messages</h1>
 
           {convs.length === 0 ? (
             <div className="border-t border-b py-12 text-center space-y-2">
               <p className="text-sm text-muted-foreground">No messages yet.</p>
-              <p className="text-xs text-muted-foreground">You can DM people who follow you back.</p>
+              <p className="text-xs text-muted-foreground">
+                {startable.length > 0
+                  ? 'Start one with someone you follow, below.'
+                  : 'Follow someone to message them.'}
+              </p>
             </div>
           ) : (
             <div className="divide-y divide-border border-t border-b">
@@ -86,6 +102,34 @@ export default async function MessagesPage() {
                   </Link>
                 )
               })}
+            </div>
+          )}
+          </div>
+
+          {startable.length > 0 && (
+            <div>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-3">
+                Start a conversation
+              </p>
+              <ul className="divide-y divide-border border-t border-b">
+                {startable.map((fid) => {
+                  const name = nameMap[fid] ?? 'Someone'
+                  return (
+                    <li key={fid} className="flex items-center gap-3 py-3">
+                      <div className="w-9 h-9 rounded-full bg-muted flex items-center justify-center text-xs font-semibold flex-shrink-0">
+                        {initialsOf(name)}
+                      </div>
+                      <p className="flex-1 min-w-0 text-sm font-medium truncate">{name}</p>
+                      <Link
+                        href={`/messages/${fid}`}
+                        className="text-xs border rounded-full px-3 py-1.5 hover:bg-muted transition-colors"
+                      >
+                        Message
+                      </Link>
+                    </li>
+                  )
+                })}
+              </ul>
             </div>
           )}
         </div>

@@ -215,6 +215,26 @@ works fine from this machine.
       returns zero rows, so the phantom weekly meet is genuinely gone rather
       than merely unreferenced.
 
+- [ ] **Run `supabase/dm-follow-2026-09-13.sql`** after the security fixes.
+      Pilot request: DMs to anyone you follow, not only mutual follows. The
+      app's `canMessage` checks, the Message button on profiles, the new
+      "Start a conversation" list on /messages and the error copy all assume
+      the new policy; until it is applied, sends to non-mutual follows are
+      refused with the follow-first message. Trade-off, deliberately taken:
+      a stranger can follow you and message you. Mitigation is block, which
+      does not exist yet.
+
+- [ ] **Pilot feedback 2026-09-13, shipped:** followers / following /
+      circles counts open lists (`/profile/[id]/followers|following`,
+      `#circles`); explore list rows fly the map to the pin and switch a
+      phone to the map view; locate button added to the create and edit
+      maps, and the explore one now reports *why* it failed (permission
+      denied is the usual answer on phones) instead of just stopping.
+
+- [ ] **Pilot feedback, open: "text overlap on mobile".** Screenshot is in
+      iMessage and unreadable from here (macOS blocks the attachments dir).
+      Needs the image pasted into chat to identify the page.
+
 ## Environment
 
 - [ ] **`SUPABASE_SERVICE_ROLE_KEY` in `.env.local`.** Username sign-in

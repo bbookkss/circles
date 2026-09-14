@@ -31,7 +31,9 @@ export default async function MessageThreadPage({ params }: { params: Promise<{ 
       .limit(200),
   ])
 
-  const canMessage = !!iFollow && !!followsMe
+  // Following is enough; see dm-follow-2026-09-13.sql for the policy and why.
+  const canMessage = !!iFollow
+  void followsMe
 
   return (
     <>
