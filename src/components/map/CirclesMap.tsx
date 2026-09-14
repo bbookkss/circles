@@ -2,7 +2,8 @@
 
 import { useState, useCallback, useEffect } from 'react'
 import type { ReactNode } from 'react'
-import Map, { Marker, Popup, NavigationControl, GeolocateControl } from 'react-map-gl/mapbox'
+import Link from 'next/link'
+import Map, { Marker, NavigationControl, GeolocateControl } from 'react-map-gl/mapbox'
 import type { Map as MapboxMap, LngLatBounds } from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import { applyCoffeeTheme } from '@/lib/mapTheme'
@@ -81,7 +82,8 @@ export default function CirclesMap({
   const [locateError, setLocateError] = useState<string | null>(null)
 
   const handleMarkerClick = useCallback((circle: CirclePin) => {
-    setPopupCircle(circle)
+    // Second tap on the open tag folds it; a tap on another one swaps.
+    setPopupCircle((prev) => (prev?.id === circle.id ? null : circle))
     onCircleClick?.(circle)
   }, [onCircleClick])
 
@@ -161,6 +163,9 @@ export default function CirclesMap({
   // level because they tapped a row.
   useEffect(() => {
     if (!map || !focus) return
+    // Arriving from the list opens the tag too, so the fly-to lands on
+    // something readable rather than a pin you then have to tap.
+    setPopupCircle(focus)
     map.flyTo({
       center: [focus.longitude, focus.latitude],
       zoom: Math.max(map.getZoom(), 13),
@@ -182,6 +187,8 @@ export default function CirclesMap({
         setBounds(e.target.getBounds())
       }}
       onMoveEnd={(e) => setBounds(e.target.getBounds())}
+      // Tapping the map itself folds the open tag back up.
+      onClick={() => setPopupCircle(null)}
     >
       <NavigationControl position="top-right" />
       <GeolocateControl
@@ -233,60 +240,78 @@ export default function CirclesMap({
               className="pointer-events-none absolute left-1/2 bottom-0 -translate-x-1/2 translate-y-1/2 w-20 h-20 rounded-full bg-pen/10 ring-1 ring-pen/30"
             />
           )}
-          <span className="relative flex flex-col items-center cursor-pointer group">
-            <button
-              title={
-                circle.approximate
-                  ? `${circle.name} · approximate area`
-                  : circle.kind === 'commercial'
-                    ? `${circle.name} · business`
-                    : circle.name
-              }
-              className={`font-display font-semibold text-[13px] leading-none whitespace-nowrap max-w-[240px] truncate rounded-full px-2.5 py-1.5 bg-background border shadow-[0_1px_3px_rgba(34,31,27,0.25)] transition-transform group-hover:-translate-y-0.5 ${
-                circle.approximate
-                  ? 'border-pen text-pen'
-                  : circle.kind === 'commercial'
-                    ? 'border-foreground ring-1 ring-foreground/30 text-foreground'
-                    : 'border-foreground text-foreground'
-              }`}
-            >
-              {circle.emoji ? `${circle.emoji} ` : ''}{circle.name}
-            </button>
-            <span aria-hidden className={`w-px h-2 ${circle.approximate ? 'bg-pen' : 'bg-foreground'}`} />
-          </span>
+          {/* The tag is the card. Tapping it does not swap it for a different
+              popup; it grows downward, same paper, same ink edge, to show a
+              line or two, then an Open link. The grid-rows trick animates
+              height without knowing it in advance. Deselected, it folds back
+              into a tag. */}
+          {(() => {
+            const open = popupCircle?.id === circle.id
+            const edge = circle.approximate
+              ? 'border-pen text-pen'
+              : circle.kind === 'commercial'
+                ? 'border-foreground ring-1 ring-foreground/30 text-foreground'
+                : 'border-foreground text-foreground'
+            return (
+              <span className={`relative flex flex-col items-center cursor-pointer group ${open ? 'z-20' : ''}`}>
+                <div
+                  className={`bg-background border shadow-[0_1px_3px_rgba(34,31,27,0.25)] transition-[border-radius,transform] duration-300 ease-out ${edge} ${
+                    open ? 'rounded-2xl w-[240px]' : 'rounded-full group-hover:-translate-y-0.5'
+                  }`}
+                >
+                  <button
+                    type="button"
+                    title={
+                      circle.approximate
+                        ? `${circle.name} · approximate area`
+                        : circle.kind === 'commercial'
+                          ? `${circle.name} · business`
+                          : circle.name
+                    }
+                    className={`block w-full text-left font-display font-semibold leading-none whitespace-nowrap truncate px-2.5 py-1.5 transition-[font-size] duration-300 ${
+                      open ? 'text-[15px] px-3.5 pt-3 pb-1' : 'text-[13px] max-w-[240px]'
+                    }`}
+                  >
+                    {circle.emoji ? `${circle.emoji} ` : ''}{circle.name}
+                  </button>
+                  <div
+                    className={`grid transition-[grid-template-rows,opacity] duration-300 ease-out ${
+                      open ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+                    }`}
+                  >
+                    <div className="overflow-hidden">
+                      <div className="px-3.5 pb-3 space-y-1.5 text-foreground">
+                        {(circle.category || circle.kind === 'commercial') && (
+                          <p className="font-display italic text-sm text-pen leading-tight">
+                            {[circle.category, circle.kind === 'commercial' ? 'business' : null].filter(Boolean).join(' · ')}
+                          </p>
+                        )}
+                        {circle.description && (
+                          <p className="text-xs leading-snug text-foreground/80 line-clamp-2">{circle.description}</p>
+                        )}
+                        <div className="flex items-center justify-between gap-2 pt-1">
+                          <span className="label">
+                            {circle.memberCount !== undefined ? `${circle.memberCount} member${circle.memberCount !== 1 ? 's' : ''}` : ''}
+                            {circle.approximate ? (circle.memberCount !== undefined ? ' · ' : '') + 'approx. area' : ''}
+                          </span>
+                          <Link
+                            href={`/circles/${circle.id}`}
+                            onClick={(e) => e.stopPropagation()}
+                            className="font-sans font-medium text-xs rounded-full border border-foreground px-3 py-1 hover:bg-pen hover:border-pen hover:text-white transition-colors"
+                          >
+                            Open
+                          </Link>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <span aria-hidden className={`w-px h-2 ${circle.approximate ? 'bg-pen' : 'bg-foreground'}`} />
+              </span>
+            )
+          })()}
         </Marker>
       ))}
-
-      {popupCircle && (
-        <Popup
-          longitude={popupCircle.longitude}
-          latitude={popupCircle.latitude}
-          anchor="bottom"
-          onClose={() => setPopupCircle(null)}
-          closeOnClick={false}
-        >
-          <div className="p-1 min-w-[160px]">
-            <p className="font-display font-semibold text-base leading-tight">
-              {popupCircle.emoji && <span className="mr-1">{popupCircle.emoji}</span>}
-              {popupCircle.name}
-            </p>
-            <div className="flex items-center gap-1.5 mt-0.5">
-              {popupCircle.category && (
-                <span className="font-display italic text-xs text-pen">{popupCircle.category}</span>
-              )}
-              {popupCircle.kind === 'commercial' && (
-                <span className="label">business</span>
-              )}
-            </div>
-            {popupCircle.description && (
-              <p className="text-xs mt-1 text-foreground/80 line-clamp-2">{popupCircle.description}</p>
-            )}
-            {popupCircle.memberCount !== undefined && (
-              <p className="text-xs text-muted-foreground mt-1">{popupCircle.memberCount} members</p>
-            )}
-          </div>
-        </Popup>
-      )}
 
       {/* Bottom, not centre: dead centre is exactly where someone is looking
           and dragging, so it covered the map and followed them around. */}

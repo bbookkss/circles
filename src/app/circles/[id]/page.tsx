@@ -1,6 +1,8 @@
 import { notFound } from 'next/navigation'
+import { headers } from 'next/headers'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
+import { geoFromHeaders, distanceKm } from '@/lib/mapView'
 import { Button } from '@/components/ui/button'
 import { joinCircle, leaveCircle, requestToJoin, withdrawRequest } from '@/app/actions/circles'
 import TopNav from '@/components/TopNav'
@@ -117,6 +119,19 @@ export default async function CirclePage({
   const creatorFirst = creator?.full_name?.split(' ')[0] ?? null
   const count = memberCount ?? 0
 
+  // "about 2.3 mi from you", from the IP's city-level guess. Members get it
+  // against the real point; everyone else against the blurred area, which is
+  // why it always says "about": the number is honest to roughly half a mile
+  // either way, and the blur is the reason for the second half of that.
+  const h = await headers()
+  const geo = geoFromHeaders((name) => h.get(name))
+  const fromYou = (lat: number, lng: number): string | null => {
+    if (!geo) return null
+    const mi = distanceKm(geo, { latitude: lat, longitude: lng }) * 0.621371
+    const n = mi < 0.1 ? 'under a tenth of a mile' : mi < 10 ? `${mi.toFixed(1)} mi` : `${Math.round(mi)} mi`
+    return `about ${n} from you`
+  }
+
   // Unauthenticated, or signed in without access — show preview card
   if (!user || isPreviewOnly) {
     // Nobody on this branch is a member, so the location is always coarse.
@@ -177,7 +192,8 @@ export default async function CirclePage({
                   />
                 </div>
                 <p className="label mt-2 normal-case tracking-normal">
-                  {(circle.neighborhood || circle.location) ? `${circle.neighborhood ?? circle.location} · ` : ''}exact spot shown to members
+                  {[circle.neighborhood ?? circle.location, fromYou(previewArea!.latitude, previewArea!.longitude), 'exact spot shown to members']
+                    .filter(Boolean).join(' · ')}
                 </p>
               </div>
             )}
@@ -591,8 +607,11 @@ export default async function CirclePage({
                     )}
                   </div>
                   <p className="label mt-2 normal-case tracking-normal">
-                    {(circle.neighborhood || circle.location) ? `${circle.neighborhood ?? circle.location}` : ''}
-                    {!isMember && `${(circle.neighborhood || circle.location) ? ' · ' : ''}exact spot shown to members`}
+                    {[
+                      circle.neighborhood ?? circle.location,
+                      isMember ? fromYou(circle.latitude, circle.longitude) : fromYou(area!.latitude, area!.longitude),
+                      isMember ? null : 'exact spot shown to members',
+                    ].filter(Boolean).join(' · ')}
                   </p>
                 </div>
               )}

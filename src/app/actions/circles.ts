@@ -43,6 +43,26 @@ export async function createCircle(formData: FormData) {
 
   if (!name.trim()) return { error: 'Name is required' }
 
+  // A circle is a place and a time. Without a pin it is not on the map;
+  // without a schedule there is no next meet, no check-in, no reminder and
+  // nothing on anyone's Home. Three of the first four pilot circles were
+  // created that way, so the form now refuses rather than shrugging.
+  if (isNaN(latitude) || isNaN(longitude)) {
+    return { error: 'Drop a pin on the map so people can find it.' }
+  }
+  const days = formData.getAll('days_of_week').map(Number).filter((d) => !isNaN(d))
+  const start_time = formData.get('start_time') as string
+  const end_time = formData.get('end_time') as string
+  if (days.length === 0) return { error: 'Pick at least one day it meets.' }
+  if (!start_time || !end_time) return { error: 'Set a start and end time.' }
+  if (end_time <= start_time && end_time !== '00:00') {
+    // Same-day ranges only, except a meet that runs past midnight, which the
+    // schedule maths already handles. "11pm to 2am" is fine; "2pm to 1pm" is not.
+    const [sh] = start_time.split(':').map(Number)
+    const [eh] = end_time.split(':').map(Number)
+    if (!(sh >= 18 && eh <= 6)) return { error: 'End time must be after start time.' }
+  }
+
   const { data, error } = await supabase
     .from('circles')
     .insert({
@@ -72,14 +92,11 @@ export async function createCircle(formData: FormData) {
     role: 'admin',
   })
 
-  // Save schedule if provided
-  const days = formData.getAll('days_of_week').map(Number).filter((d) => !isNaN(d))
-  const start_time = formData.get('start_time') as string
-  const end_time = formData.get('end_time') as string
+  // Save the schedule. Validated above, so this always runs.
   const frequency = formData.get('frequency') as string
   const schedule_note = formData.get('schedule_note') as string
 
-  if (days.length > 0 && start_time && end_time) {
+  {
     // Anchors the recurrence. Without it 'biweekly' has no meaning — nothing
     // says which week is the on week. Defaults to today if the form omits it.
     const starts_on = (formData.get('starts_on') as string)?.trim() || null

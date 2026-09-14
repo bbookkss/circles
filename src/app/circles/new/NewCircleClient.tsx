@@ -67,7 +67,9 @@ export default function NewCircleClient({
   const [city, setCity] = useState<string | null>(null)
   const [geocoding, setGeocoding] = useState(false)
   const [selectedDays, setSelectedDays] = useState<number[]>([])
-  const [hasSchedule, setHasSchedule] = useState(false)
+  // Always on. A circle without a schedule has no next meet, no check-in and
+  // nothing on Home; the server refuses one now, so the form does not offer it.
+  const [hasSchedule] = useState(true)
   const [selectedEmoji, setSelectedEmoji] = useState<string | null>(null)
   const [visibility, setVisibility] = useState<'public' | 'private'>('public')
   const [error, setError] = useState<string | null>(null)
@@ -207,7 +209,7 @@ export default function NewCircleClient({
           </div>
 
           <div className="space-y-1">
-            <Label>Pin</Label>
+            <Label>Pin *</Label>
             {pin ? (
               <div className="text-xs text-muted-foreground space-y-0.5">
                 <p>
@@ -292,15 +294,9 @@ export default function NewCircleClient({
 
           {/* Schedule section */}
           <div className="border-t pt-4 space-y-4">
-            <div className="flex items-center justify-between">
-              <Label>Recurring schedule</Label>
-              <button
-                type="button"
-                onClick={() => setHasSchedule((v) => !v)}
-                className="text-xs underline text-muted-foreground"
-              >
-                {hasSchedule ? 'Remove' : '+ Add'}
-              </button>
+            <div className="flex items-baseline justify-between">
+              <Label>When it meets *</Label>
+              <span className="label normal-case tracking-normal">every circle has a schedule</span>
             </div>
 
             {hasSchedule && (
@@ -385,7 +381,12 @@ export default function NewCircleClient({
             )}
           </div>
 
-          <Button type="submit" className="w-full" disabled={loading}>
+          {(!pin || selectedDays.length === 0) && (
+            <p className="label normal-case tracking-normal">
+              {!pin ? 'Drop a pin on the map to continue.' : 'Pick at least one day it meets.'}
+            </p>
+          )}
+          <Button type="submit" className="w-full" disabled={loading || !pin || selectedDays.length === 0}>
             {loading ? 'Creating...' : 'Create Circle'}
           </Button>
         </form>
