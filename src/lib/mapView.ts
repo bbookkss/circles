@@ -28,34 +28,44 @@ export function distanceKm(
   return 2 * R * Math.asin(Math.sqrt(h))
 }
 
-/** Middle value, or the lower of the two middles for an even count. */
-function median(xs: number[]): number {
-  const s = [...xs].sort((a, b) => a - b)
-  return s[Math.floor((s.length - 1) / 2)]
-}
+type Point = { latitude: number; longitude: number }
 
 /**
  * A view over where most of these points are.
  *
  * Deliberately not a bounding box of all of them: one circle in another state
  * would otherwise zoom the map out to the whole country, which is worse than
- * the hardcoded city it replaced. The median point decides the centre, and
- * only points within a metro-sized radius of it set the zoom — anything
- * further out is left off screen, where "See everywhere" can still reach it.
+ * the hardcoded city it replaced. Only points within a metro-sized radius of
+ * the chosen centre set the zoom; anything further out is left off screen,
+ * where "See everywhere" can still reach it.
+ *
+ * The centre is always one of the actual points. It used to be the median
+ * latitude and the median longitude taken separately, which for circles in
+ * Baltimore, New York, Los Angeles and San Francisco produced a point in the
+ * mountains of Nevada near nothing at all, and the map opened there at
+ * neighbourhood zoom with "No circles here yet". Independent medians make a
+ * place nobody is.
+ *
+ * Which point: the one nearest `anchor` when given (the visitor's rough
+ * location, so someone with circles in three cities opens on the city they
+ * are standing in), otherwise the one with the most neighbours.
  */
 export function viewForPoints(
-  points: { latitude: number; longitude: number }[],
-  { clusterRadiusKm = 60, minZoom = 10, maxZoom = 14 } = {}
+  points: Point[],
+  { clusterRadiusKm = 60, minZoom = 10, maxZoom = 14, anchor = null as Point | null } = {}
 ): MapView | null {
   if (points.length === 0) return null
 
-  const centre = {
-    latitude: median(points.map((p) => p.latitude)),
-    longitude: median(points.map((p) => p.longitude)),
+  const neighbours = (p: Point) => points.filter((q) => distanceKm(p, q) <= clusterRadiusKm).length
+
+  let centre: Point
+  if (anchor) {
+    centre = points.reduce((best, p) => (distanceKm(anchor, p) < distanceKm(anchor, best) ? p : best))
+  } else {
+    centre = points.reduce((best, p) => (neighbours(p) > neighbours(best) ? p : best))
   }
 
-  const near = points.filter((p) => distanceKm(centre, p) <= clusterRadiusKm)
-  const cluster = near.length > 0 ? near : [centre]
+  const cluster = points.filter((p) => distanceKm(centre, p) <= clusterRadiusKm)
 
   const lats = cluster.map((p) => p.latitude)
   const lngs = cluster.map((p) => p.longitude)
@@ -129,7 +139,8 @@ export function resolveMapView(
       typeof c.latitude === 'number' && typeof c.longitude === 'number'
   )
 
-  const fromCircles = viewForPoints(known)
+  // Your circles still win, but among them the one nearest to where you are.
+  const fromCircles = viewForPoints(known, { anchor: geo })
   if (fromCircles) return { view: fromCircles, place: null }
 
   if (geo) {

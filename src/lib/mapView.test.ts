@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { geoFromHeaders, resolveMapView, viewForPoints, SF_VIEW } from './mapView.ts'
+import { geoFromHeaders, resolveMapView, viewForPoints, distanceKm, SF_VIEW } from './mapView.ts'
 
 /** Fake request headers. */
 const hdrs = (map: Record<string, string>) => (name: string) => map[name] ?? null
@@ -88,4 +88,33 @@ test('circles with no coordinates are skipped, not treated as 0,0', () => {
 
 test('viewForPoints returns null for nothing', () => {
   assert.equal(viewForPoints([]), null)
+})
+
+test('four circles in four cities do not centre on a phantom median point', () => {
+  // Baltimore, New York, Los Angeles, San Francisco. Independent medians of
+  // lat and lng used to land in the Nevada mountains, near none of them.
+  const pts = [
+    { latitude: 39.2904, longitude: -76.6122 },
+    { latitude: 40.7128, longitude: -74.006 },
+    { latitude: 34.0522, longitude: -118.2437 },
+    { latitude: 37.7749, longitude: -122.4194 },
+  ]
+  const v = viewForPoints(pts)!
+  const onAPoint = pts.some((p) => distanceKm(p, v) < 5)
+  assert.ok(onAPoint, `centre ${v.latitude},${v.longitude} is not on any circle`)
+})
+
+test('with an anchor, the cluster nearest the visitor wins', () => {
+  const pts = [
+    { latitude: 39.2904, longitude: -76.6122 }, // Baltimore
+    { latitude: 34.0522, longitude: -118.2437 }, // Los Angeles
+    { latitude: 37.7749, longitude: -122.4194 }, // San Francisco
+  ]
+  // Standing in Brooklyn: Baltimore is the nearest circle, even though the
+  // West Coast pair is the bigger cluster.
+  const v = viewForPoints(pts, { anchor: { latitude: 40.65, longitude: -73.95 } })!
+  assert.ok(distanceKm(v, pts[0]) < 5)
+  // No anchor: the bigger cluster.
+  const w = viewForPoints(pts)!
+  assert.ok(distanceKm(w, pts[1]) < 5 || distanceKm(w, pts[2]) < 5)
 })
