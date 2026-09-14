@@ -433,6 +433,7 @@ export default function ExploreClient({ circles, people, initialView, origin: or
           onCircleClick={setSelected}
           focus={selected}
           onLocate={setOrigin}
+          onDeselect={() => setSelected(null)}
           initialView={initialView}
           // Suppressed while filtering: an empty view is then the filters
           // doing their job, not an area with nothing in it.

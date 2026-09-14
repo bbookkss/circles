@@ -61,6 +61,13 @@ type Props = {
    * the city-level IP guess it starts with.
    */
   onLocate?: (position: { latitude: number; longitude: number }) => void
+  /**
+   * The selection is over. Fired when the map is tapped away from any pin,
+   * and when the selected circle is panned out of view. The map clears its
+   * own tag either way; this is so the caller can drop its card too, which
+   * otherwise sat under the empty-state overlay saying two things at once.
+   */
+  onDeselect?: () => void
 }
 
 export default function CirclesMap({
@@ -70,6 +77,7 @@ export default function CirclesMap({
   emptyOverlay,
   focus = null,
   onLocate,
+  onDeselect,
 }: Props) {
   // Both live in state rather than refs: the overlay is handed a helper that
   // closes over the map, and "is anything visible" is derived during render.
@@ -188,9 +196,23 @@ export default function CirclesMap({
         setMap(e.target)
         setBounds(e.target.getBounds())
       }}
-      onMoveEnd={(e) => setBounds(e.target.getBounds())}
-      // Tapping the map itself folds the open tag back up.
-      onClick={() => setPopupCircle(null)}
+      onMoveEnd={(e) => {
+        const b = e.target.getBounds()
+        setBounds(b)
+        // A selection you have panned away from is not a selection any more.
+        // Otherwise the card for something off-screen sat under the
+        // "No circles here yet" overlay, saying two things at once.
+        if (popupCircle && b && !b.contains([popupCircle.longitude, popupCircle.latitude])) {
+          setPopupCircle(null)
+          onDeselect?.()
+        }
+      }}
+      // Tapping the map away from any pin folds the tag and clears the
+      // selection. Pin clicks stop propagation, so they never land here.
+      onClick={() => {
+        setPopupCircle(null)
+        onDeselect?.()
+      }}
     >
       <NavigationControl position="top-right" />
       <GeolocateControl
