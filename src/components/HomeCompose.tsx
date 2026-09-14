@@ -58,8 +58,13 @@ export default function HomeCompose({
           className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring resize-none"
         />
         {error && <p className="text-xs text-destructive">{error}</p>}
-        <div className="flex items-center justify-between gap-3">
-          <label className="flex items-center gap-2 min-w-0">
+        {/* Wraps rather than squeezes. On a phone the circle name, the
+            counter and the button do not fit on one line, and the old
+            layout let the select run underneath the counter. Now the
+            counter and button drop to their own line and the select
+            truncates instead of overflowing. */}
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+          <label className="flex items-center gap-2 min-w-0 flex-1 basis-[180px]">
             <span className="text-xs text-muted-foreground flex-shrink-0">to</span>
             <Select
               value={circleId}
@@ -70,7 +75,7 @@ export default function HomeCompose({
                 circles.map((c) => [c.id, c.emoji ? `${c.emoji} ${c.name}` : c.name])
               )}
             >
-              <SelectTrigger size="sm" className="text-xs max-w-[220px]">
+              <SelectTrigger size="sm" className="text-xs w-full max-w-[220px] min-w-0 [&>span]:truncate">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -82,7 +87,7 @@ export default function HomeCompose({
               </SelectContent>
             </Select>
           </label>
-          <div className="flex items-center gap-3 flex-shrink-0">
+          <div className="flex items-center gap-3 flex-shrink-0 ml-auto">
             <span className="text-xs text-muted-foreground tabular-nums">{content.length}/1000</span>
             <Button type="submit" size="sm" disabled={loading || !content.trim()}>
               {loading ? 'Posting...' : 'Post'}

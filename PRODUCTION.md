@@ -231,9 +231,10 @@ works fine from this machine.
       maps, and the explore one now reports *why* it failed (permission
       denied is the usual answer on phones) instead of just stopping.
 
-- [ ] **Pilot feedback, open: "text overlap on mobile".** Screenshot is in
-      iMessage and unreadable from here (macOS blocks the attachments dir).
-      Needs the image pasted into chat to identify the page.
+- [x] **Pilot feedback: text overlap on mobile.** The home composer's
+      circle picker ran underneath the 0/1000 counter on phones. The row now
+      wraps: picker on one line, counter and Post on the next, and the picker
+      truncates instead of overflowing.
 
 ## Environment
 
