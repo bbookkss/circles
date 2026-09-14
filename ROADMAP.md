@@ -6,6 +6,20 @@ this is the list that grows the product.
 
 ---
 
+## The SMS loop — specced separately in [SMS-LOOP.md](SMS-LOOP.md)
+
+Big enough to have its own file. The short version: the weekly beat (remind,
+ask, confirm who is coming, nudge) moves to text, and the app keeps the four
+things a text cannot do — the map, the blurred area, creating a circle, and
+the page you decide to join from. Written in answer to Doug Hirsch asking
+whether this could just be text-based. Mostly yes, and that is the strongest
+version of the thesis rather than a threat to it.
+
+Long pole is A2P 10DLC registration, weeks of lead time. Start it before
+writing code.
+
+---
+
 ## @mentions in posts and comments, with caret autocomplete
 
 **Status:** not started. Sized 2026-09-08.
