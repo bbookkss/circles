@@ -68,17 +68,16 @@ works fine from this machine.
       create. The Default public token has no such control, which is why this
       needed a new token rather than an edit.
 
-- [ ] **DKIM — blocked until 2026-09-10 at the earliest, do not forget.**
-      Gmail on hicircles.com went live 2026-09-09 and Google refuses to
-      generate a DKIM key for 24-72 hours after that ("You must wait 24 to 72
-      hours after enabling Gmail with a registered domain"). Nothing is wrong;
-      it just cannot be done yet.
-      When it can: Admin console → Apps → Google Workspace → Gmail →
-      Authenticate email → Generate new record (2048-bit, prefix `google`),
-      then add the TXT at host `google._domainkey` and click Start
-      authentication. MX, SPF and DMARC are already live and verified.
-      Until DKIM lands, leave DMARC at `p=none` — tightening to quarantine or
-      reject without DKIM would start sending your own mail to spam.
+- [x] **DKIM on hicircles.com — done 2026-09-13.** Google generated the
+      2048-bit key once the 24-72 hour post-Gmail-activation wait elapsed; the
+      TXT lives at `google._domainkey` and authentication is started. Verified
+      end to end in a delivered message's raw headers:
+      `dkim=pass header.i=@hicircles.com`.
+
+      DMARC is still `p=none`. That was correct while DKIM was missing and is
+      now merely cautious — worth tightening to `p=quarantine` after a week or
+      two of clean reports, not before, because a mistake here sends your own
+      mail to spam and you find out from the people who did not reply.
 
 - [x] **Signup no longer depends on email.** Confirmation was the thing that
       made the default mailer a launch blocker: every signup sent one, and at
@@ -96,12 +95,29 @@ works fine from this machine.
       person real" signal here, and because the alternative was losing most of
       the first evening's signups. Revisit when volume justifies Resend.
 
-- [ ] **Real SMTP, for password reset only now.** Reset still uses the default
-      mailer. That is low-volume enough to survive the rate limit, so it is no
-      longer blocking, but it fails silently when it does fail. Resend on the
-      `send.hicircles.com` subdomain is the plan — a subdomain rather than the
-      root because a domain may have exactly one SPF record, and adding a
-      second TXT breaks every existing sender including Google Workspace.
+- [x] **Resend is live on `send.hicircles.com` — verified 2026-09-13.**
+      A subdomain rather than the root because a domain may have exactly one
+      SPF record, and adding a second TXT breaks every existing sender
+      including Google Workspace. The root's SPF was never touched.
+
+      Proven by a real reminder delivered to a real inbox, not by the
+      provider's own dashboard. The raw headers of that message:
+
+          dkim=pass   header.i=@send.hicircles.com  header.s=resend
+          dkim=pass   header.i=@amazonses.com
+          spf=pass    smtp.mailfrom=...@send.send.hicircles.com
+          dmarc=pass  (p=NONE) header.from=hicircles.com
+
+      DMARC passing on the root while the mail leaves a subdomain via Amazon
+      SES is the whole point of the design working. It landed in INBOX.
+
+      `List-Unsubscribe` and `List-Unsubscribe-Post` are present, so Gmail
+      renders its own Unsubscribe button and the bulk-sender requirement is
+      met before there is any volume to be judged on.
+
+      Still on the default Supabase mailer: password reset. Moving it to
+      Resend is a Supabase Auth SMTP config change, not code, and it is the
+      remaining reason the default mailer matters at all.
 
 - [ ] **Phone auth via Twilio — decide early, not on launch week.** Assessed
       2026-09-09. Supabase's side is config and takes minutes; the lift is US
@@ -112,6 +128,37 @@ works fine from this machine.
       signup and login reworked, and the username sign-in path currently
       resolves username to email so it would need to resolve to phone. Worth
       it for a flyer-to-phone product; not worth starting the week of launch.
+
+- [x] **Reminder cron confirmed live 2026-09-13.** `cron.job` has one row,
+      `circle-reminders`, `*/15 * * * *`, active. Checked the HTTP responses
+      too, not just the job rows, because pg_cron reports "succeeded" when the
+      `net.http_post` statement ran, which says nothing about what the server
+      answered. In `net._http_response`: 9x 200, and the most recent is
+      `{"mode":"live","due":0,"sent":0,"skipped":0,"failures":[]}`, so the
+      deployed function is seeing `RESEND_API_KEY`.
+
+- [ ] **Two cron runs returned Gateway Timeout** (22:00 and 22:15 on
+      2026-09-13, 2 of 11). Not a pg_cron timeout: `timed_out` is false and
+      the job's own budget is 25s, so this is Vercel killing the function at
+      its own limit and returning a 504 body. The two are adjacent, which fits
+      a deploy or cold-start window rather than a persistent fault.
+
+      Mostly self-healing by design. A run that dies before claiming anything
+      leaves the reminders unclaimed, so the next run 15 minutes later picks
+      them up, and the `3h` band is three hours wide against a 30-minute
+      floor. The real hole is a run killed *after* claiming a row and before
+      the send returns: that reminder is marked sent and never goes. Harmless
+      at one member per circle, worth revisiting before a circle has dozens.
+
+- [ ] **Run `supabase/prelaunch-reset-2026-09-13.sql`.** Deletes the four
+      fixture circles (`test`, `test 2`, `TEST Florida`, `TEST Street
+      autofill`) and, by cascade, the reminder test schedule that would
+      otherwise mail somebody every Monday forever. Six real circles survive.
+
+      Dry-run against production 2026-09-13 inside a rolled-back transaction:
+      4 circles, 4 memberships, 1 schedule, 1 reminder-send row. No posts, no
+      check-ins, no events, no join requests, no notifications are touched.
+      The file asserts a survivor count of 6 and refuses to commit otherwise.
 
 ## Environment
 
@@ -124,10 +171,43 @@ works fine from this machine.
 - [ ] **Same key in Vercel Preview and Development.**
       `vercel env add SUPABASE_SERVICE_ROLE_KEY preview`. Production is set.
 
-- [ ] **Delete the unused `POSTGRES_*` secrets in Vercel.** `POSTGRES_URL`,
-      `POSTGRES_PASSWORD`, `POSTGRES_URL_NON_POOLING`, `POSTGRES_PRISMA_URL`.
-      Nothing in `src/` opens a Postgres connection — no `pg`, no Prisma, no
-      Drizzle — so these are dead credentials with live database access.
+- [ ] **Delete 11 dead env vars in Vercel Production.** This list previously
+      named four; an audit on 2026-09-13 found eleven. The app reads exactly
+      ten environment keys, established by grepping every `process.env.*`
+      reference in `src/`:
+
+          CRON_SECRET            NEXT_PUBLIC_MAPBOX_TOKEN
+          RESEND_API_KEY         NEXT_PUBLIC_SITE_URL
+          EMAIL_FROM             NEXT_PUBLIC_SUPABASE_URL
+          EMAIL_REPLY_TO         NEXT_PUBLIC_SUPABASE_ANON_KEY
+          SUPABASE_SERVICE_ROLE_KEY   SUPABASE_SECRET_KEY
+
+      Everything else in Production is dead weight the Supabase Vercel
+      integration created. Seven Postgres vars, `POSTGRES_URL`,
+      `POSTGRES_PRISMA_URL`, `POSTGRES_URL_NON_POOLING`, `POSTGRES_USER`,
+      `POSTGRES_HOST`, `POSTGRES_PASSWORD`, `POSTGRES_DATABASE`, plus
+      `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_PUBLISHABLE_KEY` and
+      `SUPABASE_JWT_SECRET`.
+
+      `SUPABASE_JWT_SECRET` is the one that matters most and was not on the
+      old list at all. It signs auth tokens: anyone holding it can mint a JWT
+      for any user. Nothing reads it. The Postgres credentials are next, being
+      direct database access that bypasses PostgREST and therefore RLS.
+
+      There is no `pg`, Prisma, Drizzle, Kysely or Knex dependency in
+      `package.json`, so nothing in the app can open a Postgres connection
+      even in principle.
+
+      Removing an env var does not affect the running deployment; it takes
+      effect on the next build. Caveat: these are integration-managed, so a
+      Supabase integration re-sync may put them back. Check after the next
+      deploy.
+
+- [ ] **`NEXT_PUBLIC_SITE_URL` is not set in Vercel.** It only feeds the
+      unsubscribe and circle links in reminder emails, and the code falls back
+      to `https://hicircles.com`, which is correct today. Worth setting
+      explicitly so a future preview deployment does not mail production
+      links, or deleting the fallback so the omission is loud.
 
 ## Untested
 
@@ -149,17 +229,19 @@ never been exercised through the UI by a real person.
 - [ ] **Account deletion, actually submitted.** The panel and its disabled
       confirm button render correctly; nothing has ever been deleted through
       it. Best tested with a throwaway account, not yours.
-- [ ] **Check-ins.** Table, trigger and UI are written and the SQL is verified
-      in a rolled-back transaction, but nobody has ever pressed Going. Needs
-      the migrations above applied first. Test inside the 24-hour window —
-      outside it the buttons are correctly disabled.
+- [x] **Check-ins work.** This list said nobody had ever pressed Going. Three
+      rows exist in `circle_check_ins` (2026-09-09 and 09-10) covering all
+      three states, `yes`, `maybe` and `no`, and one row has `updated_at`
+      later than `created_at`, so changing an answer works too, not just
+      setting one. Still unexercised: a *second* person checking in to the
+      same meet, which is the only case where the count matters.
 - [ ] **Timezone from coordinates.** tz-lookup resolves a circle's zone from
       its pin at write time. Verified for the existing nine (TEST Florida →
       America/New_York), never exercised by creating a new circle.
 - [ ] **Business approve/reject.** `/admin` renders and gates correctly, but
       the queue has never had a row in it. Submit a request from
       `Test user 2`, approve it, and create a commercial circle.
-- [ ] **Private circles.** All 9 circles are public, so every private-circle
+- [ ] **Private circles.** All 10 circles are public, so every private-circle
       protection in the RLS audit is correct by inspection and has never once
       run. Make a private circle and a second account.
 - [ ] **Signed-in non-member reading a public circle.** Follows from
@@ -168,13 +250,13 @@ never been exercised through the UI by a real person.
 
 ## Known issues
 
-- [ ] **Explore map pins are still exact.** The circle page now shows
-      non-members an offset area rather than the meeting point, but
-      `/explore` plots every public circle at its real coordinates, so the
-      thing the blur protects against is still available one page over. Same
-      treatment needed there: blur server-side in `page.tsx` before the pins
-      reach `CirclesMap`, using the same `approxArea`, and show the precise
-      pin only for circles the viewer belongs to.
+- [x] **Explore map pins are blurred too** (verified in code 2026-09-13).
+      This list previously said `/explore` still plotted every public circle
+      at its real coordinates, which would have made the circle page's blur
+      pointless one page over. It does not. `src/app/explore/page.tsx` runs
+      the same `approxArea` over every circle the viewer does not belong to,
+      server-side, before the props are serialised. Non-members' browsers
+      never receive a real coordinate.
 
 - [ ] **The coffee map theme is not applying; the map renders stock grey.**
       `applyCoffeeTheme` recolours every layer on the map's load event, and
@@ -198,40 +280,32 @@ never been exercised through the UI by a real person.
       itself fires `styledata`, so any listener there needs a re-entrancy
       guard or it freezes the renderer.
 
-- [ ] **Confirm psql can reach the database before the pre-launch data reset.**
-      The reset has to be surgical, and right now the tool that would do it is
-      unreliable. `psql` through the Supavisor pooler fails intermittently
-      with `FATAL: (ENOTFOUND) tenant/user postgres.<ref> not found`, which is
-      not what it sounds like: the connection string is byte-identical between
-      the runs that work and the runs that fail, so nothing is misconfigured
-      here. Observed 2026-09-09: 14 consecutive successes, then 12 consecutive
-      failures, no change in between.
+- [x] **psql is reliable on the direct host** (2026-09-13). Roughly a dozen
+      consecutive statements, including both migration dry-runs, with no
+      failures. The instability was only ever the Supavisor pooler, and the
+      app never used that path anyway since it reaches the database over
+      PostgREST.
 
-      Two explanations tested and ruled out. It is not one bad node behind the
-      load balancer (both IPs fail when pinned individually with SNI intact,
-      via `host=... hostaddr=...` — note `PGHOSTADDR` alone is not a valid
-      test, it breaks the SNI that Supavisor routes tenants by). It is not a
-      cold cache after idle (0s/30s/60s/90s gaps, 12/12 failed). A per-IP
-      connection throttle from ~40 rapid debug attempts is the remaining
-      guess, weakened by a 120s quiet period still failing.
+      The pooler's `FATAL: (ENOTFOUND) tenant/user postgres.<ref> not found`
+      is still unexplained and still on Supabase's side. It does not matter,
+      because the direct host works and is what the migration recipe at the
+      top of this file already tells you to use. Do not spend more time on it.
 
-      Root cause not established, and it is on Supabase's side. What matters:
-      the app is unaffected, since it reaches the database over PostgREST, not
-      Postgres. Only hand-applied migrations and the data reset use this path,
-      and a migration that half-applies is worse than one that never ran.
+      What carried over and is worth keeping: wrap any reset in an explicit
+      `begin; ... commit;` so a mid-connection drop rolls back rather than
+      leaving the data half-deleted. Both migration files do this, and both
+      raise rather than commit if their post-conditions fail.
 
-      Before the reset: connect, run something trivial, and only proceed if it
-      is reliable across several minutes. If it still flaps, do the reset
-      through the Supabase dashboard's SQL editor instead, which goes over
-      HTTPS and does not touch the pooler. Wrap the reset in an explicit
-      `begin; ... commit;` either way, so a mid-connection drop rolls back
-      instead of leaving the data half-deleted.
+- [ ] **Run `supabase/admin-backfill-2026-09-13.sql`.** Five circles have
+      members but no admin (`Surf Club`, `Beach volleyball (baker beach)`,
+      `WIne club`, `test`, `test 2`), so nobody can edit them or approve a
+      join request. They predate the `role: 'admin'` line in `createCircle`.
+      All five belong to Ben and have exactly one member.
 
-- [ ] **5 circles have no admin.** `WIne club`, `test`, `Surf Club`,
-      `test 2`, `Beach volleyball (baker beach)`. They predate the
-      `role: 'admin'` line in `createCircle`, so nobody can edit them or
-      approve join requests. One line to backfill: promote each one's
-      earliest-joined member.
+      Promotes the earliest-joined member, which generalises correctly if a
+      circle has since gained members. Idempotent. Dry-run 2026-09-13:
+      `UPDATE 5`, assertion passed. Run it before the reset or after; the two
+      do not depend on each other, and the reset removes two of the five.
 
 - [ ] **Anonymised posts are uneditable by anyone, including admins.** After
       an account is deleted its posts remain with `user_id` null, and every
