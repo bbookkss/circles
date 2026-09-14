@@ -35,6 +35,58 @@ works fine from this machine.
 
 ## Blocking — do before anyone real signs up
 
+- [ ] **AUDIT 2026-09-13: two confirmed breaks, rehearsed against production
+      in a rolled-back transaction.** Four pilot users signed up the same
+      evening and one created a private circle, so both are live risks.
+
+      1. **Approving a join request does not make the person a member.**
+         `approveRequest()` inserts the requester into `circle_members` as
+         the admin; the only INSERT policy is `auth.uid() = user_id`, so it
+         is rejected. The error is not checked and the action redirects.
+         Result: request marked approved, "you're in" notification sent,
+         person still locked out. Fix: a `security definer`
+         `approve_join_request(circle_id, user_id)` that checks the caller
+         is an admin and does update + insert + notify atomically.
+      2. **Anyone signed in can self-join a private circle.** `joinCircle()`
+         has no visibility check and the same policy lets any user insert
+         themselves anywhere. Fix: `with check (auth.uid() = user_id and
+         circle_is_public(circle_id))`. Two lines. Do this one first.
+
+      Also confirmed, silent (UPDATE 0 / DELETE 0, then redirect):
+      - A second admin cannot edit the circle, its schedule, or remove a
+        member: every write policy on circles/schedules is keyed to
+        `created_by`, not the admin role. After `delete_own_account` hands
+        admin to an heir, `created_by` is null and nobody can ever edit it.
+      - Admins have no moderation power at all: cannot remove members,
+        delete others' posts/comments. No report, no block.
+      - Any user can insert a notification addressed to anyone
+        (`notifications: actor insert` only checks actor_id).
+      - `circles.visibility` has no CHECK; `'banana'` is accepted.
+
+      Product logic, live in the first ten minutes of the pilot:
+      - Schedule and pin are optional at creation. 3 of 4 pilot circles have
+        no schedule; the pilot-user circle has neither. No schedule means no
+        next meet, no check-in, no reminder, nothing on Home.
+      - `city` empty on 3 of 4 despite pins: reverse geocode only runs on
+        map click, not on search-select.
+      - Home shows 7 days only; monthly circles vanish 3 weeks in 4.
+      - Multiple schedules per circle are half-supported (home takes last,
+        circle page takes first, trigger takes `limit 1`).
+      - Reminder email has no check-in CTA; the 24h mail lands exactly when
+        the window opens.
+      - DMs gated on mutual follow; "share a circle" is the natural rule.
+      - Explore map renders stock grey; /circles/new renders the coffee
+        theme. Route-specific, now reproducible side by side.
+      - /profile shows the account email and a dev "Fix neighborhoods"
+        button.
+
+      Full write-up with evidence and fix order: the pre-pilot audit page
+      (served locally from the job tmp dir this session; regenerate from
+      this list if lost). Suggested order: policy fix (2), approval RPC (1),
+      admin-keyed write policies, actions return errors before redirect,
+      require pin + schedule on create, then decide Instagram/email-verify.
+
+
 - [ ] **Refresh the old Mapbox default token.** Console → home → Tokens →
       Refresh. It is unrestricted, sat in the public bundle for days, and
       cannot be deleted, only refreshed. Nothing uses it: production and
