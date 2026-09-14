@@ -3,7 +3,7 @@
 import { useMemo } from 'react'
 import Map, { Marker, Source, Layer } from 'react-map-gl/mapbox'
 import 'mapbox-gl/dist/mapbox-gl.css'
-import { applyCoffeeTheme } from '@/lib/mapTheme'
+import { installCoffeeTheme, COFFEE } from '@/lib/mapTheme'
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN!
 
@@ -68,10 +68,10 @@ export default function CircleLocationMap({
         // like a specific target again rather than a rough part of town.
         zoom: radiusM ? 11.6 : 14,
       }}
-      style={{ width: '100%', height: '100%' }}
+      style={{ width: '100%', height: '100%', background: COFFEE }}
       mapStyle="mapbox://styles/mapbox/light-v11"
       mapboxAccessToken={MAPBOX_TOKEN}
-      onLoad={(e) => applyCoffeeTheme(e.target)}
+      onLoad={(e) => installCoffeeTheme(e.target)}
       scrollZoom={false}
       dragRotate={false}
       attributionControl={false}

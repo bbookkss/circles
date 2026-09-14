@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label'
 import LocationSearch from '@/components/LocationSearch'
 import BackButton from '@/components/BackButton'
 import { reverseGeocode } from '@/lib/geocoding'
-import { applyCoffeeTheme } from '@/lib/mapTheme'
+import { installCoffeeTheme, COFFEE } from '@/lib/mapTheme'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN!
@@ -323,11 +323,11 @@ export default function EditCircleClient({ circle, schedule }: { circle: Circle;
       <main className="h-[38vh] md:h-auto flex-shrink-0 md:flex-1 relative border-b md:border-b-0">
         <Map
           initialViewState={{ ...mapCenter, zoom: 13 }}
-          style={{ width: '100%', height: '100%' }}
+          style={{ width: '100%', height: '100%', background: COFFEE }}
           mapStyle="mapbox://styles/mapbox/light-v11"
           mapboxAccessToken={MAPBOX_TOKEN}
           cursor="crosshair"
-          onLoad={(e) => applyCoffeeTheme(e.target)}
+          onLoad={(e) => installCoffeeTheme(e.target)}
           onClick={(e) => handleMapClick(e.lngLat.lng, e.lngLat.lat)}
         >
           <NavigationControl position="top-right" showCompass={false} />

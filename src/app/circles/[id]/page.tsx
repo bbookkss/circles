@@ -16,6 +16,7 @@ import { approxArea } from '@/lib/approxLocation'
 import CheckInControl from '@/components/CheckInControl'
 import { relativeDayLabel, dayNameISO, checkInWindow } from '@/lib/schedule'
 import MeetZone from '@/components/MeetZone'
+import DistanceFromYou from '@/components/DistanceFromYou'
 
 const DAY_LONG = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 
@@ -192,8 +193,13 @@ export default async function CirclePage({
                   />
                 </div>
                 <p className="label mt-2 normal-case tracking-normal">
-                  {[circle.neighborhood ?? circle.location, fromYou(previewArea!.latitude, previewArea!.longitude), 'exact spot shown to members']
-                    .filter(Boolean).join(' · ')}
+                  {(circle.neighborhood || circle.location) && <span>{circle.neighborhood ?? circle.location} · </span>}
+                  <DistanceFromYou
+                    latitude={previewArea!.latitude}
+                    longitude={previewArea!.longitude}
+                    initial={fromYou(previewArea!.latitude, previewArea!.longitude)}
+                  />
+                  {geo && ' · '}exact spot shown to members
                 </p>
               </div>
             )}
@@ -607,11 +613,13 @@ export default async function CirclePage({
                     )}
                   </div>
                   <p className="label mt-2 normal-case tracking-normal">
-                    {[
-                      circle.neighborhood ?? circle.location,
-                      isMember ? fromYou(circle.latitude, circle.longitude) : fromYou(area!.latitude, area!.longitude),
-                      isMember ? null : 'exact spot shown to members',
-                    ].filter(Boolean).join(' · ')}
+                    {(circle.neighborhood || circle.location) && <span>{circle.neighborhood ?? circle.location} · </span>}
+                    <DistanceFromYou
+                      latitude={isMember ? circle.latitude : area!.latitude}
+                      longitude={isMember ? circle.longitude : area!.longitude}
+                      initial={isMember ? fromYou(circle.latitude, circle.longitude) : fromYou(area!.latitude, area!.longitude)}
+                    />
+                    {!isMember && <span>{geo ? ' · ' : ''}exact spot shown to members</span>}
                   </p>
                 </div>
               )}

@@ -6,7 +6,7 @@ import Link from 'next/link'
 import Map, { Marker, NavigationControl, GeolocateControl } from 'react-map-gl/mapbox'
 import type { Map as MapboxMap, LngLatBounds } from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
-import { applyCoffeeTheme } from '@/lib/mapTheme'
+import { installCoffeeTheme, COFFEE } from '@/lib/mapTheme'
 import { SF_VIEW, type MapView } from '@/lib/mapView'
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN!
@@ -178,11 +178,13 @@ export default function CirclesMap({
   return (
     <Map
       initialViewState={initialView}
-      style={{ width: '100%', height: '100%' }}
+      // The canvas is this colour before any tile arrives, so the first
+      // frame is paper, not the stock white that used to flash.
+      style={{ width: '100%', height: '100%', background: COFFEE }}
       mapStyle="mapbox://styles/mapbox/light-v11"
       mapboxAccessToken={MAPBOX_TOKEN}
       onLoad={(e) => {
-        applyCoffeeTheme(e.target)
+        installCoffeeTheme(e.target)
         setMap(e.target)
         setBounds(e.target.getBounds())
       }}

@@ -390,27 +390,16 @@ never been exercised through the UI by a real person.
       server-side, before the props are serialised. Non-members' browsers
       never receive a real coordinate.
 
-- [ ] **The coffee map theme is not applying; the map renders stock grey.**
-      `applyCoffeeTheme` recolours every layer on the map's load event, and
-      the map is plainly not tan any more at any zoom. Confirmed 2026-09-09
-      that the code is not the missing piece: the compiled chunk served to the
-      browser does contain the palette, so it ships and loads. Confirmed too
-      that the style is still the classic kind — fetched
-      `styles/v1/mapbox/light-v11` from the API and it has 50 layers with a
-      background layer and ordinary fills and lines, not the newer
-      import-based architecture that would have made per-layer recolouring
-      inert.
-
-      So it runs and does nothing visible. The untested explanation is that
-      `setPaintProperty` is throwing for every layer and being swallowed by
-      the `try {} catch {}` inside the loop, which would look exactly like
-      this. Next step is to count successes and failures in that catch rather
-      than guess again.
-
-      Re-applying on the `styledata` event was tried and does not fix it, so
-      that was reverted. Note for whoever picks this up: `setPaintProperty`
-      itself fires `styledata`, so any listener there needs a re-entrancy
-      guard or it freezes the renderer.
+- [x] **Coffee map theme now self-heals** (2026-09-13). The recolour ran once
+      on `load`; Mapbox rebuilds the style in a few situations and each
+      rebuild fires `styledata` and restores the stock colours, which is why
+      explore came up grey on first paint and turned tan after the first
+      fly-to. `installCoffeeTheme` re-applies on `styledata` / `style.load`,
+      guarded by idempotence (the background layer already being coffee)
+      rather than a flag, because `setPaintProperty` itself fires
+      `styledata` and an unguarded listener loops until the renderer
+      freezes. The canvas also gets the coffee colour as a CSS background so
+      the first frame is paper before any tile arrives. All four maps use it.
 
 - [x] **psql is reliable on the direct host** (2026-09-13). Roughly a dozen
       consecutive statements, including both migration dry-runs, with no
