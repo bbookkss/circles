@@ -6,9 +6,6 @@ import { headers } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 
-// Not exported: a 'use server' module may only export async functions.
-const USERNAME_RE = /^[a-z0-9_]{3,20}$/
-
 /**
  * Resolve a username to the email Supabase authenticates against.
  *
@@ -103,43 +100,17 @@ export async function signup(formData: FormData) {
   const supabase = await createClient()
 
   const full_name = (formData.get('full_name') as string)?.trim()
-  const rawIg = (formData.get('instagram') as string | null)?.trim() ?? ''
-  const instagram = rawIg
-    ? rawIg.replace(/^https?:\/\/(www\.)?instagram\.com\//i, '').replace(/^@/, '').replace(/\/+$/, '').trim()
-    : ''
+  if (!full_name) return { error: 'Your name is required' }
 
-  if (!instagram) return { error: 'Instagram handle is required' }
-
-  // Optional. Email remains the credential; a username is only an alias you
-  // can type instead of it.
-  const rawUsername = (formData.get('username') as string | null)?.trim().toLowerCase() ?? ''
-  if (rawUsername && !USERNAME_RE.test(rawUsername)) {
-    return { error: 'Username must be 3-20 characters: letters, numbers or underscores' }
-  }
-
-  if (rawUsername) {
-    const admin = createAdminClient()
-    const { data: taken } = await admin
-      .from('profiles').select('id').eq('username', rawUsername).maybeSingle()
-    // The unique index is the real guard; this just gives a clear message
-    // instead of a failed signup.
-    if (taken) return { error: 'That username is taken' }
-  }
-
+  // Three fields, and this is all of them. Instagram, username and the email
+  // opt-in were asked here and are now asked on the profile, where somebody
+  // has seen a circle and the reason for each is obvious. Both columns are
+  // nullable and email_reminders defaults to false, so their absence needs no
+  // migration and opts nobody in.
   const { data, error } = await supabase.auth.signUp({
     email: formData.get('email') as string,
     password: formData.get('password') as string,
-    options: {
-      data: {
-        full_name,
-        instagram,
-        username: rawUsername || null,
-        // An unchecked box submits nothing, so absence is a no. handle_new_user
-        // reads this to set profiles.email_reminders; without it the checkbox
-        // would look like it worked and change nothing.
-        email_reminders: formData.get('email_reminders') === 'on',
-      },
-    },
+    options: { data: { full_name } },
   })
 
   if (error) return { error: error.message }

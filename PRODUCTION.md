@@ -285,44 +285,26 @@ works fine from this machine.
       links, or deleting the fallback so the omission is loud.
 
 - [ ] **Accepted for pilots, not for strangers: email addresses are never
-      verified.** Recorded here as its own item because it currently lives
-      inside a ticked-off entry about signup, where it reads as settled rather
-      than as an open risk.
-
-      `Confirm email` is off, so `signUp` returns a session immediately and
-      nobody proves they own the address they typed. Two consequences. Someone
+      verified.** `Confirm email` is off, so `signUp` returns a session
+      immediately and nobody proves they own the address they typed. Someone
       can squat an address against its real owner, and password reset for that
-      account then mails a stranger, which is an account-takeover path that
-      needs no password at all.
+      account then mails a stranger, which is account takeover needing no
+      password. Fine for pilots Ben can verify in person; not fine for
+      strangers scanning a flyer, which is the whole point of the product.
 
-      Deliberately accepted, and genuinely fine for pilot users who are people
-      Ben knows and can verify in person. It stops being fine the moment the
-      audience is strangers scanning a flyer, which is the entire point of the
-      product. The fix is turning confirmation back on once Resend handles
-      auth mail, since the original reason for disabling it was the default
-      mailer's rate limit losing most of an evening's signups.
+      Turning confirmation back on is the fix, now that Resend handles the
+      mail. Decide before the first flyer goes up.
 
-      Decide this before the first flyer goes up, not after.
+- [ ] **Phone auth is the real answer, and it has weeks of lead time.**
+      Doug Hirsch's first note on the pilot build was "just get phone # and
+      go". Agreed, and Supabase's side is config. The lift is US A2P 10DLC
+      brand and campaign registration: needs an EIN, takes days to weeks, and
+      unregistered traffic gets filtered by carriers rather than rejected
+      loudly. Roughly $0.013 a message plus ~$15/month.
 
-- [x] **Field Notes design shipped 2026-09-13** (two passes, `f8584ff`
-      through `3ffa06a`). Fraunces / Figtree / Space Mono; paper, ink, one
-      pen-blue accent that only means "you said yes" or "check-in open";
-      Home rebuilt around the week with a Later list; circle page as a
-      masthead; explore pins as paper name tags; every lowercase-everything
-      heading gone. The design memory and rationale are in the session's
-      Field Notes page and PRODUCTION.md history.
-
-      Still stock: the `/business` and `/admin` pages, the edit-profile form
-      internals, and the map tiles themselves. The coffee map theme now
-      visibly applies on explore after a fly-to and on create/edit, and not
-      on the circle page's small map or on first paint of explore; the
-      "renders stock grey" issue is timing, not the palette.
-
-- [ ] **Explore map opened on a phantom point** for anyone with circles in
-      several cities (independent medians of lat and lng). Fixed in
-      `bafdd09`: the centre is always a real circle, nearest to the visitor
-      when geo headers are present. Two regression tests. Keep an eye on it
-      with pilots who join circles across cities.
+      Start the registration now so the paperwork runs while other things
+      ship. Signup was cut to three fields in the meantime, which is most of
+      the same benefit without the wait.
 
 ## Untested
 

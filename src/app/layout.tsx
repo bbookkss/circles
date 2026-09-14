@@ -36,8 +36,9 @@ const utility = Space_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Circles · find your people",
-  description: "Recurring local gatherings, mapped. Join circles near you.",
+  title: "Circles · groups that meet every week",
+  description:
+    "Nobody makes a friend at a one-off. Circles are local groups that meet on a schedule, close enough to walk to. See who is coming before you go.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

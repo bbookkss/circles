@@ -43,12 +43,12 @@ export default function AuthShell({
         {/* Same copy, same sizes, same breaks as the landing hero. */}
         <div className="fade-rise">
           <h1 className="text-4xl md:text-[2.75rem] font-medium leading-[1.05] text-balance">
-            Find your people.<br />
-            <em className="italic font-normal text-pen">Create your circle.</em>
+            Nobody makes a friend<br />at a one-off.<br />
+            <em className="italic font-normal text-pen">Circles meet every week.</em>
           </h1>
           <p className="text-foreground/75 text-base md:text-lg mt-5 max-w-md">
-            Groups that meet on a schedule, close enough to walk to. See who&apos;s
-            coming before you go.
+            Same place, same time, the same people. Close enough to walk to, and
+            you see who is coming before you go.
           </p>
           {/* The landing hero carries a button row here (mt-8 on a size="lg"
               button, so 32px + 36px). The grid is items-center, so leaving it

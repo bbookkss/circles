@@ -8,6 +8,23 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import AuthShell from '@/components/AuthShell'
 
+/**
+ * Three fields. It used to be six.
+ *
+ * What went, and where it went instead:
+ *
+ *   Instagram   Was required, and was the highest-friction field on the form:
+ *               a stranger's social handle, asked before they know what this
+ *               is. It verified nothing either, being free text. Now optional
+ *               on the profile, where the reason for giving it is obvious.
+ *   Username    An alias for signing in. Useful later, noise now.
+ *   Email opt-in  Asking permission to email someone about circles before
+ *               they have seen a circle. It defaults off and lives on the
+ *               profile, which is also the honest place for a consent
+ *               checkbox nobody is being rushed past.
+ *
+ * The bar for a field here is: the account cannot exist without it.
+ */
 export default function SignupPage() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
@@ -27,7 +44,7 @@ export default function SignupPage() {
       <div className="space-y-6">
           <div>
             <h2 className="text-3xl">Create your account</h2>
-            <p className="text-muted-foreground text-sm mt-1">Free. No spam. Just your local circles.</p>
+            <p className="text-muted-foreground text-sm mt-1">Takes a minute. Free.</p>
           </div>
 
           <form action={handleSubmit} className="space-y-4">
@@ -35,79 +52,25 @@ export default function SignupPage() {
               <p className="text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-md">{error}</p>
             )}
             <div className="space-y-2">
-              <Label htmlFor="full_name">Full name</Label>
-              <Input id="full_name" name="full_name" type="text" placeholder="Your name" required />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="instagram">Instagram</Label>
-              <div className="flex items-center gap-1">
-                <span className="text-sm text-muted-foreground">@</span>
-                <Input
-                  id="instagram"
-                  name="instagram"
-                  type="text"
-                  placeholder="yourhandle"
-                  required
-                  autoCapitalize="none"
-                  autoCorrect="off"
-                  spellCheck={false}
-                />
-              </div>
-              <p className="text-xs text-muted-foreground">so other people know you are real :)</p>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="username">
-                Username <span className="text-muted-foreground font-normal">(optional)</span>
-              </Label>
-              <Input
-                id="username"
-                name="username"
-                type="text"
-                autoCapitalize="none"
-                spellCheck={false}
-                pattern="[A-Za-z0-9_]{3,20}"
-                title="3-20 characters: letters, numbers or underscores"
-                placeholder="yourname"
-              />
-              <p className="text-xs text-muted-foreground">
-                Sign in with this instead of your email. You can add or change
-                it later.
-              </p>
+              <Label htmlFor="full_name">Your name</Label>
+              <Input id="full_name" name="full_name" type="text" placeholder="Ben Bookstaver" autoComplete="name" required />
             </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input id="email" name="email" type="email" placeholder="you@example.com" required />
+              <Input id="email" name="email" type="email" placeholder="you@example.com" autoComplete="email" required />
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
-              <Input id="password" name="password" type="password" placeholder="8+ characters" minLength={8} required />
+              <Input id="password" name="password" type="password" placeholder="8+ characters" autoComplete="new-password" minLength={8} required />
             </div>
-            {/* Unchecked by default, and it stays that way. Opting people in
-                at signup is how a product ends up in spam folders, and the
-                whole consent chain behind this assumes the box was a choice. */}
-            <label className="flex gap-3 items-start pt-1 cursor-pointer">
-              <input
-                id="email_reminders"
-                name="email_reminders"
-                type="checkbox"
-                className="mt-0.5 size-4 accent-foreground cursor-pointer"
-              />
-              <span className="text-sm">
-                Email me before my circles meet
-                <span className="block text-xs text-muted-foreground mt-0.5">
-                  A day before and a few hours before. Nothing else, and you can
-                  stop them any time.
-                </span>
-              </span>
-            </label>
-            <Button type="submit" className="w-full" disabled={loading}>
+            <Button type="submit" className="w-full rounded-full" disabled={loading}>
               {loading ? 'Creating account...' : 'Join Circles'}
             </Button>
           </form>
 
           <p className="text-sm text-muted-foreground text-center">
             Already have an account?{' '}
-            <Link href="/login" className="underline underline-offset-4 hover:text-foreground">
+            <Link href="/login" className="underline underline-offset-4 decoration-pen-soft hover:text-foreground">
               Sign in
             </Link>
           </p>
