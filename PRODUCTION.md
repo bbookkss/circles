@@ -150,42 +150,18 @@ works fine from this machine.
       the send returns: that reminder is marked sent and never goes. Harmless
       at one member per circle, worth revisiting before a circle has dozens.
 
-- [ ] **Run `supabase/full-reset-2026-09-13.sql`.** Empties the app
-      completely: every circle, every account except
-      `benjaminabookstaver@gmail.com`. Pilot users should arrive at an empty
-      product, not a museum of someone else's testing.
+- [x] **Full reset applied 2026-09-13.** Verified against the database
+      afterwards rather than trusting the editor's output. All 19 tables are
+      empty except `auth.users` 1, `profiles` 1, `platform_admins` 1. The
+      surviving account is `benjaminabookstaver@gmail.com`, confirmed, not
+      banned, not soft-deleted, and still a platform admin.
 
-      **Supersedes `supabase/prelaunch-reset-2026-09-13.sql`**, which removed
-      only the four fixture circles. Do not run both; the full reset is a
-      superset. The partial file is kept only as a record of what was
-      considered.
-
-      Rehearsed against production 2026-09-13 by running the file as written,
-      which ends in `rollback`. Every assertion passed and the database was
-      confirmed unchanged afterwards. Removes 10 circles, 1 account, and by
-      cascade 10 memberships, 5 schedules, 3 check-ins, 2 posts, 1 comment,
-      1 post like, 1 comment like, 1 reminder-send.
-
-      Two things the file is careful about, both of which would be easy to get
-      wrong by hand:
-
-      `circles.created_by` and `posts.user_id` are `ON DELETE SET NULL`, not
-      cascade. That is right for account deletion, where a departed person's
-      circles should survive and their posts go anonymous. It is wrong here:
-      deleting the account first would strand that account's circles with
-      `created_by = null`, owned by nobody. So circles are deleted first.
-
-      `email_suppressions` is deliberately NOT cleared. It is keyed by email
-      address rather than by user, and it is the record of who asked never to
-      be emailed again. That request outlives the account and the reset.
-      Clearing it would mean mailing someone who opted out, which is the one
-      failure mode here with a legal dimension.
-
-      It also asserts Ben's `platform_admins` row survives. Losing it silently
-      would lock him out of `/admin` with no route back through the UI.
-
-      To run it: paste into the Supabase dashboard SQL editor, read the
-      previews, then change the final `rollback;` to `commit;`.
+      Checked three things beyond the row counts. The site serves 200 on the
+      empty-state path, which had never rendered before. The cron returned
+      `{"mode":"live","due":0,...}` on the runs after the reset, so no stray
+      mail is queued against deleted circles. And `due_email_reminders()`
+      returns zero rows, so the phantom weekly meet is genuinely gone rather
+      than merely unreferenced.
 
 ## Environment
 
@@ -289,8 +265,8 @@ never been exercised through the UI by a real person.
       the queue has never had a row in it. Submit a request from
       `Test user 2`, approve it, and create a commercial circle.
 - [ ] **Private circles — data layer verified 2026-09-13, UI still untested.**
-      All 10 circles are public, so the protections have never run against a
-      real private row. Three checks short of an end-to-end test:
+      There are now zero circles, so the protections still have never run
+      against a real private row. Three checks short of an end-to-end test:
 
       The predicate was evaluated directly against live data with visibility
       forced to 'private'. For all 10 circles a non-member returns false and
@@ -360,16 +336,16 @@ never been exercised through the UI by a real person.
       leaving the data half-deleted. Both migration files do this, and both
       raise rather than commit if their post-conditions fail.
 
-- [ ] **Run `supabase/admin-backfill-2026-09-13.sql`.** Five circles have
-      members but no admin (`Surf Club`, `Beach volleyball (baker beach)`,
-      `WIne club`, `test`, `test 2`), so nobody can edit them or approve a
-      join request. They predate the `role: 'admin'` line in `createCircle`.
-      All five belong to Ben and have exactly one member.
+- [x] **Admin backfill is moot.** The five admin-less circles were deleted
+      by the full reset, so there is nothing left to backfill.
+      `supabase/admin-backfill-2026-09-13.sql` is kept because it is
+      idempotent and correct, and because the same drift reappears if
+      `createCircle` ever stops setting `role: 'admin'`. Running it now is a
+      no-op.
 
-      Promotes the earliest-joined member, which generalises correctly if a
-      circle has since gained members. Idempotent. Dry-run 2026-09-13:
-      `UPDATE 5`, assertion passed. Run it before the reset or after; the two
-      do not depend on each other, and the reset removes two of the five.
+      What replaces it as a live question: does `createCircle` actually
+      insert the creator as admin? Every circle that proved it is gone. The
+      next circle created is the test.
 
 - [ ] **Anonymised posts are uneditable by anyone, including admins.** After
       an account is deleted its posts remain with `user_id` null, and every
