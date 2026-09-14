@@ -228,7 +228,13 @@ export default function CirclesMap({
           longitude={circle.longitude}
           latitude={circle.latitude}
           anchor="bottom"
-          onClick={() => handleMarkerClick(circle)}
+          onClick={(e) => {
+            // Markers live inside the map's canvas container, so this click
+            // would bubble to the map's own onClick, which folds the card.
+            // Open-then-immediately-close looked like a broken animation.
+            e.originalEvent.stopPropagation()
+            handleMarkerClick(circle)
+          }}
         >
           {/* A paper name tag on a pin, which is what a notice board pin
               looks like, rather than an emoji in a disc. The name is the
