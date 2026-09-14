@@ -12,7 +12,7 @@ import BackButton from '@/components/BackButton'
 import CircleLocationMap from '@/components/map/CircleLocationMap'
 import { approxArea } from '@/lib/approxLocation'
 import CheckInControl from '@/components/CheckInControl'
-import { relativeDayLabel, checkInWindow } from '@/lib/schedule'
+import { relativeDayLabel, dayNameISO, checkInWindow } from '@/lib/schedule'
 import MeetZone from '@/components/MeetZone'
 
 const DAY_LONG = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
@@ -453,14 +453,17 @@ export default async function CirclePage({
                 <div className="border border-foreground p-5 space-y-3 fade-rise">
                   <div className="flex items-baseline justify-between gap-3 flex-wrap">
                     <p className="font-display text-2xl">
-                      {relativeDayLabel(nextMeet, circleToday ?? nextMeet)}
+                      {(() => {
+                        const rel = relativeDayLabel(nextMeet, circleToday ?? nextMeet)
+                        return rel === 'Today' || rel === 'Tomorrow' ? rel : dayNameISO(nextMeet)
+                      })()}
                     </p>
                     <p className="num text-sm text-foreground/80">
                       {formatTime(schedule.start_time)} – {formatTime(schedule.end_time)}
                       <MeetZone tz={circle.timezone} />
                     </p>
                   </div>
-                  <p className={`label ${window.open ? 'text-pen' : ''}`}>
+                  <p className={`label ${window.open ? 'text-pen' : 'normal-case tracking-normal'}`}>
                     {window.open ? '● check-in open' : window.reason ?? ''}
                   </p>
                   {isMember ? (

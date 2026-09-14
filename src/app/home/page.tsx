@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import HomeCompose from '@/components/HomeCompose'
 import PostItem from '@/components/PostItem'
 import CheckInControl from '@/components/CheckInControl'
-import { todayISO, daysBetweenISO, relativeDayLabel, formatTime, checkInWindow, meetPhase } from '@/lib/schedule'
+import { todayISO, dayNameISO, daysBetweenISO, relativeDayLabel, formatTime, checkInWindow, meetPhase } from '@/lib/schedule'
 import MeetZone from '@/components/MeetZone'
 import { cookies } from 'next/headers'
 
@@ -293,7 +293,10 @@ export default async function HomePage() {
                   // Day labels are computed in the circle's own timezone,
                   // not the reader's. A Sunday 11am meet in San Francisco is
                   // still "Today" at 1am Monday in New York.
-                  const dayWord = relativeDayLabel(occursOn, todayISO(circle.timezone))
+                  const rel = relativeDayLabel(occursOn, todayISO(circle.timezone))
+                  // "Today" and "Tomorrow" stay; anything else is the full day
+                  // name, because "Fri" in a serif at 24px looks like a typo.
+                  const dayWord = rel === 'Today' || rel === 'Tomorrow' ? rel : dayNameISO(occursOn)
                   const yesNames = going.map((r) => firstNameOf(r.user_id))
                   const whoLine =
                     yesNames.length === 0
@@ -310,7 +313,7 @@ export default async function HomePage() {
                           {formatTime(schedule.start_time)} – {formatTime(schedule.end_time)}
                           <MeetZone tz={circle.timezone} />
                         </p>
-                        <p className={`label mt-2 ${open ? 'text-pen' : ''}`}>
+                        <p className={`label mt-2 ${open ? 'text-pen' : 'normal-case tracking-normal'}`}>
                           {open ? '● check-in open' : reason ?? ''}
                         </p>
                       </div>
