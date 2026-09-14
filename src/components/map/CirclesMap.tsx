@@ -35,8 +35,18 @@ type Props = {
    * and only this component has one, and `areaName` for wherever the map is
    * currently looking — null while unknown, so callers can fall back to
    * something that is true regardless.
+   *
+   * `canShowAll` says whether that helper would actually do anything. There is
+   * a difference between "nothing near here" and "nothing anywhere", and only
+   * this component knows which it is. Offering a button that silently does
+   * nothing is worse than not offering it, so callers are expected to hide the
+   * control rather than let it no-op.
    */
-  emptyOverlay?: (helpers: { showAll: () => void; areaName: string | null }) => ReactNode
+  emptyOverlay?: (helpers: {
+    showAll: () => void
+    canShowAll: boolean
+    areaName: string | null
+  }) => ReactNode
 }
 
 export default function CirclesMap({
@@ -107,6 +117,12 @@ export default function CirclesMap({
     }
     // bounds is the dependency that matters: it changes on every settled move.
   }, [nothingInView, map, bounds])
+
+  /**
+   * Whether pulling back would reveal anything. False on an empty database,
+   * which is the state every visitor sees before the first circle exists.
+   */
+  const canShowAll = circles.length > 0
 
   /** Pull back until every circle is on screen, wherever they are. */
   const showAll = useCallback(() => {
@@ -218,7 +234,7 @@ export default function CirclesMap({
           and dragging, so it covered the map and followed them around. */}
       {emptyOverlay && nothingInView && (
         <div className="absolute inset-x-0 bottom-0 flex justify-center p-4 pointer-events-none">
-          <div className="pointer-events-auto">{emptyOverlay({ showAll, areaName })}</div>
+          <div className="pointer-events-auto">{emptyOverlay({ showAll, canShowAll, areaName })}</div>
         </div>
       )}
     </Map>

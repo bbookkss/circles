@@ -373,12 +373,16 @@ export default function ExploreClient({ circles, people, initialView }: Props) {
           initialView={initialView}
           // Suppressed while filtering: an empty view is then the filters
           // doing their job, not an area with nothing in it.
-          emptyOverlay={hasFilters ? undefined : ({ showAll, areaName }) => (
+          emptyOverlay={hasFilters ? undefined : ({ showAll, canShowAll, areaName }) => (
             <div className="bg-background/95 backdrop-blur border rounded-xl px-5 py-4 text-center shadow-lg max-w-xs">
-              {/* areaName tracks the map, not the visitor's IP. Falls back to
-                  "here", which is true wherever they have panned to. */}
+              {/* Two different situations, and naming a city in the second one
+                  would be a lie by implication: it suggests circles exist
+                  somewhere else, which is what the button then fails to show.
+                  areaName tracks the map, not the visitor's IP. */}
               <p className="text-sm font-medium">
-                No circles {areaName ? `in ${areaName}` : 'here'} yet
+                {canShowAll
+                  ? `No circles ${areaName ? `in ${areaName}` : 'here'} yet`
+                  : 'No circles anywhere yet'}
               </p>
               <p className="text-xs text-muted-foreground mt-1">
                 Someone has to be first. It may as well be you.
@@ -387,9 +391,14 @@ export default function ExploreClient({ circles, people, initialView }: Props) {
                 <Link href="/circles/new">
                   <Button size="sm">Start one</Button>
                 </Link>
-                <Button size="sm" variant="outline" onClick={showAll}>
-                  See everywhere
-                </Button>
+                {/* Hidden rather than disabled when there is nothing to pull
+                    back to. A disabled control still says "there is more,
+                    elsewhere", and there isn't. */}
+                {canShowAll && (
+                  <Button size="sm" variant="outline" onClick={showAll}>
+                    See everywhere
+                  </Button>
+                )}
               </div>
             </div>
           )}
