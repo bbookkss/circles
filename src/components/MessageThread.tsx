@@ -69,9 +69,9 @@ export default function MessageThread({ meId, otherUserId, otherName, initialMes
               const mine = m.sender_id === meId
               return (
                 <div key={m.id} className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-[75%] rounded-2xl px-3.5 py-2 text-sm ${mine ? 'bg-foreground text-background' : 'bg-muted text-foreground'}`}>
+                  <div className={`max-w-[75%] rounded-2xl px-3.5 py-2 text-sm ${mine ? 'bg-pen text-white' : 'bg-muted text-foreground'}`}>
                     <p className="whitespace-pre-wrap break-words">{m.content}</p>
-                    <p className={`text-[10px] mt-1 ${mine ? 'text-background/60' : 'text-muted-foreground'}`}>{formatTime(m.created_at)}</p>
+                    <p className={`num text-[10px] mt-1 ${mine ? 'text-white/70' : 'text-muted-foreground'}`}>{formatTime(m.created_at)}</p>
                   </div>
                 </div>
               )
@@ -97,9 +97,9 @@ export default function MessageThread({ meId, otherUserId, otherName, initialMes
               <button
                 type="submit"
                 disabled={sending || !text.trim()}
-                className="text-sm font-medium text-muted-foreground hover:text-foreground disabled:opacity-40 transition-colors px-2"
+                className="text-sm font-medium rounded-full border border-foreground px-4 py-2 hover:bg-pen hover:border-pen hover:text-white disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-foreground disabled:hover:border-foreground transition-colors"
               >
-                send
+                Send
               </button>
             </form>
           ) : (

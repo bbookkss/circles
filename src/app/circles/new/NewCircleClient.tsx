@@ -113,7 +113,7 @@ export default function NewCircleClient({
       <aside className="w-full md:w-96 flex-1 md:flex-none flex-shrink-0 min-h-0 bg-background md:border-r flex flex-col">
         <div className="p-4 border-b flex items-center gap-3">
           <BackButton fallback="/explore" />
-          <h1 className="text-lg font-semibold lowercase">new circle</h1>
+          <h1 className="text-xl">New circle</h1>
         </div>
 
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-4 space-y-5">

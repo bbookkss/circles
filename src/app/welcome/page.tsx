@@ -29,15 +29,15 @@ export default async function WelcomePage() {
 
   const cards = [
     {
-      title: 'what a circle is',
+      title: 'What a circle is',
       body: 'A group that meets at the same place on a regular schedule. Beach volleyball every Thursday. Morning pages at 7am. A run club that leaves from the same corner.',
     },
     {
-      title: 'find one',
+      title: 'Find one',
       body: 'Explore puts circles near you on a map. Filter by category, day, or neighborhood. Public ones you just join.',
     },
     {
-      title: 'start one',
+      title: 'Start one',
       body: 'Drop a pin, set a schedule, done. Public so anyone can find it, or private so you approve who gets in.',
     },
   ]
@@ -50,7 +50,7 @@ export default async function WelcomePage() {
 
         <div className="space-y-3 fade-rise">
           <div className="w-12 h-12 rounded-full border-2 border-background mx-auto" />
-          <h1 className="text-3xl font-bold lowercase">hey {firstName}, welcome to circles</h1>
+          <h1 className="text-3xl md:text-4xl font-medium">Hey {firstName}, <em className="italic font-normal text-background/70">welcome to circles.</em></h1>
         </div>
 
         <div className="grid gap-4 text-left">
@@ -59,7 +59,7 @@ export default async function WelcomePage() {
               key={card.title}
               className={`border border-background/20 rounded-xl p-5 space-y-1 bg-background/[0.06] backdrop-blur-[2px] fade-rise stagger-${i + 1}`}
             >
-              <p className="font-semibold flex items-baseline gap-3 text-base lowercase">
+              <p className="font-display font-semibold flex items-baseline gap-3 text-lg">
                 <span className="text-background/50 text-sm tabular-nums">0{i + 1}</span>
                 {card.title}
               </p>

@@ -78,22 +78,27 @@ export default function CircleLocationMap({
     >
       {areaGeoJson ? (
         <Source id="approx-area" type="geojson" data={areaGeoJson}>
+          {/* Pen-blue, like the approximate pins on explore: the blur is a
+              visible design element, not a smudge to apologise for. */}
           <Layer
             id="approx-area-fill"
             type="fill"
-            paint={{ 'fill-color': '#3a2a23', 'fill-opacity': 0.13 }}
+            paint={{ 'fill-color': '#2b5c8a', 'fill-opacity': 0.12 }}
           />
           <Layer
             id="approx-area-line"
             type="line"
-            paint={{ 'line-color': '#3a2a23', 'line-opacity': 0.35, 'line-width': 1.5 }}
+            paint={{ 'line-color': '#2b5c8a', 'line-opacity': 0.6, 'line-width': 1.5 }}
           />
         </Source>
       ) : (
-        <Marker longitude={longitude} latitude={latitude} anchor="center">
-          {/* Matches the pin on the explore map: paper fill, ink edge. */}
-          <div className="w-9 h-9 rounded-full bg-background border border-foreground/30 shadow-[0_1px_4px_rgba(58,42,35,0.28)] flex items-center justify-center text-lg">
-            {emoji ?? '●'}
+        <Marker longitude={longitude} latitude={latitude} anchor="bottom">
+          {/* Matches the explore map: a paper tag on a pin. */}
+          <div className="flex flex-col items-center">
+            <div className="font-display font-semibold text-[13px] leading-none rounded-full px-2.5 py-1.5 bg-background border border-foreground shadow-[0_1px_3px_rgba(34,31,27,0.25)]">
+              {emoji ?? '●'}
+            </div>
+            <span aria-hidden className="w-px h-2 bg-foreground" />
           </div>
         </Marker>
       )}

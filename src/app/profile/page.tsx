@@ -3,7 +3,6 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import TopNav from '@/components/TopNav'
 import EditProfileForm from './EditProfileForm'
-import BackfillButton from './BackfillButton'
 import DeleteAccountForm from './DeleteAccountForm'
 
 export default async function ProfilePage() {
@@ -48,8 +47,8 @@ export default async function ProfilePage() {
               {initials}
             </div>
             <div className="flex-1 min-w-0 space-y-1">
-              <p className="font-bold text-xl">{profile?.full_name ?? 'Unknown'}</p>
-              <p className="text-sm text-muted-foreground">{user.email}</p>
+              <h1 className="text-2xl leading-tight">{profile?.full_name ?? 'Unknown'}</h1>
+              <p className="label normal-case tracking-normal">{user.email}</p>
               {profile?.instagram && (
                 <a
                   href={`https://instagram.com/${profile.instagram}`}
@@ -83,21 +82,21 @@ export default async function ProfilePage() {
 
           {/* Circles */}
           <div id="circles" className="space-y-3 scroll-mt-20">
-            <p className="text-sm font-semibold">Your circles</p>
+            <p className="label">Your circles</p>
             {circles && circles.length > 0 ? (
-              <ul className="space-y-2">
+              <ul className="divide-y divide-border border-t border-b">
                 {circles.map((circle) => {
                   const role = memberships?.find((m) => m.circle_id === circle.id)?.role
                   return (
                     <li key={circle.id}>
                       <Link
                         href={`/circles/${circle.id}`}
-                        className="flex items-center gap-3 border rounded-xl px-3 py-2.5 hover:bg-muted transition-colors"
+                        className="flex items-center gap-3 py-3 hover:underline underline-offset-4 decoration-pen-soft"
                       >
                         <span className="text-lg">{circle.emoji ?? '●'}</span>
-                        <span className="flex-1 text-sm font-medium">{circle.name}</span>
-                        {circle.visibility === 'private' && <span className="text-xs text-muted-foreground border rounded-full px-2 py-0.5">Private</span>}
-                        {role === 'admin' && <span className="text-xs bg-muted px-2 py-0.5 rounded-full">Admin</span>}
+                        <span className="flex-1 font-display font-semibold">{circle.name}</span>
+                        {circle.visibility === 'private' && <span className="font-display italic text-sm text-muted-foreground">private</span>}
+                        {role === 'admin' && <span className="font-display italic text-sm text-muted-foreground">admin</span>}
                       </Link>
                     </li>
                   )
@@ -108,15 +107,9 @@ export default async function ProfilePage() {
             )}
           </div>
 
-          {/* Dev tools */}
-          <div className="pt-4 border-t space-y-2">
-            <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Tools</p>
-            <BackfillButton />
-          </div>
-
           {/* Business */}
           <div className="pt-4 border-t space-y-2">
-            <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Business</p>
+            <p className="label">Business</p>
             <Link href="/business" className="text-sm underline underline-offset-2">
               Run a restaurant or business?
             </Link>
@@ -124,7 +117,7 @@ export default async function ProfilePage() {
 
           {/* Danger zone */}
           <div className="pt-4 border-t space-y-2">
-            <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Account</p>
+            <p className="label">Account</p>
             <DeleteAccountForm />
           </div>
 

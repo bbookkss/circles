@@ -208,41 +208,42 @@ export default function CirclesMap({
           key={circle.id}
           longitude={circle.longitude}
           latitude={circle.latitude}
-          anchor="center"
+          anchor="bottom"
           onClick={() => handleMarkerClick(circle)}
         >
-          {/* Paper disc with an ink edge, not a white puck with a drop
-              shadow. bg-card was lighter than anything else on screen and
-              border-card made the ring the same colour as the fill, so the
-              pins read as generic pasted-on circles rather than part of this
-              map. The shadow is small and warm for the same reason: on a
-              muted tan basemap a large neutral one just looks grey. */}
+          {/* A paper name tag on a pin, which is what a notice board pin
+              looks like, rather than an emoji in a disc. The name is the
+              information; an emoji at 18px was not readable as anything. */}
           {/* A sharp pin on displaced coordinates would be a confident lie:
-              it looks precise, and it is not. The halo says roughly here. */}
+              it looks precise, and it is not. Approximate circles get the
+              pen-blue treatment and a soft halo that says roughly here. */}
           {circle.approximate && (
             <span
               aria-hidden
-              className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 rounded-full bg-foreground/10 ring-1 ring-foreground/15"
+              className="pointer-events-none absolute left-1/2 bottom-0 -translate-x-1/2 translate-y-1/2 w-20 h-20 rounded-full bg-pen/10 ring-1 ring-pen/30"
             />
           )}
-          <button
-            title={
-              circle.approximate
-                ? `${circle.name} · approximate area`
-                : circle.kind === 'commercial'
-                  ? `${circle.name} · business`
-                  : circle.name
-            }
-            className={`relative w-9 h-9 rounded-full bg-background flex items-center justify-center text-lg cursor-pointer transition-transform hover:scale-110 shadow-[0_1px_4px_rgba(58,42,35,0.28)] border ${
-              // Businesses get a heavier ring rather than an off-palette
-              // amber, so they stand out without introducing a new colour.
-              circle.kind === 'commercial'
-                ? 'border-foreground/70 ring-1 ring-foreground/25'
-                : 'border-foreground/30'
-            }`}
-          >
-            {circle.emoji ?? '●'}
-          </button>
+          <span className="relative flex flex-col items-center cursor-pointer group">
+            <button
+              title={
+                circle.approximate
+                  ? `${circle.name} · approximate area`
+                  : circle.kind === 'commercial'
+                    ? `${circle.name} · business`
+                    : circle.name
+              }
+              className={`font-display font-semibold text-[13px] leading-none whitespace-nowrap max-w-[180px] truncate rounded-full px-2.5 py-1.5 bg-background border shadow-[0_1px_3px_rgba(34,31,27,0.25)] transition-transform group-hover:-translate-y-0.5 ${
+                circle.approximate
+                  ? 'border-pen text-pen'
+                  : circle.kind === 'commercial'
+                    ? 'border-foreground ring-1 ring-foreground/30 text-foreground'
+                    : 'border-foreground text-foreground'
+              }`}
+            >
+              {circle.emoji ? `${circle.emoji} ` : ''}{circle.name}
+            </button>
+            <span aria-hidden className={`w-px h-2 ${circle.approximate ? 'bg-pen' : 'bg-foreground'}`} />
+          </span>
         </Marker>
       ))}
 
@@ -255,18 +256,16 @@ export default function CirclesMap({
           closeOnClick={false}
         >
           <div className="p-1 min-w-[160px]">
-            <p className="font-semibold text-sm">
+            <p className="font-display font-semibold text-base leading-tight">
               {popupCircle.emoji && <span className="mr-1">{popupCircle.emoji}</span>}
               {popupCircle.name}
             </p>
             <div className="flex items-center gap-1.5 mt-0.5">
               {popupCircle.category && (
-                <span className="text-xs text-muted-foreground">{popupCircle.category}</span>
+                <span className="font-display italic text-xs text-pen">{popupCircle.category}</span>
               )}
               {popupCircle.kind === 'commercial' && (
-                <span className="text-[10px] font-medium text-amber-700 bg-amber-100 rounded-full px-1.5 py-0.5">
-                  Business
-                </span>
+                <span className="label">business</span>
               )}
             </div>
             {popupCircle.description && (

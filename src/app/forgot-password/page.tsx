@@ -24,7 +24,7 @@ export default function ForgotPasswordPage() {
   return (
     <div className="min-h-screen flex items-center justify-center px-4 bg-background">
       <div className="w-full max-w-sm space-y-6">
-        <Link href="/login" className="font-bold text-lg lowercase tracking-tight block">
+        <Link href="/login" className="font-display font-semibold text-[1.35rem] tracking-tight block">
           circles
         </Link>
 

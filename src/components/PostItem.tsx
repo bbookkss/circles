@@ -170,7 +170,7 @@ export default function PostItem({
               type="button"
               onClick={onLike}
               disabled={!canInteract}
-              className={`${liked ? 'text-foreground font-medium' : 'text-muted-foreground hover:text-foreground'} ${!canInteract ? 'cursor-default' : ''} transition-colors`}
+              className={`${liked ? 'text-pen font-medium' : 'text-muted-foreground hover:text-foreground'} ${!canInteract ? 'cursor-default' : ''} transition-colors`}
             >
               {liked ? 'Liked' : 'Like'}{likeCount > 0 ? ` (${likeCount})` : ''}
             </button>
@@ -227,7 +227,7 @@ export default function PostItem({
                           type="button"
                           onClick={() => onLikeComment(c.id)}
                           disabled={!canInteract}
-                          className={`mt-1 text-[10px] ${c.likedByMe ? 'text-foreground font-medium' : 'text-muted-foreground hover:text-foreground'} ${!canInteract ? 'cursor-default' : ''} transition-colors`}
+                          className={`mt-1 text-[10px] ${c.likedByMe ? 'text-pen font-medium' : 'text-muted-foreground hover:text-foreground'} ${!canInteract ? 'cursor-default' : ''} transition-colors`}
                         >
                           {c.likedByMe ? 'Liked' : 'Like'}{c.likeCount > 0 ? ` (${c.likeCount})` : ''}
                         </button>

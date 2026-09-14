@@ -23,13 +23,13 @@ export default async function UnsubscribePage({
   return (
     <main className="min-h-screen flex items-center justify-center px-6 py-16">
       <div className="w-full max-w-md space-y-6">
-        <Link href="/" className="font-bold text-lg lowercase tracking-tight block">
+        <Link href="/" className="font-display font-semibold text-[1.35rem] tracking-tight block">
           circles
         </Link>
 
         {!who ? (
           <div className="space-y-2">
-            <h1 className="text-2xl font-bold lowercase">link expired</h1>
+            <h1 className="text-3xl">Link expired</h1>
             <p className="text-sm text-muted-foreground">
               This unsubscribe link is no longer valid. If you are still getting
               emails you did not ask for, use the link in the most recent one, or

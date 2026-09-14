@@ -6,7 +6,7 @@ export default function CheckEmailPage() {
       <div className="max-w-sm w-full text-center space-y-6 fade-rise">
         <div className="w-12 h-12 rounded-full border-2 border-foreground mx-auto" />
         <div className="space-y-2">
-          <h1 className="text-2xl font-bold lowercase">check your email</h1>
+          <h1 className="text-3xl">Check your email</h1>
           <p className="text-muted-foreground text-sm">
             We sent you a confirmation link. Click it to activate your account, then come back here to sign in.
           </p>

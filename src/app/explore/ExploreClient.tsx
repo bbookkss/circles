@@ -117,10 +117,10 @@ export default function ExploreClient({ circles, people, initialView }: Props) {
             type="button"
             onClick={() => setMobileView(v)}
             aria-pressed={mobileView === v}
-            className={`flex-1 py-2.5 text-sm font-medium capitalize transition-colors ${
+            className={`flex-1 py-2.5 label transition-colors ${
               mobileView === v
-                ? 'bg-foreground text-background'
-                : 'bg-background text-muted-foreground hover:bg-muted'
+                ? 'text-foreground border-b-2 border-pen'
+                : 'hover:text-foreground'
             }`}
           >
             {v}
@@ -136,21 +136,21 @@ export default function ExploreClient({ circles, people, initialView }: Props) {
         <div className="p-3 border-b space-y-2">
           <input
             type="text"
-            placeholder="Search circles & people..."
+            placeholder="Search circles and people"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="w-full border-0 border-b border-foreground bg-transparent px-0 py-1.5 text-base font-display placeholder:text-muted-foreground placeholder:font-sans placeholder:text-sm focus-visible:outline-none focus-visible:border-pen"
           />
           <div className="flex items-center justify-between">
             <button
               onClick={() => setShowFilters((v) => !v)}
-              className="text-xs text-muted-foreground hover:text-foreground"
+              className="label hover:text-foreground"
             >
-              {showFilters ? '▲ Hide filters' : '▼ Filters'}
+              {showFilters ? 'hide filters' : 'filters'}
             </button>
             {hasFilters && (
-              <button onClick={clearFilters} className="text-xs text-muted-foreground underline hover:text-foreground">
-                Clear all
+              <button onClick={clearFilters} className="label underline underline-offset-4 hover:text-foreground">
+                clear
               </button>
             )}
           </div>
@@ -319,8 +319,8 @@ export default function ExploreClient({ circles, people, initialView }: Props) {
             </div>
           )}
 
-          <p className="px-4 py-2 text-xs text-muted-foreground border-b">
-            {peopleResults.length > 0 ? 'Circles · ' : ''}{filtered.length} circle{filtered.length !== 1 ? 's' : ''}
+          <p className="label px-4 py-2.5 border-b">
+            {peopleResults.length > 0 ? 'circles · ' : ''}{filtered.length} circle{filtered.length !== 1 ? 's' : ''}
           </p>
           {filtered.length === 0 ? (
             <div className="p-4 text-sm text-muted-foreground">
@@ -342,20 +342,19 @@ export default function ExploreClient({ circles, people, initialView }: Props) {
                       selected?.id === circle.id ? 'bg-muted' : ''
                     }`}
                   >
-                    <div className="flex items-center gap-2 mb-0.5">
-                      <span className="text-base">{circle.emoji ?? '●'}</span>
-                      <p className="font-medium text-sm truncate">{circle.name}</p>
-                    </div>
-                    {circle.category && (
-                      <p className="text-xs text-muted-foreground">{circle.category}</p>
-                    )}
-                    {(circle.neighborhood || circle.location) && (
-                      <p className="text-xs text-muted-foreground truncate">
-                        {circle.neighborhood ?? circle.location}
+                    <p className="font-display font-semibold text-[1.05rem] leading-tight truncate">
+                      {circle.emoji && <span className="mr-1.5">{circle.emoji}</span>}{circle.name}
+                    </p>
+                    <p className="text-xs text-foreground/75 truncate mt-0.5">
+                      {[circle.neighborhood ?? circle.location, circle.member_count !== undefined ? `${circle.member_count} member${circle.member_count !== 1 ? 's' : ''}` : null]
+                        .filter(Boolean).join(' · ')}
+                    </p>
+                    {(circle.category || (circle.days_of_week && circle.days_of_week.length > 0)) && (
+                      <p className="label mt-1">
+                        {[circle.category, circle.days_of_week && circle.days_of_week.length > 0
+                          ? [...circle.days_of_week].sort().map((d) => DAYS[d]).join(' ')
+                          : null].filter(Boolean).join(' · ')}
                       </p>
-                    )}
-                    {circle.member_count !== undefined && (
-                      <p className="text-xs text-muted-foreground">{circle.member_count} member{circle.member_count !== 1 ? 's' : ''}</p>
                     )}
                   </button>
                 </li>
@@ -411,14 +410,17 @@ export default function ExploreClient({ circles, people, initialView }: Props) {
           )}
         />
         {selected && (
-          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-background border rounded-xl shadow-lg px-5 py-3 flex items-center gap-4 min-w-[240px]">
-            <span className="text-2xl">{selected.emoji ?? '●'}</span>
-            <div className="flex-1">
-              <p className="font-semibold text-sm">{selected.name}</p>
-              {selected.category && <p className="text-xs text-muted-foreground">{selected.category}</p>}
+          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-background border border-foreground shadow-lg px-5 py-3 flex items-center gap-4 min-w-[260px] max-w-[calc(100%-2rem)]">
+            <div className="flex-1 min-w-0">
+              <p className="font-display font-semibold text-lg leading-tight truncate">
+                {selected.emoji && <span className="mr-1.5">{selected.emoji}</span>}{selected.name}
+              </p>
+              <p className="font-display italic text-sm text-pen truncate">
+                {[selected.category, selected.neighborhood ?? selected.location].filter(Boolean).join(' · ')}
+              </p>
             </div>
             <Link href={`/circles/${selected.id}`}>
-              <Button size="sm">View</Button>
+              <Button size="sm" className="rounded-full">Open</Button>
             </Link>
           </div>
         )}

@@ -24,7 +24,7 @@ export default function UnsubscribeForm({
   if (state === 'done') {
     return (
       <div className="space-y-2">
-        <h1 className="text-2xl font-bold lowercase">unsubscribed</h1>
+        <h1 className="text-3xl">Unsubscribed</h1>
         <p className="text-sm text-muted-foreground">
           We will not email <span className="text-foreground">{email}</span> about
           circles again. Your account and your circles are untouched.
@@ -53,7 +53,7 @@ export default function UnsubscribeForm({
       }}
     >
       <div className="space-y-2">
-        <h1 className="text-2xl font-bold lowercase">stop these emails?</h1>
+        <h1 className="text-3xl">Stop these emails?</h1>
         <p className="text-sm text-muted-foreground">
           This turns off meet reminders for{' '}
           <span className="text-foreground">{email}</span>. You stay in your

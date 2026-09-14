@@ -30,7 +30,7 @@ export default function LoginPage() {
     <AuthShell altHref="/signup" altLabel="Create an account">
       <div className="space-y-6">
         <div>
-          <h2 className="text-2xl font-bold lowercase">welcome back</h2>
+          <h2 className="text-3xl">Welcome back</h2>
           <p className="text-muted-foreground text-sm mt-1">Sign in to your account</p>
         </div>
 

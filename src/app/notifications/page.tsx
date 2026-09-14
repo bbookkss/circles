@@ -52,7 +52,7 @@ export default async function NotificationsPage() {
       <ReadMarker />
       <main className="pt-14 min-h-screen bg-background">
         <div className="max-w-2xl mx-auto px-6 py-10">
-          <h1 className="text-2xl font-bold lowercase mb-6">notifications</h1>
+          <h1 className="text-3xl mb-6">Notifications</h1>
 
           {!notifs || notifs.length === 0 ? (
             <div className="border-t border-b py-12 text-center">
@@ -75,7 +75,7 @@ export default async function NotificationsPage() {
                       <span className="font-medium">{actor}</span> {text}
                     </p>
                     <span className="text-xs text-muted-foreground flex-shrink-0">{timeAgo(n.created_at)}</span>
-                    {!n.read && <span className="w-2 h-2 rounded-full bg-foreground flex-shrink-0" />}
+                    {!n.read && <span className="w-2 h-2 rounded-full bg-pen flex-shrink-0" />}
                   </Link>
                 )
               })}

@@ -70,7 +70,7 @@ export default async function UserProfilePage({ params }: { params: Promise<{ id
               {initials}
             </div>
             <div className="flex-1 min-w-0 space-y-2">
-              <p className="font-bold text-xl">{profile.full_name}</p>
+              <h1 className="text-2xl leading-tight">{profile.full_name}</h1>
               {profile.instagram && (
                 <a
                   href={`https://instagram.com/${profile.instagram}`}
@@ -116,24 +116,24 @@ export default async function UserProfilePage({ params }: { params: Promise<{ id
 
           {/* Public circles */}
           <div id="circles" className="space-y-3 scroll-mt-20">
-            <p className="text-sm font-semibold">Circles</p>
+            <p className="label">Circles</p>
             {circles && circles.length > 0 ? (
-              <ul className="space-y-2">
+              <ul className="divide-y divide-border border-t border-b">
                 {circles.map((circle) => (
                   <li key={circle.id}>
                     <Link
                       href={`/circles/${circle.id}`}
-                      className="flex items-center gap-3 border rounded-xl px-3 py-2.5 hover:bg-muted transition-colors"
+                      className="flex items-center gap-3 py-3 hover:underline underline-offset-4 decoration-pen-soft"
                     >
                       <span className="text-lg">{circle.emoji ?? '●'}</span>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium">{circle.name}</p>
+                        <p className="font-display font-semibold truncate">{circle.name}</p>
                         {(circle.neighborhood || circle.location) && (
-                          <p className="text-xs text-muted-foreground">{circle.neighborhood ?? circle.location}</p>
+                          <p className="text-xs text-foreground/75 truncate">{circle.neighborhood ?? circle.location}</p>
                         )}
                       </div>
                       {circle.category && (
-                        <span className="text-xs text-muted-foreground">{circle.category}</span>
+                        <span className="font-display italic text-sm text-pen">{circle.category}</span>
                       )}
                     </Link>
                   </li>

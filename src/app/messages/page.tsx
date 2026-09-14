@@ -71,7 +71,7 @@ export default async function MessagesPage() {
       <main className="pt-14 min-h-screen bg-background">
         <div className="max-w-2xl mx-auto px-6 py-10 space-y-10">
           <div>
-          <h1 className="text-2xl font-bold lowercase mb-6">messages</h1>
+          <h1 className="text-3xl mb-6">Messages</h1>
 
           {convs.length === 0 ? (
             <div className="border-t border-b py-12 text-center space-y-2">

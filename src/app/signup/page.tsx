@@ -26,7 +26,7 @@ export default function SignupPage() {
     <AuthShell altHref="/login" altLabel="Sign in">
       <div className="space-y-6">
           <div>
-            <h2 className="text-2xl font-bold lowercase">create your account</h2>
+            <h2 className="text-3xl">Create your account</h2>
             <p className="text-muted-foreground text-sm mt-1">Free. No spam. Just your local circles.</p>
           </div>
 
