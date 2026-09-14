@@ -32,23 +32,28 @@ The entire weekly beat. In order:
 Draft copy, written to fit one segment (160 chars) so each message costs one
 unit and arrives whole.
 
-**24h, 137 chars:**
+**24h:**
 
 ```
-Late Night Rofo Chicken meets tomorrow 11pm at Fleet Street
-Royal Farms. Coming? Reply Y, N or M for maybe.
+Circles: Late Night Rofo Chicken meets tomorrow 11pm at Fleet
+Street Royal Farms. Coming? Reply Y, N or M. Reply STOP to stop.
 ```
+
+The brand name at the front and the STOP line at the end are not padding.
+Carriers look for both during campaign review, and an unbranded message with
+no opt-out is a filtering risk even after a campaign is approved. It costs
+most of the segment, which is the argument for keeping everything else short.
 
 **On `Y`:**
 
 ```
-You're in. 5 going so far: Sam, Kaya, Kian +2. See you there.
+Circles: you're in. 5 going so far: Sam, Kaya, Kian +2. See you there.
 ```
 
 **On `N`:**
 
 ```
-No problem. Next one is Friday the 26th.
+Circles: no problem. Next one is Friday the 26th.
 ```
 
 **On `M`:**
@@ -60,8 +65,7 @@ Noted as a maybe. We'll nudge you 3 hours before.
 **3h, to anyone who said yes or maybe:**
 
 ```
-Rofo Chicken in 3 hours, 11pm, Fleet Street Royal Farms.
-6 going.
+Circles: Rofo Chicken in 3 hours, 11pm, Fleet Street Royal Farms. 6 going.
 ```
 
 **3h, to anyone who has not answered:** the same, with the ask on the end.
@@ -146,7 +150,8 @@ territory and the rules have teeth.
 - **STOP / HELP** handled at both the carrier layer and ours. Carriers honour
   STOP automatically; we still record it, or we keep trying to send and keep
   paying for messages that never arrive.
-- **A2P 10DLC registration** is mandatory. Brand plus campaign, needs an EIN,
+- **A2P 10DLC registration** is mandatory. The full field-by-field pack, with
+  the copy written out, is in [A2P-REGISTRATION.md](A2P-REGISTRATION.md). Brand plus campaign, needs an EIN,
   takes days to weeks. Unregistered traffic is filtered silently rather than
   rejected loudly, which is the worst failure mode available: it looks like it
   works.

@@ -345,6 +345,23 @@ works fine from this machine.
       Turning confirmation back on is the fix, now that Resend handles the
       mail. Decide before the first flyer goes up.
 
+- [ ] **A2P 10DLC: brand today, campaign after the opt-in screen exists.**
+      Full pack with every field answered:
+      [A2P-REGISTRATION.md](A2P-REGISTRATION.md).
+
+      The two halves have different blockers. Brand describes who you are and
+      nothing gates it. Campaign describes how people opt in, and reviewers
+      check that against the live site: there is no phone field anywhere in
+      Circles today, so submitting now invites a rejection, a fee and another
+      wait. Build the consent screen first, then submit.
+
+      Sole Proprietor is the right brand type for a pilot and needs no EIN.
+      Re-register as Standard before any real flyer campaign.
+
+      Also missing before campaign review: a privacy policy and terms at
+      hicircles.com, with a paragraph saying phone numbers are collected, what
+      for, and that they are not sold.
+
 - [ ] **Phone auth is the real answer, and it has weeks of lead time.**
       Doug Hirsch's first note on the pilot build was "just get phone # and
       go". Agreed, and Supabase's side is config. The lift is US A2P 10DLC
