@@ -2,9 +2,9 @@
 
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import type { CirclePin } from '@/components/map/CirclesMap'
-import type { MapView } from '@/lib/mapView'
+import { distanceKm, type MapView } from '@/lib/mapView'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
@@ -34,14 +34,29 @@ type Person = {
   instagram: string | null
 }
 
+type LatLng = { latitude: number; longitude: number }
+
 type Props = {
   circles: CircleWithMeta[]
   people: Person[]
   initialView?: MapView
-  /** City name from the IP lookup, when that is what decided the view. */
+  /**
+   * Where the visitor roughly is, from the IP on the server. City-level, so
+   * good enough to sort by and say "about 3 mi", and upgraded to the device's
+   * own fix when the browser will give one without a prompt.
+   */
+  origin?: LatLng | null
 }
 
-export default function ExploreClient({ circles, people, initialView }: Props) {
+/** "0.4 mi", "2.3 mi", "14 mi". Under a tenth of a mile is "nearby". */
+function milesLabel(km: number): string {
+  const mi = km * 0.621371
+  if (mi < 0.1) return 'nearby'
+  if (mi < 10) return `${mi.toFixed(1)} mi`
+  return `${Math.round(mi)} mi`
+}
+
+export default function ExploreClient({ circles, people, initialView, origin: originProp = null }: Props) {
   const [selected, setSelected] = useState<CircleWithMeta | null>(null)
   const [search, setSearch] = useState('')
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null)
@@ -84,6 +99,44 @@ export default function ExploreClient({ circles, people, initialView }: Props) {
       return true
     })
   }, [circles, search, categoryFilter, dayFilter, cityFilter, neighborhoodFilter, sizeFilter, kindFilter])
+
+  // Where distances are measured from. Starts as the server's IP guess and
+  // is replaced by the device's fix when one arrives: silently on mount if
+  // the person has already granted location to this site (no prompt), or
+  // when they tap the locate button on the map.
+  const [origin, setOrigin] = useState<LatLng | null>(originProp)
+  useEffect(() => {
+    if (typeof navigator === 'undefined' || !navigator.geolocation || !navigator.permissions) return
+    let cancelled = false
+    navigator.permissions
+      .query({ name: 'geolocation' })
+      .then((status) => {
+        if (cancelled || status.state !== 'granted') return
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            if (!cancelled) setOrigin({ latitude: pos.coords.latitude, longitude: pos.coords.longitude })
+          },
+          () => {},
+          { enableHighAccuracy: false, timeout: 8000, maximumAge: 300000 }
+        )
+      })
+      .catch(() => {})
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  // The list in distance order, nearest first, with a label for each. Any
+  // circle whose coordinates are the blurred area gets "~": the number is
+  // honest to within about half a mile, which is the point of the blur.
+  const sorted = useMemo(() => {
+    const rows = filtered.map((circle) => {
+      const km = origin ? distanceKm(origin, circle) : null
+      return { circle, km, miles: km === null ? null : `${circle.approximate ? '~' : ''}${milesLabel(km)}` }
+    })
+    if (!origin) return rows
+    return rows.sort((a, b) => (a.km ?? Infinity) - (b.km ?? Infinity))
+  }, [filtered, origin])
 
   // People matching the search term (only when actively searching)
   const peopleResults = useMemo(() => {
@@ -328,7 +381,7 @@ export default function ExploreClient({ circles, people, initialView }: Props) {
             </div>
           ) : (
             <ul>
-              {filtered.map((circle) => (
+              {sorted.map(({ circle, miles }) => (
                 <li key={circle.id}>
                   <button
                     onClick={() => {
@@ -342,9 +395,12 @@ export default function ExploreClient({ circles, people, initialView }: Props) {
                       selected?.id === circle.id ? 'bg-muted' : ''
                     }`}
                   >
-                    <p className="font-display font-semibold text-[1.05rem] leading-tight truncate">
-                      {circle.emoji && <span className="mr-1.5">{circle.emoji}</span>}{circle.name}
-                    </p>
+                    <div className="flex items-baseline justify-between gap-3">
+                      <p className="font-display font-semibold text-[1.05rem] leading-tight truncate">
+                        {circle.emoji && <span className="mr-1.5">{circle.emoji}</span>}{circle.name}
+                      </p>
+                      {miles && <span className="num text-xs text-foreground/80 flex-shrink-0">{miles}</span>}
+                    </div>
                     <p className="text-xs text-foreground/75 truncate mt-0.5">
                       {[circle.neighborhood ?? circle.location, circle.member_count !== undefined ? `${circle.member_count} member${circle.member_count !== 1 ? 's' : ''}` : null]
                         .filter(Boolean).join(' · ')}
@@ -376,6 +432,7 @@ export default function ExploreClient({ circles, people, initialView }: Props) {
           circles={filtered}
           onCircleClick={setSelected}
           focus={selected}
+          onLocate={setOrigin}
           initialView={initialView}
           // Suppressed while filtering: an empty view is then the filters
           // doing their job, not an area with nothing in it.

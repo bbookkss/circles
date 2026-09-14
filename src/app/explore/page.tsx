@@ -57,15 +57,17 @@ export default async function ExplorePage() {
   // Decision and header parsing both live in lib/mapView so they can be
   // tested without a request; this only supplies the inputs.
   const h = await headers()
-  const { view: initialView, place } = resolveMapView(
-    myCirclesResult.data ?? [],
-    geoFromHeaders((name) => h.get(name))
-  )
+  const geo = geoFromHeaders((name) => h.get(name))
+  const { view: initialView, place } = resolveMapView(myCirclesResult.data ?? [], geo)
+  // City-level, from the IP, and good enough to sort a list by and say
+  // "about 3 mi". The browser's own fix replaces it client-side when the
+  // person has already granted location, or taps the locate button.
+  const origin = geo ? { latitude: geo.latitude, longitude: geo.longitude } : null
 
   if (!circles) return (
     <>
       <TopNav />
-      <ExploreClient circles={[]} people={peopleList} initialView={initialView} />
+      <ExploreClient circles={[]} people={peopleList} initialView={initialView} origin={origin} />
     </>
   )
 
@@ -103,7 +105,7 @@ export default async function ExplorePage() {
   return (
     <>
       <TopNav />
-      <ExploreClient circles={enriched} people={peopleList} initialView={initialView} />
+      <ExploreClient circles={enriched} people={peopleList} initialView={initialView} origin={origin} />
     </>
   )
 }

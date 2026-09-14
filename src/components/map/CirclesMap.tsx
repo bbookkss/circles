@@ -54,6 +54,12 @@ type Props = {
    * assumed it already did.
    */
   focus?: CirclePin | null
+  /**
+   * Fired with the device's position when the locate control gets a fix.
+   * The explore page uses it to re-sort its list by real distance instead of
+   * the city-level IP guess it starts with.
+   */
+  onLocate?: (position: { latitude: number; longitude: number }) => void
 }
 
 export default function CirclesMap({
@@ -62,6 +68,7 @@ export default function CirclesMap({
   initialView = SF_VIEW,
   emptyOverlay,
   focus = null,
+  onLocate,
 }: Props) {
   // Both live in state rather than refs: the overlay is handed a helper that
   // closes over the map, and "is anything visible" is derived during render.
@@ -182,7 +189,10 @@ export default function CirclesMap({
         trackUserLocation
         showUserHeading
         positionOptions={{ enableHighAccuracy: true, timeout: 10000 }}
-        onGeolocate={() => setLocateError(null)}
+        onGeolocate={(e) => {
+          setLocateError(null)
+          onLocate?.({ latitude: e.coords.latitude, longitude: e.coords.longitude })
+        }}
         onError={(e) => {
           // PERMISSION_DENIED is 1, POSITION_UNAVAILABLE 2, TIMEOUT 3. The
           // first is by far the common one on phones, and the fix is in the
