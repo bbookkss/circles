@@ -260,47 +260,31 @@ export default function CirclesMap({
               : circle.kind === 'commercial'
                 ? 'border-foreground ring-1 ring-foreground/30 text-foreground'
                 : 'border-foreground text-foreground'
-            const title = circle.approximate
-              ? `${circle.name} · approximate area`
-              : circle.kind === 'commercial'
-                ? `${circle.name} · business`
-                : circle.name
             return (
-              /* Two layers. The tag and its stem stay in normal flow, so the
-                 marker's size never changes and Mapbox keeps the stem on the
-                 pin. The card is absolutely positioned over the tag's top
-                 edge and grows downward, over the map. Growing the tag
-                 itself did not work: the marker is anchored at its bottom,
-                 so a taller element pushed the pill *up* to make room, and
-                 the thing you tapped leapt away from your finger. */
               <span className={`relative flex flex-col items-center cursor-pointer group ${open ? 'z-20' : ''}`}>
-                <button
-                  type="button"
-                  title={title}
-                  className={`font-display font-semibold text-[13px] leading-none whitespace-nowrap max-w-[240px] truncate rounded-full px-2.5 py-1.5 bg-background border shadow-[0_1px_3px_rgba(34,31,27,0.25)] transition-transform duration-150 ${edge} ${
-                    open ? 'invisible' : 'group-hover:-translate-y-0.5'
-                  }`}
-                >
-                  {circle.emoji ? `${circle.emoji} ` : ''}{circle.name}
-                </button>
-                <span aria-hidden className={`w-px h-2 ${circle.approximate ? 'bg-pen' : 'bg-foreground'}`} />
-
                 <div
-                  aria-hidden={!open}
-                  className={`absolute top-0 left-1/2 -translate-x-1/2 w-[240px] rounded-2xl bg-background border shadow-[0_6px_18px_-8px_rgba(34,31,27,0.45)] origin-top transition-[opacity,transform] duration-200 ease-out ${edge} ${
-                    open ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'
+                  className={`bg-background border shadow-[0_1px_3px_rgba(34,31,27,0.25)] transition-[border-radius,transform] duration-300 ease-out ${edge} ${
+                    open ? 'rounded-2xl w-[240px]' : 'rounded-full group-hover:-translate-y-0.5'
                   }`}
                 >
                   <button
                     type="button"
-                    title={title}
-                    className="block w-full text-left font-display font-semibold text-[15px] leading-none whitespace-nowrap truncate px-3.5 pt-3 pb-1"
+                    title={
+                      circle.approximate
+                        ? `${circle.name} · approximate area`
+                        : circle.kind === 'commercial'
+                          ? `${circle.name} · business`
+                          : circle.name
+                    }
+                    className={`block w-full text-left font-display font-semibold leading-none whitespace-nowrap truncate px-2.5 py-1.5 transition-[font-size] duration-300 ${
+                      open ? 'text-[15px] px-3.5 pt-3 pb-1' : 'text-[13px] max-w-[240px]'
+                    }`}
                   >
                     {circle.emoji ? `${circle.emoji} ` : ''}{circle.name}
                   </button>
                   <div
-                    className={`grid transition-[grid-template-rows] duration-300 ease-out ${
-                      open ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
+                    className={`grid transition-[grid-template-rows,opacity] duration-300 ease-out ${
+                      open ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
                     }`}
                   >
                     <div className="overflow-hidden">
@@ -330,6 +314,7 @@ export default function CirclesMap({
                     </div>
                   </div>
                 </div>
+                <span aria-hidden className={`w-px h-2 ${circle.approximate ? 'bg-pen' : 'bg-foreground'}`} />
               </span>
             )
           })()}
