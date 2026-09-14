@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { logout } from '@/app/actions/auth'
 import Circled from '@/components/Circled'
 import MobileNav from '@/components/MobileNav'
+import FeedbackButton from '@/components/FeedbackButton'
 
 export default async function TopNav() {
   const supabase = await createClient()
@@ -96,6 +97,11 @@ export default async function TopNav() {
         </Link>
         <MobileNav unread={unread ?? 0} unreadDms={unreadDms ?? 0} />
       </div>
+
+      {/* Every signed-in page carries the nav, so this is the one place to
+          put a control that should be everywhere. Fixed, so it escapes the
+          bar. */}
+      {user && <FeedbackButton />}
     </nav>
   )
 }

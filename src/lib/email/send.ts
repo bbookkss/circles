@@ -20,8 +20,14 @@ export type SendArgs = {
   subject: string
   html: string
   text: string
-  /** Used for the List-Unsubscribe headers, not just the body link. */
-  unsubscribeUrl: string
+  /**
+   * Used for the List-Unsubscribe headers, not just the body link. Omit for
+   * one-off transactional mail such as feedback forwarded to us, which is not
+   * a list and must not carry an unsubscribe.
+   */
+  unsubscribeUrl?: string
+  /** Overrides the default reply address, e.g. so a reply goes to the person who wrote in. */
+  replyTo?: string
 }
 
 export function emailConfigured(): boolean {
@@ -35,7 +41,7 @@ export async function sendEmail(args: SendArgs): Promise<void> {
   const from = process.env.EMAIL_FROM ?? 'Circles <reminders@send.hicircles.com>'
   // Replies should reach a mailbox a person reads, not the sending subdomain,
   // which has no inbox behind it.
-  const replyTo = process.env.EMAIL_REPLY_TO ?? 'info@hicircles.com'
+  const replyTo = args.replyTo ?? process.env.EMAIL_REPLY_TO ?? 'info@hicircles.com'
 
   const res = await fetch(ENDPOINT, {
     method: 'POST',
@@ -50,14 +56,18 @@ export async function sendEmail(args: SendArgs): Promise<void> {
       subject: args.subject,
       html: args.html,
       text: args.text,
-      headers: {
-        // Gmail and Yahoo require these of anyone sending at volume, and they
-        // put an Unsubscribe button in the client's own chrome. One-Click
-        // means the client POSTs rather than opening the link, which is why
-        // /api/unsubscribe exists separately from the confirmation page.
-        'List-Unsubscribe': `<${args.unsubscribeUrl}>`,
-        'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
-      },
+      // Gmail and Yahoo require these of anyone sending at volume, and they
+      // put an Unsubscribe button in the client's own chrome. One-Click
+      // means the client POSTs rather than opening the link, which is why
+      // /api/unsubscribe exists separately from the confirmation page.
+      ...(args.unsubscribeUrl
+        ? {
+            headers: {
+              'List-Unsubscribe': `<${args.unsubscribeUrl}>`,
+              'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+            },
+          }
+        : {}),
     }),
   })
 
