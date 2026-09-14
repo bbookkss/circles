@@ -24,6 +24,14 @@ export default async function TopNav() {
     : '?'
 
   return (
+    <>
+    {/* Outside the nav on purpose. The bar's backdrop-blur makes it the
+        containing block for anything position:fixed inside it, so a button
+        that asked for "bottom right of the screen" got the bottom right of
+        the bar instead and sat on top of Sign out. As a sibling it pins to
+        the viewport. Every signed-in page carries this component, so it is
+        still the one place for a control that should be everywhere. */}
+    {user && <FeedbackButton />}
     <nav className="fixed top-0 left-0 right-0 z-50 h-14 bg-background/80 backdrop-blur-md border-b flex items-center px-4 gap-4">
       {/* Logo */}
       <Link href="/home" className="font-display font-semibold text-[1.35rem] mr-2 tracking-tight hover:opacity-70 transition-opacity">
@@ -97,11 +105,7 @@ export default async function TopNav() {
         </Link>
         <MobileNav unread={unread ?? 0} unreadDms={unreadDms ?? 0} />
       </div>
-
-      {/* Every signed-in page carries the nav, so this is the one place to
-          put a control that should be everywhere. Fixed, so it escapes the
-          bar. */}
-      {user && <FeedbackButton />}
     </nav>
+    </>
   )
 }
