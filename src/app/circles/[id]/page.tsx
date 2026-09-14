@@ -8,7 +8,6 @@ import PostCompose from '@/components/PostCompose'
 import PostItem from '@/components/PostItem'
 import CopyLinkButton from '@/components/CopyLinkButton'
 import FollowButton from '@/components/FollowButton'
-import Circled from '@/components/Circled'
 import BackButton from '@/components/BackButton'
 import CircleLocationMap from '@/components/map/CircleLocationMap'
 import { approxArea } from '@/lib/approxLocation'
@@ -16,12 +15,7 @@ import CheckInControl from '@/components/CheckInControl'
 import { relativeDayLabel, checkInWindow } from '@/lib/schedule'
 import MeetZone from '@/components/MeetZone'
 
-const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-const FREQ_LABELS: Record<string, string> = {
-  weekly: 'Weekly',
-  biweekly: 'Every other week',
-  monthly: 'Monthly',
-}
+const DAY_LONG = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 
 function formatTime(t: string) {
   const [h, m] = t.split(':').map(Number)
@@ -30,10 +24,26 @@ function formatTime(t: string) {
   return m === 0 ? `${hour}${ampm}` : `${hour}:${String(m).padStart(2, '0')}${ampm}`
 }
 
+function listJoin(xs: string[]) {
+  if (xs.length <= 1) return xs.join('')
+  return `${xs.slice(0, -1).join(', ')} and ${xs[xs.length - 1]}`
+}
+
+/**
+ * "Fridays, 11pm – 1am" / "Mondays and Wednesdays every other week, 7 – 8pm".
+ * A sentence, because "Fri · 11pm – 1am · Weekly" is a database row wearing
+ * a hat. The frequency only appears when it is not the obvious one.
+ */
+function meetsPhrase(s: { days_of_week: number[]; start_time: string; end_time: string; frequency: string }) {
+  const days = [...s.days_of_week].sort().map((d) => `${DAY_LONG[d]}s`)
+  const freq = s.frequency === 'biweekly' ? ' every other week' : s.frequency === 'monthly' ? ' monthly' : ''
+  return `${listJoin(days)}${freq}, ${formatTime(s.start_time)} – ${formatTime(s.end_time)}`
+}
+
 function Initials({ name, size = 'md' }: { name: string; size?: 'sm' | 'md' }) {
   const initials = name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)
   return (
-    <div className={`rounded-full bg-muted flex items-center justify-center font-semibold flex-shrink-0 ${size === 'sm' ? 'w-7 h-7 text-xs' : 'w-9 h-9 text-sm'}`}>
+    <div className={`rounded-full border border-foreground/70 flex items-center justify-center font-medium flex-shrink-0 ${size === 'sm' ? 'w-7 h-7 text-[11px]' : 'w-9 h-9 text-sm'}`}>
       {initials}
     </div>
   )
@@ -102,6 +112,11 @@ export default async function CirclePage({
         .select('status').eq('circle_id', id).eq('user_id', user.id).maybeSingle()
     : { data: null }
 
+  const schedule = schedules?.[0] ?? null
+  const place = circle.location ?? circle.neighborhood ?? null
+  const creatorFirst = creator?.full_name?.split(' ')[0] ?? null
+  const count = memberCount ?? 0
+
   // Unauthenticated, or signed in without access — show preview card
   if (!user || isPreviewOnly) {
     // Nobody on this branch is a member, so the location is always coarse.
@@ -116,11 +131,11 @@ export default async function CirclePage({
       <>
         {user ? <TopNav /> : (
           <nav className="fixed top-0 left-0 right-0 z-50 h-14 bg-background/80 backdrop-blur-md border-b flex items-center px-4">
-            <Link href="/login" className="font-bold text-lg lowercase tracking-tight">circles</Link>
+            <Link href="/login" className="font-display font-semibold text-[1.35rem] tracking-tight">circles</Link>
           </nav>
         )}
         <div className="pt-14 min-h-screen bg-background">
-          <div className="max-w-2xl mx-auto px-4 py-8 space-y-8">
+          <div className="max-w-2xl mx-auto px-5 py-10 space-y-8">
 
             {actionError && (
               <p className="text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-md">
@@ -128,50 +143,32 @@ export default async function CirclePage({
               </p>
             )}
 
-            {/* Circle preview */}
-            <div className="space-y-4 fade-rise">
-              {circle.emoji && <div className="text-6xl">{circle.emoji}</div>}
-              <div className="space-y-2">
-                <div className="flex flex-wrap gap-1.5">
-                  {isPrivate && <span className="text-xs border px-2 py-0.5 rounded-full text-muted-foreground">Private</span>}
-                  {circle.kind === 'commercial' && <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-medium">Business</span>}
-                  {circle.category && <span className="text-xs bg-muted px-2 py-0.5 rounded-full text-muted-foreground">{circle.category}</span>}
-                </div>
-                <h1 className="text-3xl font-bold">{circle.name}</h1>
-                {circle.description && <p className="text-muted-foreground">{circle.description}</p>}
-              </div>
-              <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
-                {(circle.neighborhood || circle.location) && <span>{circle.neighborhood ?? circle.location}</span>}
-                <span>{memberCount ?? 0} member{memberCount !== 1 ? 's' : ''}</span>
-                {creator?.full_name && <span>Started by {creator.full_name}</span>}
-              </div>
-            </div>
-
-            {/* Schedule */}
-            {schedules && schedules.length > 0 && (
-              <div className="border rounded-xl p-4 space-y-2 bg-card fade-rise stagger-1">
-                <p className="text-sm font-semibold">Schedule</p>
-                {schedules.map((s) => (
-                  <div key={s.id} className="text-sm text-muted-foreground">
-                    <span className="text-foreground font-medium">
-                      {(s.days_of_week as number[]).sort().map((d) => DAY_NAMES[d]).join(', ')}
-                    </span>
-                    {' · '}{formatTime(s.start_time)} – {formatTime(s.end_time)}
-                    {' · '}{FREQ_LABELS[s.frequency] ?? s.frequency}
-                    {s.note && <span className="block text-xs mt-0.5 italic">{s.note}</span>}
-                  </div>
-                ))}
-              </div>
-            )}
+            {/* Masthead */}
+            <header className="space-y-3 fade-rise border-b border-foreground pb-6">
+              <p className="font-display italic text-pen">
+                {[circle.category, isPrivate ? 'private' : 'public', circle.kind === 'commercial' ? 'business' : null]
+                  .filter(Boolean).join(' · ')}
+              </p>
+              <h1 className="text-[2.4rem] md:text-5xl leading-[0.98]">
+                {circle.emoji && <span className="mr-3">{circle.emoji}</span>}{circle.name}
+              </h1>
+              <p className="text-base text-foreground/80 mt-2 max-w-prose">
+                {schedule ? (
+                  <>Meets <b className="num font-bold text-foreground text-sm">{meetsPhrase(schedule)}</b>{place ? ` at ${place}` : ''}. </>
+                ) : (
+                  <>No schedule yet. </>
+                )}
+                {creatorFirst && <>Started by {creatorFirst}. </>}
+                {count} member{count !== 1 ? 's' : ''}.
+              </p>
+              {circle.description && <p className="text-foreground/80 max-w-prose">{circle.description}</p>}
+            </header>
 
             {/* Location map */}
             {circle.latitude != null && circle.longitude != null && (
-              <div className="fade-rise stagger-2">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-2">Location</p>
-                {/* Signed out: never the precise point. The blurred centre is
-                    computed here, on the server, so the real coordinates are
-                    not in what gets sent to the browser. */}
-                <div className="h-56 rounded-xl overflow-hidden border">
+              <div className="fade-rise stagger-1">
+                <p className="label mb-2">Where</p>
+                <div className="h-52 border border-foreground overflow-hidden">
                   <CircleLocationMap
                     longitude={previewArea!.longitude}
                     latitude={previewArea!.latitude}
@@ -179,25 +176,24 @@ export default async function CirclePage({
                     emoji={circle.emoji}
                   />
                 </div>
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-xs text-muted-foreground">
-                  {(circle.neighborhood || circle.location) && <span>{circle.neighborhood ?? circle.location}</span>}
-                  <span>Members see the exact spot.</span>
-                </div>
+                <p className="label mt-2 normal-case tracking-normal">
+                  {(circle.neighborhood || circle.location) ? `${circle.neighborhood ?? circle.location} · ` : ''}exact spot shown to members
+                </p>
               </div>
             )}
 
             {/* Join CTA */}
-            <div className="border rounded-xl p-6 space-y-4 bg-card fade-rise stagger-2">
+            <div className="border border-foreground p-6 space-y-4 fade-rise stagger-2">
               <div>
-                <p className="font-semibold text-base">
+                <p className="font-display text-xl">
                   {isPrivate ? 'Want to join this circle?' : 'Join this circle'}
                 </p>
-                <p className="text-sm text-muted-foreground mt-1">
+                <p className="text-sm text-foreground/75 mt-1">
                   {user
-                    ? 'Ask the admin for access to see members and posts.'
+                    ? 'Ask the admin for access to see members and notes.'
                     : isPrivate
                       ? 'Create an account to request access. The admin will approve you.'
-                      : 'Create a free account to join and see posts from this circle.'}
+                      : 'Create a free account to join and see notes from this circle.'}
                 </p>
               </div>
               <div className="flex gap-2">
@@ -338,7 +334,6 @@ export default async function CirclePage({
     ? ((await supabase.rpc('circle_today', { cid: id })).data ?? null)
     : null
 
-
   const { data: checkInRows } = nextMeet
     ? await supabase
         .from('circle_check_ins')
@@ -349,10 +344,10 @@ export default async function CirclePage({
 
   const checkIns = checkInRows ?? []
   const myCheckIn = checkIns.find((c) => c.user_id === user.id)?.status ?? null
+  const statusOf = Object.fromEntries(checkIns.map((c) => [c.user_id, c.status]))
   const going = checkIns.filter((c) => c.status === 'yes')
   const maybes = checkIns.filter((c) => c.status === 'maybe')
 
-  const creatorName = profileMap[circle.created_by] ?? null
   const myName = myProfile?.full_name ?? 'You'
 
   const isMember = !!membership
@@ -366,11 +361,20 @@ export default async function CirclePage({
   const totalMembers = memberCount ?? 0
   const hiddenCount = Math.max(0, totalMembers - members.length)
 
+  const window = nextMeet && schedule
+    ? checkInWindow(nextMeet, schedule.start_time, schedule.end_time, circle.timezone)
+    : { open: false, reason: undefined as string | undefined }
+
+  const membersSorted = [...members].sort((a, b) => {
+    const rank = (s?: string) => (s === 'yes' ? 0 : s === 'maybe' ? 1 : s === 'no' ? 3 : 2)
+    return rank(statusOf[a.user_id]) - rank(statusOf[b.user_id]) || a.full_name.localeCompare(b.full_name)
+  })
+
   return (
     <>
       <TopNav />
       <div className="pt-14 min-h-screen bg-background">
-        <div className="max-w-2xl mx-auto px-4 py-8 space-y-8">
+        <div className="max-w-3xl mx-auto px-5 md:px-6 py-8 md:py-10 space-y-8">
 
           {actionError && (
             <p className="text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-md">
@@ -382,242 +386,227 @@ export default async function CirclePage({
           <div className="flex items-center justify-between">
             <BackButton fallback="/explore" />
             {isAdmin && (
-              <div className="flex items-center gap-2">
-                <Circled>
-                  <Link href={`/circles/${id}/edit`} className="text-sm text-muted-foreground hover:text-foreground px-2 py-1">Edit</Link>
-                </Circled>
-                <Circled>
-                  <Link href={`/circles/${id}/requests`} className="text-sm text-muted-foreground hover:text-foreground px-2 py-1">Requests</Link>
-                </Circled>
+              <div className="flex items-center gap-4 text-sm">
+                <Link href={`/circles/${id}/edit`} className="text-muted-foreground hover:text-foreground underline underline-offset-4 decoration-border">Edit</Link>
+                <Link href={`/circles/${id}/requests`} className="text-muted-foreground hover:text-foreground underline underline-offset-4 decoration-border">Requests</Link>
               </div>
             )}
           </div>
 
-          {/* Header */}
-          <div className="space-y-4 fade-rise">
-            {circle.emoji && <div className="text-6xl">{circle.emoji}</div>}
-            <div className="space-y-2">
-              <div className="flex flex-wrap gap-1.5">
-                {isPrivate && <span className="text-xs border px-2 py-0.5 rounded-full text-muted-foreground">Private</span>}
-                  {circle.kind === 'commercial' && <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-medium">Business</span>}
-                {circle.category && <span className="text-xs bg-muted px-2 py-0.5 rounded-full text-muted-foreground">{circle.category}</span>}
-              </div>
-              <h1 className="text-3xl font-bold">{circle.name}</h1>
-              {circle.description && <p className="text-muted-foreground">{circle.description}</p>}
-            </div>
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
-              {(circle.neighborhood || circle.location) && <span>{circle.neighborhood ?? circle.location}</span>}
-              <span>{totalMembers} member{totalMembers !== 1 ? 's' : ''}</span>
-              {creatorName && <span>Started by {creatorName}</span>}
+          {/* Masthead */}
+          <header className="fade-rise border-b border-foreground pb-6 grid grid-cols-1 md:grid-cols-[1fr_auto] gap-x-6 gap-y-4 items-end">
+            <div className="space-y-3 min-w-0">
+              <p className="font-display italic text-pen">
+                {[circle.category, isPrivate ? 'private' : 'public', circle.kind === 'commercial' ? 'business' : null]
+                  .filter(Boolean).join(' · ')}
+              </p>
+              <h1 className="text-[2.4rem] md:text-5xl leading-[0.98]">
+                {circle.emoji && <span className="mr-3">{circle.emoji}</span>}{circle.name}
+              </h1>
+              <p className="text-base text-foreground/80 max-w-prose">
+                {schedule ? (
+                  <>Meets <b className="num font-bold text-foreground text-sm">{meetsPhrase(schedule)}</b>{place ? ` at ${place}` : ''}. </>
+                ) : (
+                  <>No schedule yet{isAdmin ? <>. <Link href={`/circles/${id}/edit`} className="underline underline-offset-4 decoration-pen-soft">Set one</Link></> : null}. </>
+                )}
+                {creatorFirst && <>Started by {creatorFirst}. </>}
+                {totalMembers} member{totalMembers !== 1 ? 's' : ''}.
+              </p>
+              {circle.description && <p className="text-foreground/80 max-w-prose">{circle.description}</p>}
             </div>
             <div className="flex items-center gap-2 flex-wrap">
               {!isAdmin && (
                 isMember ? (
                   <form action={leaveCircle}>
                     <input type="hidden" name="circle_id" value={id} />
-                    <Button variant="outline" size="sm" type="submit">Leave</Button>
+                    <Button variant="outline" size="sm" type="submit" className="rounded-full">Leave</Button>
                   </form>
                 ) : isPrivate ? (
                   hasPendingRequest ? (
                     <form action={withdrawRequest}>
                       <input type="hidden" name="circle_id" value={id} />
-                      <Button variant="outline" size="sm" type="submit">Withdraw request</Button>
+                      <Button variant="outline" size="sm" type="submit" className="rounded-full">Withdraw request</Button>
                     </form>
                   ) : (
                     <form action={requestToJoin}>
                       <input type="hidden" name="circle_id" value={id} />
-                      <Button size="sm" type="submit">Request to join</Button>
+                      <Button size="sm" type="submit" className="rounded-full">Request to join</Button>
                     </form>
                   )
                 ) : (
                   <form action={joinCircle}>
                     <input type="hidden" name="circle_id" value={id} />
-                    <Button size="sm" type="submit">Join</Button>
+                    <Button size="sm" type="submit" className="rounded-full">Join</Button>
                   </form>
                 )
               )}
+              {isMember && !isAdmin && null}
               <CopyLinkButton />
             </div>
-          </div>
+          </header>
 
-          {/* Schedule */}
-          {/* Next meet + check-in */}
-          {nextMeet && (
-            <div className="border rounded-xl p-4 space-y-3 bg-card fade-rise">
-              <div className="flex items-baseline justify-between gap-3 flex-wrap">
-                <p className="text-sm font-semibold">
-                  Next meet · {relativeDayLabel(nextMeet, circleToday ?? nextMeet)}
-                  {schedules?.[0] && (
-                    <span className="font-normal text-muted-foreground">
-                      {' · '}{formatTime(schedules[0].start_time)}
+          <div className="grid grid-cols-1 md:grid-cols-[1.25fr_1fr] gap-x-10 gap-y-8">
+            {/* Left column: next meet, who's coming, notes */}
+            <div className="space-y-8 min-w-0">
+              {/* The one boxed thing on the page. */}
+              {nextMeet && schedule && (
+                <div className="border border-foreground p-5 space-y-3 fade-rise">
+                  <div className="flex items-baseline justify-between gap-3 flex-wrap">
+                    <p className="font-display text-2xl">
+                      {relativeDayLabel(nextMeet, circleToday ?? nextMeet)}
+                    </p>
+                    <p className="num text-sm text-foreground/80">
+                      {formatTime(schedule.start_time)} – {formatTime(schedule.end_time)}
                       <MeetZone tz={circle.timezone} />
-                    </span>
-                  )}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {going.length} going{maybes.length > 0 ? ` · ${maybes.length} maybe` : ''}
-                </p>
-              </div>
-
-              {isMember ? (
-                (() => {
-                  // Hours, not calendar days -- see checkInWindow. This used
-                  // to offer an enabled button for a meet 31 hours out, which
-                  // the trigger then refused.
-                  const { open, reason } = schedules?.[0]
-                    ? checkInWindow(
-                        nextMeet,
-                        schedules[0].start_time,
-                        schedules[0].end_time,
-                        circle.timezone
-                      )
-                    : { open: false, reason: undefined }
-                  return (
+                    </p>
+                  </div>
+                  <p className={`label ${window.open ? 'text-pen' : ''}`}>
+                    {window.open ? '● check-in open' : window.reason ?? ''}
+                  </p>
+                  {isMember ? (
                     <CheckInControl
                       circleId={id}
                       occursOn={nextMeet}
                       initialStatus={myCheckIn as 'yes' | 'no' | 'maybe' | null}
-                      disabled={!open}
-                      disabledReason={reason}
+                      disabled={!window.open}
+                      disabledReason={undefined}
                     />
-                  )
-                })()
+                  ) : (
+                    <p className="text-sm text-foreground/75">Join this circle to check in.</p>
+                  )}
+                  <p className="text-sm text-foreground/75">
+                    {going.length === 0
+                      ? 'Nobody has said yes yet.'
+                      : `${going.length} going${maybes.length > 0 ? ` · ${maybes.length} maybe` : ''}`}
+                  </p>
+                </div>
+              )}
+
+              {/* Who's coming, then everyone else */}
+              {(isMember || !isPrivate) && members.length > 0 && (
+                <div className="fade-rise stagger-1">
+                  <p className="label mb-2">{nextMeet ? "Who's coming" : 'Members'}</p>
+                  <ul className="divide-y divide-border/70 border-t border-border/70">
+                    {membersSorted.map((m) => {
+                      const st = statusOf[m.user_id]
+                      return (
+                        <li key={m.user_id} className="flex items-center gap-3 py-2.5">
+                          <Initials name={m.full_name} size="sm" />
+                          <Link
+                            href={m.isMe ? '/profile' : `/profile/${m.user_id}`}
+                            className="text-sm flex-1 min-w-0 truncate hover:underline underline-offset-4 decoration-pen-soft"
+                          >
+                            {m.full_name}
+                            {m.role === 'admin' && <span className="font-display italic text-muted-foreground ml-2">admin</span>}
+                          </Link>
+                          {nextMeet && st && (
+                            <span className={`label ${st === 'yes' ? 'text-pen' : ''}`}>
+                              {st === 'yes' ? 'going' : st === 'maybe' ? 'maybe' : "can't"}
+                            </span>
+                          )}
+                          {!m.isMe && (
+                            <FollowButton targetId={m.user_id} circleId={id} initialIsFollowing={m.isFollowing} />
+                          )}
+                        </li>
+                      )
+                    })}
+                  </ul>
+                  {hiddenCount > 0 && (
+                    <p className="label mt-2">+{hiddenCount} more</p>
+                  )}
+                </div>
+              )}
+
+              {/* Notes / gated */}
+              {isPrivate && !isMember ? (
+                <div className="border border-border p-8 text-center fade-rise">
+                  <p className="font-display text-lg mb-1">This circle is private</p>
+                  <p className="text-sm text-foreground/75">
+                    {hasPendingRequest
+                      ? 'Your request is pending. The admin will review it soon.'
+                      : 'Request to join to see notes and updates.'}
+                  </p>
+                </div>
               ) : (
-                <p className="text-xs text-muted-foreground">Join this circle to check in.</p>
-              )}
-
-              {going.length > 0 && (
-                <div className="flex flex-wrap gap-x-3 gap-y-1 pt-1 border-t">
-                  {going.map((c) => (
-                    <span key={c.user_id} className="text-xs text-muted-foreground pt-2">
-                      {profileMap[c.user_id] ?? 'Someone'}
-                    </span>
-                  ))}
+                <div className="space-y-4 fade-rise stagger-2">
+                  <p className="label">Notes</p>
+                  {isMember && <PostCompose circleId={id} authorName={myName} />}
+                  {posts.length === 0 ? (
+                    <div className="py-6">
+                      <p className="font-display text-lg">No notes yet.</p>
+                      <p className="text-sm text-foreground/75">{isMember ? 'Leave the first one for the next meet.' : 'Nothing posted here yet.'}</p>
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-border border-t border-b">
+                      {posts.map((post) => (
+                        <PostItem
+                          key={post.id}
+                          post={{
+                            id: post.id,
+                            circleId: id,
+                            content: post.content,
+                            created_at: post.created_at,
+                            user_id: post.user_id,
+                            author_name: post.author_name,
+                          }}
+                          currentUserId={user.id}
+                          currentUserName={myName}
+                          initialLikeCount={post.likeCount}
+                          initialLiked={post.likedByMe}
+                          initialComments={post.comments}
+                          canInteract={isMember}
+                        />
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
-          )}
 
-          {schedules && schedules.length > 0 && (
-            <div className="border rounded-xl p-4 space-y-2 bg-card fade-rise stagger-1">
-              <p className="text-sm font-semibold">Schedule</p>
-              {schedules.map((s) => (
-                <div key={s.id} className="text-sm text-muted-foreground">
-                  <span className="text-foreground font-medium">
-                    {(s.days_of_week as number[]).sort().map((d) => DAY_NAMES[d]).join(', ')}
-                  </span>
-                  {' · '}{formatTime(s.start_time)} – {formatTime(s.end_time)}
-                  {' · '}{FREQ_LABELS[s.frequency] ?? s.frequency}
-                  {s.note && <span className="block text-xs mt-0.5 italic">{s.note}</span>}
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Location map */}
-          {circle.latitude != null && circle.longitude != null && (
-            <div className="fade-rise stagger-2">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-2">Location</p>
-              {/* Members get the place; everyone else gets an area. The
-                  choice is made here rather than in the component, so the
-                  precise coordinates are never sent to a non-member at all. */}
-              <div className="h-56 rounded-xl overflow-hidden border">
-                {isMember ? (
-                  <CircleLocationMap
-                    longitude={circle.longitude}
-                    latitude={circle.latitude}
-                    emoji={circle.emoji}
-                  />
-                ) : (
-                  <CircleLocationMap
-                    longitude={area!.longitude}
-                    latitude={area!.latitude}
-                    radiusM={area!.radiusM}
-                    emoji={circle.emoji}
-                  />
-                )}
-              </div>
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-xs text-muted-foreground">
-                {(circle.neighborhood || circle.location) && <span>{circle.neighborhood ?? circle.location}</span>}
-                {!isMember && <span>Members see the exact spot.</span>}
-              </div>
-            </div>
-          )}
-
-          {/* Members */}
-          {(isMember || !isPrivate) && members.length > 0 && (
-            <div className="space-y-3 fade-rise stagger-2">
-              <p className="text-sm font-semibold">Members</p>
-              <div className="space-y-2">
-                {members.map((m) => (
-                  <div key={m.user_id} className="flex items-center gap-3">
-                    <Initials name={m.full_name} size="sm" />
-                    <Link
-                      href={m.isMe ? '/profile' : `/profile/${m.user_id}`}
-                      className="text-sm flex-1 hover:underline"
-                    >
-                      {m.full_name}
-                    </Link>
-                    {m.role === 'admin' && (
-                      <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">Admin</span>
-                    )}
-                    {!m.isMe && (
-                      <FollowButton targetId={m.user_id} circleId={id} initialIsFollowing={m.isFollowing} />
+            {/* Right column: where */}
+            <aside className="space-y-6 min-w-0">
+              {circle.latitude != null && circle.longitude != null && (
+                <div className="fade-rise stagger-1">
+                  <p className="label mb-2">Where</p>
+                  {/* Members get the place; everyone else gets an area. The
+                      choice is made here rather than in the component, so the
+                      precise coordinates are never sent to a non-member at all. */}
+                  <div className="h-56 border border-foreground overflow-hidden">
+                    {isMember ? (
+                      <CircleLocationMap
+                        longitude={circle.longitude}
+                        latitude={circle.latitude}
+                        emoji={circle.emoji}
+                      />
+                    ) : (
+                      <CircleLocationMap
+                        longitude={area!.longitude}
+                        latitude={area!.latitude}
+                        radiusM={area!.radiusM}
+                        emoji={circle.emoji}
+                      />
                     )}
                   </div>
-                ))}
-                {hiddenCount > 0 && (
-                  <p className="text-xs text-muted-foreground pl-10">+{hiddenCount} more</p>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Posts / gated */}
-          {isPrivate && !isMember ? (
-            <div className="border rounded-xl p-8 text-center text-muted-foreground bg-card fade-rise">
-              <div className="w-8 h-8 rounded-full border-2 border-muted-foreground/40 mx-auto mb-3" />
-              <p className="font-medium mb-1">This circle is private</p>
-              <p className="text-sm">
-                {hasPendingRequest
-                  ? 'Your request is pending. The admin will review it soon.'
-                  : 'Request to join to see posts and updates.'}
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-6 fade-rise stagger-3">
-              <p className="text-sm font-semibold">Posts</p>
-              {isMember && <PostCompose circleId={id} authorName={myName} />}
-              {posts.length === 0 ? (
-                <div className="border rounded-xl p-8 text-center text-muted-foreground bg-card">
-                  <p className="font-medium mb-1">No posts yet</p>
-                  <p className="text-sm">{isMember ? 'Be the first to post something.' : 'Nothing posted here yet.'}</p>
-                </div>
-              ) : (
-                <div className="divide-y divide-border border-t border-b">
-                  {posts.map((post) => (
-                    <PostItem
-                      key={post.id}
-                      post={{
-                        id: post.id,
-                        circleId: id,
-                        content: post.content,
-                        created_at: post.created_at,
-                        user_id: post.user_id,
-                        author_name: post.author_name,
-                      }}
-                      currentUserId={user.id}
-                      currentUserName={myName}
-                      initialLikeCount={post.likeCount}
-                      initialLiked={post.likedByMe}
-                      initialComments={post.comments}
-                      canInteract={isMember}
-                    />
-                  ))}
+                  <p className="label mt-2 normal-case tracking-normal">
+                    {(circle.neighborhood || circle.location) ? `${circle.neighborhood ?? circle.location}` : ''}
+                    {!isMember && `${(circle.neighborhood || circle.location) ? ' · ' : ''}exact spot shown to members`}
+                  </p>
                 </div>
               )}
-            </div>
-          )}
+              {schedule && (
+                <div className="fade-rise stagger-2">
+                  <p className="label mb-2">When</p>
+                  <p className="text-sm text-foreground/80">
+                    {meetsPhrase(schedule)}
+                    {schedule.note && <span className="block font-display italic text-muted-foreground mt-1">{schedule.note}</span>}
+                  </p>
+                  {schedules && schedules.length > 1 && (
+                    <p className="label mt-2 normal-case tracking-normal">+{schedules.length - 1} more schedule{schedules.length > 2 ? 's' : ''}</p>
+                  )}
+                </div>
+              )}
+            </aside>
+          </div>
 
         </div>
       </div>

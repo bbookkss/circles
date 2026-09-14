@@ -35,8 +35,7 @@ works fine from this machine.
 
 ## Blocking — do before anyone real signs up
 
-- [ ] **AUDIT 2026-09-13: two confirmed breaks, rehearsed against production
-      in a rolled-back transaction.** Four pilot users signed up the same
+- [x] **AUDIT 2026-09-13: two confirmed breaks, FIXED. `security-fixes-2026-09-13.sql` applied; all 9 admin-keyed policies, the approval RPC and the visibility check confirmed live.** Original notes kept below for the record. Four pilot users signed up the same
       evening and one created a private circle, so both are live risks.
 
       1. **Approving a join request does not make the person a member.**
@@ -215,7 +214,7 @@ works fine from this machine.
       returns zero rows, so the phantom weekly meet is genuinely gone rather
       than merely unreferenced.
 
-- [ ] **Run `supabase/dm-follow-2026-09-13.sql`** after the security fixes.
+- [x] **`supabase/dm-follow-2026-09-13.sql` applied 2026-09-13** (policy `messages: insert if following` confirmed live).
       Pilot request: DMs to anyone you follow, not only mutual follows. The
       app's `canMessage` checks, the Message button on profiles, the new
       "Start a conversation" list on /messages and the error copy all assume

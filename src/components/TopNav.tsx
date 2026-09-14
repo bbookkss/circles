@@ -25,7 +25,7 @@ export default async function TopNav() {
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 h-14 bg-background/80 backdrop-blur-md border-b flex items-center px-4 gap-4">
       {/* Logo */}
-      <Link href="/home" className="font-bold text-lg mr-2 tracking-tight lowercase hover:opacity-70 transition-opacity">
+      <Link href="/home" className="font-display font-semibold text-[1.35rem] mr-2 tracking-tight hover:opacity-70 transition-opacity">
         circles
       </Link>
 

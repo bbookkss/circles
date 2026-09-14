@@ -11,6 +11,12 @@ const OPTIONS: { value: Status; label: string }[] = [
   { value: 'no', label: "Can't" },
 ]
 
+/**
+ * Three pills. Only one colour on the page means anything, and this is where
+ * it lives: a chosen answer fills in pen-blue. "Can't", once chosen, is
+ * struck through rather than filled, because it is the one answer that is
+ * not a commitment to be somewhere.
+ */
 export default function CheckInControl({
   circleId,
   occursOn,
@@ -52,27 +58,34 @@ export default function CheckInControl({
 
   return (
     <div className="space-y-1.5">
-      <div className="flex gap-1.5">
-        {OPTIONS.map((o) => (
-          <button
-            key={o.value}
-            type="button"
-            onClick={() => choose(o.value)}
-            disabled={pending || disabled}
-            title={disabled ? disabledReason : undefined}
-            className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
-              status === o.value
-                ? 'bg-foreground text-background border-foreground'
-                : 'border-input hover:bg-muted'
-            } ${disabled ? 'opacity-50 cursor-default' : ''}`}
-          >
-            {o.label}
-          </button>
-        ))}
+      <div className="flex gap-2 flex-wrap">
+        {OPTIONS.map((o) => {
+          const on = status === o.value
+          const cls = disabled
+            ? 'border-border text-muted-foreground'
+            : on
+              ? o.value === 'no'
+                ? 'border-border text-muted-foreground line-through'
+                : 'bg-pen border-pen text-white'
+              : 'border-foreground text-foreground hover:bg-muted'
+          return (
+            <button
+              key={o.value}
+              type="button"
+              onClick={() => choose(o.value)}
+              disabled={pending || disabled}
+              aria-pressed={on}
+              title={disabled ? disabledReason : undefined}
+              className={`px-3.5 py-1.5 rounded-full text-sm font-medium border transition-colors ${cls} ${disabled ? 'cursor-default' : ''}`}
+            >
+              {o.label}
+            </button>
+          )
+        })}
       </div>
       {error && <p className="text-xs text-destructive">{error}</p>}
       {disabled && disabledReason && (
-        <p className="text-xs text-muted-foreground">{disabledReason}</p>
+        <p className="label normal-case tracking-normal">{disabledReason}</p>
       )}
     </div>
   )
