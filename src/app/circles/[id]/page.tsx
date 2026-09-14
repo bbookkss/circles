@@ -39,8 +39,17 @@ function Initials({ name, size = 'md' }: { name: string; size?: 'sm' | 'md' }) {
   )
 }
 
-export default async function CirclePage({ params }: { params: Promise<{ id: string }> }) {
+export default async function CirclePage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>
+  searchParams: Promise<{ error?: string }>
+}) {
   const { id } = await params
+  // joinCircle / leaveCircle / requestToJoin redirect here with a message
+  // when the write was refused, instead of redirecting here as if it worked.
+  const { error: actionError } = await searchParams
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -112,6 +121,12 @@ export default async function CirclePage({ params }: { params: Promise<{ id: str
         )}
         <div className="pt-14 min-h-screen bg-background">
           <div className="max-w-2xl mx-auto px-4 py-8 space-y-8">
+
+            {actionError && (
+              <p className="text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-md">
+                {actionError}
+              </p>
+            )}
 
             {/* Circle preview */}
             <div className="space-y-4 fade-rise">
@@ -356,6 +371,12 @@ export default async function CirclePage({ params }: { params: Promise<{ id: str
       <TopNav />
       <div className="pt-14 min-h-screen bg-background">
         <div className="max-w-2xl mx-auto px-4 py-8 space-y-8">
+
+          {actionError && (
+            <p className="text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-md">
+              {actionError}
+            </p>
+          )}
 
           {/* Back + admin links */}
           <div className="flex items-center justify-between">

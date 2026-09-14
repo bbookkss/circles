@@ -5,8 +5,17 @@ import { Button } from '@/components/ui/button'
 import { approveRequest, rejectRequest } from '@/app/actions/circles'
 import TopNav from '@/components/TopNav'
 
-export default async function RequestsPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function RequestsPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>
+  searchParams: Promise<{ error?: string }>
+}) {
   const { id } = await params
+  // Set by approveRequest/rejectRequest when the write is refused. Without
+  // this the page re-rendered identical and the admin assumed it worked.
+  const { error: actionError } = await searchParams
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
@@ -51,6 +60,12 @@ export default async function RequestsPage({ params }: { params: Promise<{ id: s
         </div>
 
         <h1 className="text-2xl font-bold mb-6">Join requests</h1>
+
+        {actionError && (
+          <p className="mb-6 text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-md">
+            {actionError}
+          </p>
+        )}
 
         {!requests || requests.length === 0 ? (
           <div className="border rounded-lg p-8 text-center text-muted-foreground">
