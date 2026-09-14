@@ -241,9 +241,26 @@ never been exercised through the UI by a real person.
 - [ ] **Business approve/reject.** `/admin` renders and gates correctly, but
       the queue has never had a row in it. Submit a request from
       `Test user 2`, approve it, and create a commercial circle.
-- [ ] **Private circles.** All 10 circles are public, so every private-circle
-      protection in the RLS audit is correct by inspection and has never once
-      run. Make a private circle and a second account.
+- [ ] **Private circles — data layer verified 2026-09-13, UI still untested.**
+      All 10 circles are public, so the protections have never run against a
+      real private row. Three checks short of an end-to-end test:
+
+      The predicate was evaluated directly against live data with visibility
+      forced to 'private'. For all 10 circles a non-member returns false and
+      the owner returns true, so `is_circle_member` and the `created_by`
+      fallback both behave. `anon`'s policy on circles is
+      `visibility = 'public'` with no escape hatch.
+
+      More importantly, the service-role client bypasses RLS entirely, so a
+      single admin-client query against `circles` would undo all of it.
+      There are exactly four `createAdminClient` call sites, in
+      `actions/email.ts`, `actions/auth.ts` and `api/cron/reminders/route.ts`,
+      and none of them touch the circles table.
+
+      What is still untested is the UI: creating a private circle, the join
+      request flow, and the fact that `requestToJoin` notifies admins by
+      querying for `role = 'admin'`, which returns nobody on a circle that has
+      no admin. Run the admin backfill before making any circle private.
 - [ ] **Signed-in non-member reading a public circle.** Follows from
       `can_read_circle_content` returning true when `uid is not null`, but was
       never observed.
