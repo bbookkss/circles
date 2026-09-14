@@ -158,21 +158,24 @@
   }
 }
 
-@layer utilities {
-  /* Small mono label: dates, counts, section eyebrows. One class so the
-     tracking and size stay identical everywhere it appears. */
-  .label {
-    font-family: var(--font-mono);
-    font-size: 0.7rem;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--muted-foreground);
-  }
-  /* Times and dates in running text. Tabular so columns of them line up. */
-  .num {
-    font-family: var(--font-mono);
-    font-variant-numeric: tabular-nums;
-  }
+/* Small mono label: dates, counts, section eyebrows. One class so the
+   tracking and size stay identical everywhere it appears.
+   Declared with @utility rather than @layer utilities so Tailwind sorts it
+   with the rest: multi-property utilities come first, so a single-property
+   override like `normal-case` or `text-pen` on the same element wins. In a
+   plain @layer block it was beating them, and the email on the profile page
+   came out shouted. */
+@utility label {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+/* Times and dates in running text. Tabular so columns of them line up. */
+@utility num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
 }
 
 /* ---- Motion ---- */
