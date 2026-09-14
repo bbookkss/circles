@@ -11,6 +11,7 @@ import LocationSearch from '@/components/LocationSearch'
 import BackButton from '@/components/BackButton'
 import { reverseGeocode } from '@/lib/geocoding'
 import { applyCoffeeTheme } from '@/lib/mapTheme'
+import type { MapView } from '@/lib/mapView'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN!
@@ -49,7 +50,16 @@ const FREQUENCIES = [
 type Pin = { longitude: number; latitude: number }
 
 
-export default function NewCircleClient({ isBusiness = false }: { isBusiness?: boolean }) {
+export default function NewCircleClient({
+  isBusiness = false,
+  // Resolved on the server from the request's geo headers, so the map is
+  // already in the right place on first paint. Doing it in the browser would
+  // show San Francisco and then jump, which is worse than either alone.
+  initialView = SF_CENTER,
+}: {
+  isBusiness?: boolean
+  initialView?: MapView
+}) {
   const [kind, setKind] = useState<'social' | 'commercial'>('social')
   const [pin, setPin] = useState<Pin | null>(null)
   const [neighborhood, setNeighborhood] = useState<string | null>(null)
@@ -386,7 +396,7 @@ export default function NewCircleClient({ isBusiness = false }: { isBusiness?: b
           enough to see it exists, not to drop a pin on it. */}
       <main className="h-[38vh] md:h-auto flex-shrink-0 md:flex-1 relative border-b md:border-b-0">
         <Map
-          initialViewState={SF_CENTER}
+          initialViewState={initialView}
           style={{ width: '100%', height: '100%' }}
           mapStyle="mapbox://styles/mapbox/light-v11"
           mapboxAccessToken={MAPBOX_TOKEN}
