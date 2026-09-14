@@ -304,6 +304,26 @@ works fine from this machine.
 
       Decide this before the first flyer goes up, not after.
 
+- [x] **Field Notes design shipped 2026-09-13** (two passes, `f8584ff`
+      through `3ffa06a`). Fraunces / Figtree / Space Mono; paper, ink, one
+      pen-blue accent that only means "you said yes" or "check-in open";
+      Home rebuilt around the week with a Later list; circle page as a
+      masthead; explore pins as paper name tags; every lowercase-everything
+      heading gone. The design memory and rationale are in the session's
+      Field Notes page and PRODUCTION.md history.
+
+      Still stock: the `/business` and `/admin` pages, the edit-profile form
+      internals, and the map tiles themselves. The coffee map theme now
+      visibly applies on explore after a fly-to and on create/edit, and not
+      on the circle page's small map or on first paint of explore; the
+      "renders stock grey" issue is timing, not the palette.
+
+- [ ] **Explore map opened on a phantom point** for anyone with circles in
+      several cities (independent medians of lat and lng). Fixed in
+      `bafdd09`: the centre is always a real circle, nearest to the visitor
+      when geo headers are present. Two regression tests. Keep an eye on it
+      with pilots who join circles across cities.
+
 ## Untested
 
 Everything below has proven database logic (rolled-back transactions) but has

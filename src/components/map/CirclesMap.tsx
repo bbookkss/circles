@@ -232,7 +232,7 @@ export default function CirclesMap({
                     ? `${circle.name} · business`
                     : circle.name
               }
-              className={`font-display font-semibold text-[13px] leading-none whitespace-nowrap max-w-[180px] truncate rounded-full px-2.5 py-1.5 bg-background border shadow-[0_1px_3px_rgba(34,31,27,0.25)] transition-transform group-hover:-translate-y-0.5 ${
+              className={`font-display font-semibold text-[13px] leading-none whitespace-nowrap max-w-[240px] truncate rounded-full px-2.5 py-1.5 bg-background border shadow-[0_1px_3px_rgba(34,31,27,0.25)] transition-transform group-hover:-translate-y-0.5 ${
                 circle.approximate
                   ? 'border-pen text-pen'
                   : circle.kind === 'commercial'
