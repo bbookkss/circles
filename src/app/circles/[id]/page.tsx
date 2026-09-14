@@ -21,6 +21,9 @@ import AttendanceRegister from '@/components/AttendanceRegister'
 
 const DAY_LONG = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 
+/** meets_attended is tenure; committed and kept are the promise and the keeping. */
+type MemberStats = { user_id: string; meets_attended: number; committed: number; kept: number }
+
 function formatTime(t: string) {
   const [h, m] = t.split(':').map(Number)
   const ampm = h >= 12 ? 'pm' : 'am'
@@ -418,8 +421,8 @@ export default async function CirclePage({
       ? supabase.from('circle_attendance').select('user_id, attended').eq('circle_id', id).eq('occurs_on', lastMeet)
       : Promise.resolve({ data: [] as { user_id: string; attended: boolean }[] }),
     memberUserIds.length > 0
-      ? supabase.rpc('reliability', { uids: memberUserIds })
-      : Promise.resolve({ data: [] as { user_id: string; committed: number; attended: number }[] }),
+      ? supabase.rpc('member_stats', { uids: memberUserIds })
+      : Promise.resolve({ data: [] as MemberStats[] }),
   ])
 
   const attendanceMap = Object.fromEntries((lastAttendance ?? []).map((a) => [a.user_id, a.attended]))
@@ -434,10 +437,10 @@ export default async function CirclePage({
   // Under three confirmed meets a ratio is noise, and an unlucky first week
   // would follow someone around. Below the bar, say nothing.
   const RELIABILITY_MIN = 3
-  const rateOf: Record<string, { committed: number; attended: number }> = Object.fromEntries(
-    ((reliabilityRows ?? []) as { user_id: string; committed: number; attended: number }[])
+  const rateOf: Record<string, { committed: number; kept: number }> = Object.fromEntries(
+    ((reliabilityRows ?? []) as MemberStats[])
       .filter((r) => r.committed >= RELIABILITY_MIN)
-      .map((r) => [r.user_id, { committed: r.committed, attended: r.attended }])
+      .map((r) => [r.user_id, { committed: r.committed, kept: r.kept }])
   )
 
   return (
@@ -593,7 +596,7 @@ export default async function CirclePage({
                                 not, and until now they looked identical. */}
                             {rateOf[m.user_id] && (
                               <span className="label" title="Meets they said yes to, and turned up for">
-                                shows up {rateOf[m.user_id].attended} of {rateOf[m.user_id].committed}
+                                shows up {rateOf[m.user_id].kept} of {rateOf[m.user_id].committed}
                               </span>
                             )}
                           </span>

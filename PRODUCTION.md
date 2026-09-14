@@ -35,6 +35,30 @@ works fine from this machine.
 
 ## Blocking — do before anyone real signs up
 
+- [ ] **Run `supabase/in-common-2026-09-14.sql`.** The two things Partiful puts
+      on a profile and this did not: how many meets somebody has actually been
+      to, and who you both know.
+
+      Replaces `reliability()` with `member_stats()`, which adds a lifetime
+      count of confirmed attendance alongside the promise-keeping ratio. The
+      app already calls the new name, so **this migration is not optional**:
+      until it runs, profiles and the who's-coming list will fail to resolve
+      the function. Everything degrades to zeroes rather than erroring, but
+      run it promptly.
+
+      `mutual_members` is the one that needed care. A mutual is somebody who
+      shares a circle with you and shares a circle with them, and the naive
+      version leaks private rosters: it would tell you two people share a
+      circle you have no right to see. The second leg only counts through a
+      circle that is public or one you are also in, so everything it returns
+      you could have worked out from pages you already have access to.
+
+      Rehearsed against production with a fixture built precisely to catch
+      that: a person who satisfies every other condition and is joined to the
+      subject only by a private circle the viewer is not in. They are
+      correctly excluded. `supabase/in-common-2026-09-14.rehearsal.sql`.
+
+
 - [x] **`supabase/attendance-2026-09-14.sql` applied 2026-09-14.** Verified
       against the live schema: table present with RLS on, exactly one policy
       (select), `authenticated` holds SELECT and nothing else, and all three

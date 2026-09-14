@@ -27,13 +27,13 @@ export default async function ProfilePage() {
     supabase.from('follows').select('*', { count: 'exact', head: true }).eq('follower_id', user.id),
     // Aggregate only, and deliberately so: two integers say how reliable
     // somebody is without saying which circles they go to.
-    supabase.rpc('reliability', { uids: [user.id] }),
+    supabase.rpc('member_stats', { uids: [user.id] }),
   ])
 
   // Under three confirmed meets a ratio is noise and an unlucky first week
   // would follow someone around. Below the bar, say nothing.
-  const rel = ((reliability ?? []) as { committed: number; attended: number }[])[0]
-  const showsUp = rel && rel.committed >= 3 ? rel : null
+  const stats = ((reliability ?? []) as { meets_attended: number; committed: number; kept: number }[])[0]
+  const showsUp = stats && stats.committed >= 3 ? stats : null
 
   const circleIds = memberships?.map((m) => m.circle_id) ?? []
   const { data: circles } = circleIds.length > 0
@@ -87,12 +87,19 @@ export default async function ProfilePage() {
               <p className="font-bold text-lg">{circles?.length ?? 0}</p>
               <p className="text-muted-foreground">Circles</p>
             </a>
+            {/* Times you came back, which is the number this product is
+                actually about. Counts every meet you were confirmed at,
+                including ones you never said yes to and turned up anyway. */}
+            <div className="text-center" title="Meets you were confirmed at">
+              <p className="font-bold text-lg">{stats?.meets_attended ?? 0}</p>
+              <p className="text-muted-foreground">Meets</p>
+            </div>
           </div>
 
           {showsUp && (
             <p className="text-sm">
               <span className="font-display font-semibold text-pen">
-                Shows up {showsUp.attended} of {showsUp.committed}
+                Shows up {showsUp.kept} of {showsUp.committed}
               </span>
               <span className="text-foreground/70"> meets you said yes to.</span>
             </p>
