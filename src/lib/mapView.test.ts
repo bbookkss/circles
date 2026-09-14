@@ -108,13 +108,14 @@ test('with an anchor, the cluster nearest the visitor wins', () => {
   const pts = [
     { latitude: 39.2904, longitude: -76.6122 }, // Baltimore
     { latitude: 34.0522, longitude: -118.2437 }, // Los Angeles
-    { latitude: 37.7749, longitude: -122.4194 }, // San Francisco
+    { latitude: 34.0164, longitude: -118.5052 }, // Santa Monica, 25 km away
   ]
   // Standing in Brooklyn: Baltimore is the nearest circle, even though the
-  // West Coast pair is the bigger cluster.
+  // LA pair is the bigger cluster.
   const v = viewForPoints(pts, { anchor: { latitude: 40.65, longitude: -73.95 } })!
   assert.ok(distanceKm(v, pts[0]) < 5)
   // No anchor: the bigger cluster.
   const w = viewForPoints(pts)!
-  assert.ok(distanceKm(w, pts[1]) < 5 || distanceKm(w, pts[2]) < 5)
+  // The view centres the cluster box, so it sits between the two, not on one.
+  assert.ok(distanceKm(w, pts[1]) < 20 && distanceKm(w, pts[2]) < 20)
 })
