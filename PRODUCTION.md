@@ -150,15 +150,42 @@ works fine from this machine.
       the send returns: that reminder is marked sent and never goes. Harmless
       at one member per circle, worth revisiting before a circle has dozens.
 
-- [ ] **Run `supabase/prelaunch-reset-2026-09-13.sql`.** Deletes the four
-      fixture circles (`test`, `test 2`, `TEST Florida`, `TEST Street
-      autofill`) and, by cascade, the reminder test schedule that would
-      otherwise mail somebody every Monday forever. Six real circles survive.
+- [ ] **Run `supabase/full-reset-2026-09-13.sql`.** Empties the app
+      completely: every circle, every account except
+      `benjaminabookstaver@gmail.com`. Pilot users should arrive at an empty
+      product, not a museum of someone else's testing.
 
-      Dry-run against production 2026-09-13 inside a rolled-back transaction:
-      4 circles, 4 memberships, 1 schedule, 1 reminder-send row. No posts, no
-      check-ins, no events, no join requests, no notifications are touched.
-      The file asserts a survivor count of 6 and refuses to commit otherwise.
+      **Supersedes `supabase/prelaunch-reset-2026-09-13.sql`**, which removed
+      only the four fixture circles. Do not run both; the full reset is a
+      superset. The partial file is kept only as a record of what was
+      considered.
+
+      Rehearsed against production 2026-09-13 by running the file as written,
+      which ends in `rollback`. Every assertion passed and the database was
+      confirmed unchanged afterwards. Removes 10 circles, 1 account, and by
+      cascade 10 memberships, 5 schedules, 3 check-ins, 2 posts, 1 comment,
+      1 post like, 1 comment like, 1 reminder-send.
+
+      Two things the file is careful about, both of which would be easy to get
+      wrong by hand:
+
+      `circles.created_by` and `posts.user_id` are `ON DELETE SET NULL`, not
+      cascade. That is right for account deletion, where a departed person's
+      circles should survive and their posts go anonymous. It is wrong here:
+      deleting the account first would strand that account's circles with
+      `created_by = null`, owned by nobody. So circles are deleted first.
+
+      `email_suppressions` is deliberately NOT cleared. It is keyed by email
+      address rather than by user, and it is the record of who asked never to
+      be emailed again. That request outlives the account and the reset.
+      Clearing it would mean mailing someone who opted out, which is the one
+      failure mode here with a legal dimension.
+
+      It also asserts Ben's `platform_admins` row survives. Losing it silently
+      would lock him out of `/admin` with no route back through the UI.
+
+      To run it: paste into the Supabase dashboard SQL editor, read the
+      previews, then change the final `rollback;` to `commit;`.
 
 ## Environment
 
@@ -208,6 +235,26 @@ works fine from this machine.
       to `https://hicircles.com`, which is correct today. Worth setting
       explicitly so a future preview deployment does not mail production
       links, or deleting the fallback so the omission is loud.
+
+- [ ] **Accepted for pilots, not for strangers: email addresses are never
+      verified.** Recorded here as its own item because it currently lives
+      inside a ticked-off entry about signup, where it reads as settled rather
+      than as an open risk.
+
+      `Confirm email` is off, so `signUp` returns a session immediately and
+      nobody proves they own the address they typed. Two consequences. Someone
+      can squat an address against its real owner, and password reset for that
+      account then mails a stranger, which is an account-takeover path that
+      needs no password at all.
+
+      Deliberately accepted, and genuinely fine for pilot users who are people
+      Ben knows and can verify in person. It stops being fine the moment the
+      audience is strangers scanning a flyer, which is the entire point of the
+      product. The fix is turning confirmation back on once Resend handles
+      auth mail, since the original reason for disabling it was the default
+      mailer's rate limit losing most of an evening's signups.
+
+      Decide this before the first flyer goes up, not after.
 
 ## Untested
 

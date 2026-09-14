@@ -1,3 +1,8 @@
+-- SUPERSEDED 2026-09-13 by supabase/full-reset-2026-09-13.sql.
+-- That file empties the app entirely; this one removed only the four
+-- fixture circles. Do not run both. Kept as a record of what was
+-- considered, not as something to execute.
+--
 -- Pre-launch data reset
 -- ---------------------------------------------------------------------------
 -- Clears the circles that exist only because somebody was testing, so the
