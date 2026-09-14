@@ -24,7 +24,7 @@ export default function AuthShell({
   children: React.ReactNode
 }) {
   return (
-    <main className="relative min-h-screen overflow-hidden bg-foreground text-background">
+    <main className="relative min-h-screen overflow-hidden bg-background text-foreground">
       <AsciiField />
 
       <header className="relative mx-auto w-full max-w-6xl px-6 py-6 flex items-center justify-between">
@@ -33,7 +33,7 @@ export default function AuthShell({
         </Link>
         <Link
           href={altHref}
-          className="text-sm text-background/70 hover:text-background transition-colors"
+          className="text-sm text-foreground/70 hover:text-foreground transition-colors"
         >
           {altLabel}
         </Link>
@@ -44,9 +44,9 @@ export default function AuthShell({
         <div className="fade-rise">
           <h1 className="text-4xl md:text-[2.75rem] font-medium leading-[1.05] text-balance">
             Find your people.<br />
-            <em className="italic font-normal text-background/60">Create your circle.</em>
+            <em className="italic font-normal text-pen">Create your circle.</em>
           </h1>
-          <p className="text-background/70 text-base md:text-lg mt-5 max-w-md">
+          <p className="text-foreground/75 text-base md:text-lg mt-5 max-w-md">
             Groups that meet on a schedule, close enough to walk to. See who&apos;s
             coming before you go.
           </p>
@@ -57,14 +57,15 @@ export default function AuthShell({
           <div aria-hidden className="hidden md:block mt-8 h-9" />
         </div>
 
-        {/* The form sits where the demo column sits, as lit paper on the dark.
+        {/* The form sits where the demo column sits: one more paper object,
+            given an ink edge so it reads as an object at all on paper.
             Matching the demo's height matters: the grid is items-center, so a
             shorter right column would pull the tagline up and the copy would
             visibly jump on the way in from the landing page. min-h, not h:
             the signup form is taller than 520 and must be allowed to grow. */}
         <div className="fade-rise stagger-1 w-full md:min-h-[520px] flex items-center md:justify-end">
           <div className="w-full max-w-md">
-            <div className="rounded-2xl bg-background text-foreground p-7 md:p-8 shadow-lg shadow-black/20">
+            <div className="bg-card text-foreground border border-foreground p-7 md:p-8 shadow-[0_20px_50px_-30px_rgba(34,31,27,0.35)]">
               {children}
             </div>
           </div>

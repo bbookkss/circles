@@ -33,16 +33,16 @@ export default async function Landing() {
     <main className="min-h-screen bg-background">
 
       {/* ---------------------------------------------------------------
-          Hero. Dark, so the demo column reads as a lit screen against it.
+          Hero. Paper, like the app behind it; the demo column is ink cards on paper.
           --------------------------------------------------------------- */}
-      <section className="relative overflow-hidden bg-foreground text-background">
+      <section className="relative overflow-hidden bg-background text-foreground">
         <AsciiField />
 
         <header className="relative mx-auto max-w-6xl px-6 py-6 flex items-center justify-between">
           <p className="font-display font-semibold text-[1.35rem] tracking-tight">circles</p>
           <Link
             href="/login"
-            className="text-sm text-background/70 hover:text-background transition-colors"
+            className="text-sm text-foreground/70 hover:text-foreground transition-colors"
           >
             Sign in
           </Link>
@@ -52,23 +52,21 @@ export default async function Landing() {
           <div className="fade-rise">
             <h1 className="text-4xl md:text-[2.75rem] font-medium leading-[1.05] text-balance">
               Find your people.<br />
-              <em className="italic font-normal text-background/60">Create your circle.</em>
+              <em className="italic font-normal text-pen">Create your circle.</em>
             </h1>
-            <p className="text-background/70 text-base md:text-lg mt-5 max-w-md">
+            <p className="text-foreground/75 text-base md:text-lg mt-5 max-w-md">
               Groups that meet on a schedule, close enough to walk to. See who&apos;s coming before you go.
             </p>
             <div className="flex flex-wrap gap-3 mt-8">
               <Link href="/signup">
-                <Button size="lg" className="bg-background text-foreground hover:bg-background/90">
+                <Button size="lg" className="rounded-full">
                   Get started
                 </Button>
               </Link>
               <Link href="/login">
-                {/* Not variant="outline": that sets bg-background, which on this
-                    dark panel is bone-on-bone and renders the label invisible. */}
                 <Button
                   size="lg"
-                  className="bg-transparent border border-background/30 text-background hover:bg-background/10"
+                  className="rounded-full bg-transparent border border-pen text-pen hover:bg-pen hover:text-white"
                 >
                   Sign in
                 </Button>
@@ -110,8 +108,8 @@ export default async function Landing() {
             Join one that already meets near you, or start your own in about a minute.
           </p>
           <div className="flex flex-wrap gap-3 justify-center mt-7">
-            <Link href="/signup"><Button size="lg">Get started</Button></Link>
-            <Link href="/login"><Button size="lg" variant="outline">Sign in</Button></Link>
+            <Link href="/signup"><Button size="lg" className="rounded-full">Get started</Button></Link>
+            <Link href="/login"><Button size="lg" className="rounded-full bg-transparent border border-pen text-pen hover:bg-pen hover:text-white">Sign in</Button></Link>
           </div>
         </div>
       </section>

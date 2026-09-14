@@ -43,43 +43,41 @@ export default async function WelcomePage() {
   ]
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-foreground text-background flex flex-col items-center justify-center px-6 py-16">
+    <main className="relative min-h-screen overflow-hidden bg-background text-foreground flex flex-col items-center justify-center px-6 py-16">
       <AsciiField />
 
       <div className="relative max-w-lg w-full text-center space-y-10">
 
         <div className="space-y-3 fade-rise">
-          <div className="w-12 h-12 rounded-full border-2 border-background mx-auto" />
-          <h1 className="text-3xl md:text-4xl font-medium">Hey {firstName}, <em className="italic font-normal text-background/70">welcome to circles.</em></h1>
+          <div className="w-12 h-12 rounded-full border-2 border-pen mx-auto" />
+          <h1 className="text-3xl md:text-4xl font-medium">Hey {firstName}, <em className="italic font-normal text-pen">welcome to circles.</em></h1>
         </div>
 
         <div className="grid gap-4 text-left">
           {cards.map((card, i) => (
             <div
               key={card.title}
-              className={`border border-background/20 rounded-xl p-5 space-y-1 bg-background/[0.06] backdrop-blur-[2px] fade-rise stagger-${i + 1}`}
+              className={`border border-foreground p-5 space-y-1 bg-card fade-rise stagger-${i + 1}`}
             >
               <p className="font-display font-semibold flex items-baseline gap-3 text-lg">
-                <span className="text-background/50 text-sm tabular-nums">0{i + 1}</span>
+                <span className="num text-pen text-xs">0{i + 1}</span>
                 {card.title}
               </p>
-              <p className="text-sm text-background/70 pl-8">{card.body}</p>
+              <p className="text-sm text-foreground/75 pl-8">{card.body}</p>
             </div>
           ))}
         </div>
 
         <div className="flex flex-wrap gap-3 justify-center fade-rise stagger-4">
           <Link href="/explore">
-            <Button size="lg" className="bg-background text-foreground hover:bg-background/90">
+            <Button size="lg" className="rounded-full">
               Explore
             </Button>
           </Link>
           <Link href="/circles/new">
-            {/* Not variant="outline": that sets bg-background, which on this
-                dark panel is bone-on-bone and renders the label invisible. */}
             <Button
               size="lg"
-              className="bg-transparent border border-background/30 text-background hover:bg-background/10"
+              className="rounded-full bg-transparent border border-pen text-pen hover:bg-pen hover:text-white"
             >
               Start one
             </Button>
@@ -88,7 +86,7 @@ export default async function WelcomePage() {
 
         <Link
           href="/home"
-          className="text-xs text-background/60 underline underline-offset-4 hover:text-background block"
+          className="label normal-case tracking-normal underline underline-offset-4 hover:text-foreground block"
         >
           Skip for now
         </Link>

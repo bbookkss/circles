@@ -3,7 +3,7 @@
 import { useEffect, useRef } from 'react'
 
 /**
- * Full-bleed character field for the dark hero: light rain on a pond.
+ * Full-bleed character field for the front door: pen-blue rain on paper.
  *
  * Drops land at random and each sends out a packet of expanding rings that
  * decays as it travels. Nothing is drawn — every cell sums the waves passing
@@ -180,11 +180,11 @@ export default function AsciiField() {
     >
       <pre
         ref={dimRef}
-        className="absolute inset-0 m-0 font-mono text-[7px] md:text-[9px] leading-[1.05] whitespace-pre text-background/[0.085]"
+        className="absolute inset-0 m-0 font-mono text-[7px] md:text-[9px] leading-[1.05] whitespace-pre text-pen/[0.16]"
       />
       <pre
         ref={brightRef}
-        className="absolute inset-0 m-0 font-mono text-[7px] md:text-[9px] leading-[1.05] whitespace-pre text-background/[0.26]"
+        className="absolute inset-0 m-0 font-mono text-[7px] md:text-[9px] leading-[1.05] whitespace-pre text-pen/[0.42]"
       />
     </div>
   )
