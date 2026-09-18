@@ -317,16 +317,30 @@ export default function CirclesMap({
                           ? `${circle.name} · business`
                           : circle.name
                     }
-                    className={`block w-full text-left font-display font-semibold leading-none whitespace-nowrap truncate text-[13px] px-2.5 py-1.5 max-w-[240px] ${
+                    // Not w-full. The title stretching to fill the box was
+                    // half of why a short name sat in a wide empty capsule:
+                    // width:100% resolved against a container the collapsed
+                    // body had already made too wide, then clamped at 240.
+                    // Shrink-wrapped, it is exactly as wide as the name.
+                    className={`block text-left font-display font-semibold leading-none whitespace-nowrap truncate text-[13px] px-2.5 py-1.5 max-w-[70vw] md:max-w-[260px] ${
                       open ? 'md:text-[15px] md:px-3.5 md:pt-3 md:pb-1 md:max-w-none md:transition-[font-size] md:duration-300' : ''
                     }`}
                   >
                     {circle.emoji ? `${circle.emoji} ` : ''}{circle.name}
                   </button>
                   <div
-                    className={`grid grid-rows-[0fr] opacity-0 ${
+                    // max-w-0 is the other half, and the non-obvious half.
+                    // grid-rows-[0fr] collapses the body's HEIGHT, but its
+                    // text still counted toward the container's intrinsic
+                    // WIDTH: a one-line description of a Saturday volleyball
+                    // game wanted ~300px, so the pill was 300px wide with the
+                    // name floating at the left of it, on every marker, open
+                    // or not. Capping the width at 0 while closed takes it out
+                    // of that calculation, and max-width animates, so it grows
+                    // in step with the corners and the rows.
+                    className={`grid grid-rows-[0fr] opacity-0 max-w-0 ${
                       open
-                        ? 'md:grid-rows-[1fr] md:opacity-100 md:transition-[grid-template-rows,opacity] md:duration-300 md:ease-out'
+                        ? 'md:grid-rows-[1fr] md:opacity-100 md:max-w-[240px] md:transition-[grid-template-rows,opacity,max-width] md:duration-300 md:ease-out'
                         : ''
                     }`}
                   >
