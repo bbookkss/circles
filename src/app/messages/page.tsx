@@ -68,7 +68,7 @@ export default async function MessagesPage() {
   return (
     <>
       <TopNav />
-      <main className="pt-14 min-h-screen bg-background">
+      <main className="pt-14 pb-20 md:pb-0 min-h-screen bg-background">
         <div className="max-w-2xl mx-auto px-6 py-10 space-y-10">
           <div>
           <h1 className="text-3xl mb-6">Messages</h1>

@@ -82,9 +82,9 @@ export default function AttendanceRegister({
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="label hover:text-foreground underline underline-offset-4"
+          className="min-h-9 px-3 -mr-3 text-sm text-muted-foreground hover:text-foreground underline underline-offset-4"
         >
-          change
+          Change
         </button>
       </div>
     )

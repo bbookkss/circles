@@ -148,6 +148,9 @@ export default function ExploreClient({ circles, people, initialView, origin: or
   }, [people, search])
 
   const hasFilters = !!(search || categoryFilter || dayFilter !== null || cityFilter || neighborhoodFilter || sizeFilter || kindFilter)
+  // Search is deliberately not counted: it has its own visible field, and
+  // counting it would make the button light up while somebody types.
+  const activeFilterCount = [categoryFilter, dayFilter !== null ? 'd' : null, cityFilter, neighborhoodFilter, sizeFilter, kindFilter].filter(Boolean).length
 
   function clearFilters() {
     setSearch('')
@@ -160,26 +163,7 @@ export default function ExploreClient({ circles, people, initialView, origin: or
   }
 
   return (
-    <div className="flex flex-col md:flex-row h-screen w-full overflow-hidden pt-14">
-
-      {/* Map / List switch — phones only */}
-      <div className="md:hidden flex border-b flex-shrink-0">
-        {(['map', 'list'] as const).map((v) => (
-          <button
-            key={v}
-            type="button"
-            onClick={() => setMobileView(v)}
-            aria-pressed={mobileView === v}
-            className={`flex-1 py-2.5 label transition-colors ${
-              mobileView === v
-                ? 'text-foreground border-b-2 border-pen'
-                : 'hover:text-foreground'
-            }`}
-          >
-            {v}
-          </button>
-        ))}
-      </div>
+    <div className="flex flex-col md:flex-row h-screen w-full overflow-hidden pt-14 pb-16 md:pb-0">
 
       {/* Sidebar */}
       <aside
@@ -194,16 +178,38 @@ export default function ExploreClient({ circles, people, initialView, origin: or
             onChange={(e) => setSearch(e.target.value)}
             className="w-full border-0 border-b border-foreground bg-transparent px-0 py-1.5 text-base font-display placeholder:text-muted-foreground placeholder:font-sans placeholder:text-sm focus-visible:outline-none focus-visible:border-pen"
           />
-          <div className="flex items-center justify-between">
+          {/* A bordered pill with a chevron and a count, because the old
+              version was tracked grey uppercase text with no affordance at
+              all: it read as a section heading, not a button, and it was
+              nowhere near a 24px target. */}
+          <div className="flex items-center justify-between gap-2">
             <button
+              type="button"
               onClick={() => setShowFilters((v) => !v)}
-              className="label hover:text-foreground"
+              aria-expanded={showFilters}
+              className={`inline-flex items-center gap-1.5 min-h-9 px-3 rounded-full border text-sm font-medium transition-colors ${
+                activeFilterCount > 0
+                  ? 'border-pen text-pen bg-pen-bg'
+                  : 'border-foreground text-foreground hover:bg-muted'
+              }`}
             >
-              {showFilters ? 'hide filters' : 'filters'}
+              Filters
+              {activeFilterCount > 0 && (
+                <span className="min-w-5 h-5 px-1.5 rounded-full bg-pen text-white text-[11px] font-semibold leading-5 text-center">
+                  {activeFilterCount}
+                </span>
+              )}
+              <svg viewBox="0 0 24 24" aria-hidden className={`w-4 h-4 transition-transform ${showFilters ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                <path d="m6 9 6 6 6-6" />
+              </svg>
             </button>
             {hasFilters && (
-              <button onClick={clearFilters} className="label underline underline-offset-4 hover:text-foreground">
-                clear
+              <button
+                type="button"
+                onClick={clearFilters}
+                className="min-h-9 px-3 rounded-full text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+              >
+                Clear
               </button>
             )}
           </div>
@@ -419,11 +425,6 @@ export default function ExploreClient({ circles, people, initialView, origin: or
           )}
         </div>
 
-        <div className="p-3 border-t">
-          <Link href="/circles/new">
-            <Button size="sm" className="w-full">+ New Circle</Button>
-          </Link>
-        </div>
       </aside>
 
       {/* Map */}
@@ -468,7 +469,7 @@ export default function ExploreClient({ circles, people, initialView, origin: or
           )}
         />
         {selected && (
-          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-background border border-foreground shadow-lg px-5 py-3 flex items-center gap-4 min-w-[260px] max-w-[calc(100%-2rem)]">
+          <div className="absolute bottom-[8.5rem] md:bottom-6 left-1/2 -translate-x-1/2 bg-background border border-foreground shadow-lg px-5 py-3 flex items-center gap-4 min-w-[260px] max-w-[calc(100%-2rem)]">
             <div className="flex-1 min-w-0">
               <p className="font-display font-semibold text-lg leading-tight truncate">
                 {selected.emoji && <span className="mr-1.5">{selected.emoji}</span>}{selected.name}
@@ -483,6 +484,29 @@ export default function ExploreClient({ circles, people, initialView, origin: or
           </div>
         )}
       </main>
+
+      {/* Map / List, at the bottom where a thumb is rather than at the top
+          where it was. Sits above the bottom bar and clears the home
+          indicator. "+ New Circle" used to be a full-width button pinned
+          under the list; it is a destination in the bottom bar now, so it
+          does not need to be here too. */}
+      <div className="md:hidden fixed left-1/2 -translate-x-1/2 bottom-[calc(4.75rem+env(safe-area-inset-bottom))] z-30">
+        <div className="flex bg-background border border-foreground rounded-full shadow-[0_4px_14px_-4px_rgba(34,31,27,0.4)] p-1">
+          {(['map', 'list'] as const).map((v) => (
+            <button
+              key={v}
+              type="button"
+              onClick={() => setMobileView(v)}
+              aria-pressed={mobileView === v}
+              className={`min-h-9 px-5 rounded-full text-sm font-medium capitalize transition-colors ${
+                mobileView === v ? 'bg-pen text-white' : 'text-foreground'
+              }`}
+            >
+              {v}
+            </button>
+          ))}
+        </div>
+      </div>
     </div>
   )
 }

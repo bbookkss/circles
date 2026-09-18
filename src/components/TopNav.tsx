@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { logout } from '@/app/actions/auth'
 import Circled from '@/components/Circled'
-import MobileNav from '@/components/MobileNav'
+import BottomNav from '@/components/BottomNav'
 import FeedbackButton from '@/components/FeedbackButton'
 
 export default async function TopNav() {
@@ -32,6 +32,7 @@ export default async function TopNav() {
         the viewport. Every signed-in page carries this component, so it is
         still the one place for a control that should be everywhere. */}
     {user && <FeedbackButton />}
+    {user && <BottomNav unread={unread ?? 0} unreadDms={unreadDms ?? 0} />}
     <nav className="fixed top-0 left-0 right-0 z-50 h-14 bg-background/80 backdrop-blur-md border-b flex items-center px-4 gap-4">
       {/* Logo */}
       <Link href="/home" className="font-display font-semibold text-[1.35rem] mr-2 tracking-tight hover:opacity-70 transition-opacity">
@@ -92,19 +93,19 @@ export default async function TopNav() {
         </Circled>
       </div>
 
-      {/* Phones: the eight-item row does not fit, so everything but the logo
-          and avatar moves behind a menu. Without this, Messages, Notifications
-          and Sign out were rendered off-screen and unreachable. */}
-      <div className="flex md:hidden items-center gap-2 ml-auto">
-        <Link
-          href="/profile"
-          className="w-8 h-8 rounded-full bg-foreground text-background flex items-center justify-center text-xs font-bold hover:opacity-80 transition-opacity"
-          title="Your profile"
-        >
+      {/* Phones: the account stays up here, which is where people look for
+          it, and everything else moved to the bottom bar. The hamburger is
+          gone. A 44px target rather than the 32px avatar the desktop row
+          uses, since this is now the only thing to hit up here. */}
+      <Link
+        href="/profile"
+        className="md:hidden ml-auto w-11 h-11 -mr-1.5 flex items-center justify-center"
+        title="Your profile"
+      >
+        <span className="w-9 h-9 rounded-full bg-foreground text-background flex items-center justify-center text-xs font-bold">
           {initials}
-        </Link>
-        <MobileNav unread={unread ?? 0} unreadDms={unreadDms ?? 0} />
-      </div>
+        </span>
+      </Link>
     </nav>
     </>
   )

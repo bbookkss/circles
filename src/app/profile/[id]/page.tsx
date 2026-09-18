@@ -83,7 +83,7 @@ export default async function UserProfilePage({ params }: { params: Promise<{ id
   return (
     <>
       <TopNav />
-      <main className="pt-14 min-h-screen bg-background">
+      <main className="pt-14 pb-20 md:pb-0 min-h-screen bg-background">
         <div className="max-w-2xl mx-auto px-4 py-8 space-y-8">
 
           {/* Avatar + name + bio */}

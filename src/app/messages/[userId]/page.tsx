@@ -38,7 +38,7 @@ export default async function MessageThreadPage({ params }: { params: Promise<{ 
   return (
     <>
       <TopNav />
-      <div className="pt-14 h-screen flex flex-col bg-background">
+      <div className="pt-14 pb-16 md:pb-0 h-screen flex flex-col bg-background">
         <header className="border-b px-6 py-3 flex items-center gap-3 flex-shrink-0">
           <BackButton fallback="/messages" />
           <Link href={`/profile/${other.id}`} className="font-medium hover:underline underline-offset-2">

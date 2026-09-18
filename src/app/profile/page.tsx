@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import TopNav from '@/components/TopNav'
 import EditProfileForm from './EditProfileForm'
 import DeleteAccountForm from './DeleteAccountForm'
+import { logout } from '@/app/actions/auth'
 
 export default async function ProfilePage() {
   const supabase = await createClient()
@@ -47,7 +48,7 @@ export default async function ProfilePage() {
   return (
     <>
       <TopNav />
-      <main className="pt-14 min-h-screen bg-background">
+      <main className="pt-14 pb-20 md:pb-0 min-h-screen bg-background">
         <div className="max-w-2xl mx-auto px-4 py-8 space-y-8">
 
           {/* Avatar + name + bio */}
@@ -143,7 +144,19 @@ export default async function ProfilePage() {
           {/* Danger zone */}
           <div className="pt-4 border-t space-y-2">
             <p className="label">Account</p>
-            <DeleteAccountForm />
+            {/* Sign out lived behind the phone hamburger, which is gone. The
+                account page is where people look for it anyway. */}
+            <form action={logout}>
+              <button
+                type="submit"
+                className="min-h-11 px-4 rounded-full border border-foreground text-sm font-medium hover:bg-muted transition-colors"
+              >
+                Sign out
+              </button>
+            </form>
+            <div className="pt-2">
+              <DeleteAccountForm />
+            </div>
           </div>
 
         </div>

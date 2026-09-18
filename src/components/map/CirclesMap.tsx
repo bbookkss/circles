@@ -284,9 +284,22 @@ export default function CirclesMap({
                 : 'border-foreground text-foreground'
             return (
               <span className={`relative flex flex-col items-center cursor-pointer group ${open ? 'z-20' : ''}`}>
+                {/* Two things happen here that are easy to miss.
+                    The transition classes live only on the open state, so
+                    opening animates and closing snaps. Animating the close
+                    was the bug: w-[240px] is not a transitioned property, so
+                    the width jumped back while the radius and font size took
+                    300ms, leaving a wide flat pill with oversized text
+                    stranded on the map every time you picked another circle.
+                    And the expansion is md-only. On a phone the bottom card
+                    already says all of this, so expanding here just put two
+                    copies of the same circle on one screen, one of them
+                    under the feedback button. */}
                 <div
-                  className={`bg-background border shadow-[0_1px_3px_rgba(34,31,27,0.25)] transition-[border-radius,transform] duration-300 ease-out ${edge} ${
-                    open ? 'rounded-2xl w-[240px]' : 'rounded-full group-hover:-translate-y-0.5'
+                  className={`bg-background border shadow-[0_1px_3px_rgba(34,31,27,0.25)] rounded-full ${edge} ${
+                    open
+                      ? 'md:rounded-2xl md:w-[240px] md:transition-[border-radius] md:duration-300 md:ease-out'
+                      : 'group-hover:-translate-y-0.5 transition-transform duration-150'
                   }`}
                 >
                   <button
@@ -298,15 +311,17 @@ export default function CirclesMap({
                           ? `${circle.name} · business`
                           : circle.name
                     }
-                    className={`block w-full text-left font-display font-semibold leading-none whitespace-nowrap truncate px-2.5 py-1.5 transition-[font-size] duration-300 ${
-                      open ? 'text-[15px] px-3.5 pt-3 pb-1' : 'text-[13px] max-w-[240px]'
+                    className={`block w-full text-left font-display font-semibold leading-none whitespace-nowrap truncate text-[13px] px-2.5 py-1.5 max-w-[240px] ${
+                      open ? 'md:text-[15px] md:px-3.5 md:pt-3 md:pb-1 md:max-w-none md:transition-[font-size] md:duration-300' : ''
                     }`}
                   >
                     {circle.emoji ? `${circle.emoji} ` : ''}{circle.name}
                   </button>
                   <div
-                    className={`grid transition-[grid-template-rows,opacity] duration-300 ease-out ${
-                      open ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+                    className={`grid grid-rows-[0fr] opacity-0 ${
+                      open
+                        ? 'md:grid-rows-[1fr] md:opacity-100 md:transition-[grid-template-rows,opacity] md:duration-300 md:ease-out'
+                        : ''
                     }`}
                   >
                     <div className="overflow-hidden">

@@ -318,7 +318,21 @@
   color: var(--foreground);
 }
 
-/* Zoom, compass and geolocate buttons. */
+/* Zoom, compass and geolocate buttons.
+   Mapbox draws these at 29px square, which is under the WCAG 2.2 minimum of
+   24x24 only by luck and well under the 44px a thumb wants. On a touch
+   screen they get 44. Desktop keeps the smaller ones, where a pointer is
+   precise and a big control is just clutter. */
+@media (pointer: coarse) {
+  .mapboxgl-ctrl-group button {
+    width: 44px;
+    height: 44px;
+  }
+  .mapboxgl-ctrl-group button .mapboxgl-ctrl-icon {
+    background-size: 20px 20px;
+  }
+}
+
 .mapboxgl-ctrl-group {
   background: var(--popover);
   border: 1px solid var(--border);

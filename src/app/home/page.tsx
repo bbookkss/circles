@@ -234,7 +234,7 @@ export default async function HomePage() {
   return (
     <>
       <TopNav />
-      <main className="pt-14 min-h-screen bg-background">
+      <main className="pt-14 pb-20 md:pb-0 min-h-screen bg-background">
         <div className="mx-auto max-w-3xl px-5 md:px-6 py-8 md:py-12 space-y-10">
 
           {/* ---------------------------------------------------------

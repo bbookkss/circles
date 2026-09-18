@@ -43,7 +43,10 @@ export default function FeedbackButton() {
   }
 
   return (
-    <div className="fixed right-4 bottom-10 md:bottom-6 z-40 flex flex-col items-end gap-2 print:hidden">
+    // Lifted clear of the bottom bar on phones (64px + safe area), and the
+    // trigger is a 44px circle rather than a wide pill so it stops covering
+    // whatever is underneath it.
+    <div className="fixed right-4 bottom-[calc(5rem+env(safe-area-inset-bottom))] md:bottom-6 z-40 flex flex-col items-end gap-2 print:hidden">
       {open && (
         <form
           onSubmit={submit}
@@ -54,10 +57,10 @@ export default function FeedbackButton() {
             <button
               type="button"
               onClick={() => setOpen(false)}
-              className="label hover:text-foreground"
+              className="min-h-9 px-2 -mr-2 text-sm text-muted-foreground hover:text-foreground"
               aria-label="Close"
             >
-              close
+              Close
             </button>
           </div>
           <p className="text-xs text-foreground/75">
@@ -90,9 +93,12 @@ export default function FeedbackButton() {
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        className="font-display font-semibold text-sm rounded-full px-3.5 py-2 bg-background border border-foreground shadow-[0_2px_8px_-2px_rgba(34,31,27,0.35)] hover:-translate-y-0.5 transition-transform"
+        aria-label={open ? 'Close feedback' : 'Send feedback'}
+        title="Send feedback"
+        className="w-11 h-11 md:w-auto md:h-auto md:px-3.5 md:py-2 rounded-full bg-background border border-foreground shadow-[0_2px_8px_-2px_rgba(34,31,27,0.35)] hover:-translate-y-0.5 transition-transform flex items-center justify-center font-display font-semibold text-sm"
       >
-        {open ? 'Close' : 'Feedback'}
+        <span className="md:hidden text-lg leading-none" aria-hidden>{open ? '\u00d7' : '?'}</span>
+        <span className="hidden md:inline">{open ? 'Close' : 'Feedback'}</span>
       </button>
     </div>
   )

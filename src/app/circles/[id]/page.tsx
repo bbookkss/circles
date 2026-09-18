@@ -161,7 +161,7 @@ export default async function CirclePage({
             <Link href="/login" className="font-display font-semibold text-[1.35rem] tracking-tight">circles</Link>
           </nav>
         )}
-        <div className="pt-14 min-h-screen bg-background">
+        <div className="pt-14 pb-20 md:pb-0 min-h-screen bg-background">
           <div className="max-w-2xl mx-auto px-5 py-10 space-y-8">
 
             {actionError && (
@@ -446,7 +446,7 @@ export default async function CirclePage({
   return (
     <>
       <TopNav />
-      <div className="pt-14 min-h-screen bg-background">
+      <div className="pt-14 pb-20 md:pb-0 min-h-screen bg-background">
         <div className="max-w-3xl mx-auto px-5 md:px-6 py-8 md:py-10 space-y-8">
 
           {actionError && (
