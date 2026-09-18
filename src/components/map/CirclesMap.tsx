@@ -284,22 +284,28 @@ export default function CirclesMap({
                 : 'border-foreground text-foreground'
             return (
               <span className={`relative flex flex-col items-center cursor-pointer group ${open ? 'z-20' : ''}`}>
-                {/* Two things happen here that are easy to miss.
-                    The transition classes live only on the open state, so
-                    opening animates and closing snaps. Animating the close
-                    was the bug: w-[240px] is not a transitioned property, so
-                    the width jumped back while the radius and font size took
-                    300ms, leaving a wide flat pill with oversized text
-                    stranded on the map every time you picked another circle.
-                    And the expansion is md-only. On a phone the bottom card
-                    already says all of this, so expanding here just put two
-                    copies of the same circle on one screen, one of them
-                    under the feedback button. */}
+                {/* The width is a min-width, and that is the whole trick.
+                    w-[240px] is not animatable from auto, so it snapped to
+                    full width on the first frame while the radius and the
+                    body eased in behind it: for 300ms you got a wide flat
+                    empty capsule with the name stranded on the left. Doing
+                    the same on close was the first version of this bug.
+                    min-width animates from 0, so the box, the corners and
+                    the body all move together, and a name longer than 240px
+                    simply keeps its natural width instead of being clamped.
+
+                    Transitions live only on the open state, so opening
+                    animates and closing snaps, which is what you want when
+                    the close is caused by opening something else.
+
+                    md-only: on a phone the bottom card already says all of
+                    this, and expanding here put two copies of the same
+                    circle on one screen. */}
                 <div
                   className={`bg-background border shadow-[0_1px_3px_rgba(34,31,27,0.25)] rounded-full ${edge} ${
                     open
-                      ? 'md:rounded-2xl md:w-[240px] md:transition-[border-radius] md:duration-300 md:ease-out'
-                      : 'group-hover:-translate-y-0.5 transition-transform duration-150'
+                      ? 'md:rounded-2xl md:min-w-[240px] md:transition-[border-radius,min-width] md:duration-300 md:ease-out'
+                      : 'md:min-w-0 group-hover:-translate-y-0.5 transition-transform duration-150'
                   }`}
                 >
                   <button

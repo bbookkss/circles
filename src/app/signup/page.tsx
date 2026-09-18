@@ -53,7 +53,7 @@ export default function SignupPage() {
             )}
             <div className="space-y-2">
               <Label htmlFor="full_name">Your name</Label>
-              <Input id="full_name" name="full_name" type="text" placeholder="Ben Bookstaver" autoComplete="name" required />
+              <Input id="full_name" name="full_name" type="text" placeholder="First and last" autoComplete="name" required />
             </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
