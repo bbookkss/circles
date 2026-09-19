@@ -29,7 +29,13 @@ export default async function EditCirclePage({ params }: { params: Promise<{ id:
   return (
     <>
       <TopNav />
-      <div className="pt-14 h-screen">
+      {/* h-screen only from md up. On a phone this is an ordinary
+          scrolling page: 100vh there is the height with the browser chrome
+          hidden, so a 100vh box is taller than what you can see, the page
+          scrolls by the difference, and the form's own scroller ends up
+          nested inside a container that is already the wrong height. That
+          combination is what produced the dead space below Create Circle. */}
+      <div className="pt-14 md:h-screen">
         <EditCircleClient circle={circle} schedule={schedules?.[0] ?? null} />
       </div>
     </>

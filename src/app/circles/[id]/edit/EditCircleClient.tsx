@@ -111,14 +111,14 @@ export default function EditCircleClient({ circle, schedule }: { circle: Circle;
   const mapCenter = pin ?? SF_CENTER
 
   return (
-    <div className="flex flex-col-reverse md:flex-row h-full w-full overflow-hidden">
-      <aside className="w-full md:w-96 flex-1 md:flex-none flex-shrink-0 min-h-0 bg-background md:border-r flex flex-col">
+    <div className="flex flex-col-reverse md:flex-row md:h-full w-full md:overflow-hidden">
+      <aside className="w-full md:w-96 md:flex-none md:flex-shrink-0 md:min-h-0 bg-background md:border-r flex flex-col">
         <div className="p-4 border-b flex items-center gap-3">
           <BackButton fallback={`/circles/${circle.id}`} />
           <h1 className="text-xl">Edit circle</h1>
         </div>
 
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-4 space-y-5">
+        <form onSubmit={handleSubmit} className="md:flex-1 md:overflow-y-auto p-4 pb-24 md:pb-4 space-y-5">
           {error && (
             <p className="text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-md">{error}</p>
           )}
@@ -320,7 +320,7 @@ export default function EditCircleClient({ circle, schedule }: { circle: Circle;
       {/* Phones stack this above the form at a usable height. Side by side,
           the fixed w-96 form left about 6px of map on a 390px screen --
           enough to see it exists, not to drop a pin on it. */}
-      <main className="h-[38vh] md:h-auto flex-shrink-0 md:flex-1 relative border-b md:border-b-0">
+      <main className="h-[45vh] min-h-[280px] md:h-auto md:min-h-0 flex-shrink-0 md:flex-1 relative border-b md:border-b-0 sticky top-14 md:static">
         <Map
           initialViewState={{ ...mapCenter, zoom: 13 }}
           style={{ width: '100%', height: '100%', background: COFFEE }}
