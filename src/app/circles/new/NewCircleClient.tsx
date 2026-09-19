@@ -67,13 +67,40 @@ export default function NewCircleClient({
   const [city, setCity] = useState<string | null>(null)
   const [geocoding, setGeocoding] = useState(false)
   const [selectedDays, setSelectedDays] = useState<number[]>([])
-  // Always on. A circle without a schedule has no next meet, no check-in and
-  // nothing on Home; the server refuses one now, so the form does not offer it.
-  const [hasSchedule] = useState(true)
   const [selectedEmoji, setSelectedEmoji] = useState<string | null>(null)
   const [visibility, setVisibility] = useState<'public' | 'private'>('public')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  // Controlled only so the Next button knows whether there is a name yet.
+  const [name, setName] = useState('')
+  const [showAllEmoji, setShowAllEmoji] = useState(false)
+
+  /**
+   * Three steps on a phone, one page on a desktop.
+   *
+   * Twelve fields down a single column, behind a map stuck to the top taking
+   * 45% of the screen, left about 350px to work in: you scrolled, lost your
+   * place, scrolled back. Split into what / where / when, each step is one
+   * screenful and the map gets the whole screen on the step where you are
+   * actually dropping a pin.
+   *
+   * Every field stays mounted the whole time and steps are hidden with
+   * display:none, so FormData still collects the lot on submit and nothing
+   * has to be lifted into state to survive a step change. The one casualty
+   * is `required`: the browser refuses to submit a form with an invalid
+   * required field it cannot scroll to, so validation is the guards below
+   * plus the server, which refuses a circle with no pin or no schedule
+   * anyway.
+   */
+  const [step, setStep] = useState(1)
+  const stepGate: Record<number, string | null> = {
+    1: name.trim() ? null : 'Give it a name first.',
+    2: pin ? null : 'Drop a pin on the map.',
+    3: selectedDays.length === 0 ? 'Pick at least one day it meets.' : null,
+  }
+  const blocked = stepGate[step]
+  // `hidden md:block` rather than unmounting: desktop shows all three at once.
+  const onStep = (n: number) => (step === n ? 'block' : 'hidden md:block')
 
   async function handleMapClick(lng: number, lat: number) {
     setPin({ longitude: lng, latitude: lat })
@@ -113,9 +140,23 @@ export default function NewCircleClient({
     <div className="flex flex-col-reverse md:flex-row md:h-full w-full md:overflow-hidden">
       {/* Form sidebar */}
       <aside className="w-full md:w-96 md:flex-none md:flex-shrink-0 md:min-h-0 bg-background md:border-r flex flex-col">
-        <div className="p-4 border-b flex items-center gap-3">
-          <BackButton fallback="/explore" />
-          <h1 className="text-xl">New circle</h1>
+        <div className="p-4 border-b space-y-3">
+          <div className="flex items-center gap-3">
+            <BackButton fallback="/explore" />
+            <h1 className="text-xl">New circle</h1>
+          </div>
+          {/* Phones only. Desktop shows every field at once, so a step
+              counter there would be a lie. */}
+          <div className="md:hidden flex items-center gap-2">
+            {[1, 2, 3].map((n) => (
+              <div key={n} className="flex-1 space-y-1">
+                <div className={`h-1 rounded-full ${n <= step ? 'bg-pen' : 'bg-border'}`} />
+                <p className={`label ${n === step ? 'text-pen' : ''}`}>
+                  {n === 1 ? 'What' : n === 2 ? 'Where' : 'When'}
+                </p>
+              </div>
+            ))}
+          </div>
         </div>
 
         <form onSubmit={handleSubmit} className="md:flex-1 md:overflow-y-auto p-4 pb-24 md:pb-4 space-y-5">
@@ -125,70 +166,84 @@ export default function NewCircleClient({
             </p>
           )}
 
-          {/* Basic info */}
-          <div className="space-y-2">
-            <Label htmlFor="name">Name *</Label>
-            <Input id="name" name="name" placeholder="SF Beach Volleyball" required />
-          </div>
-
-          <div className="space-y-2">
-            <Label>Emoji <span className="text-muted-foreground">(shows on map)</span></Label>
-            <input type="hidden" name="emoji" value={selectedEmoji ?? ''} />
-            <div className="grid grid-cols-8 gap-1">
-              {EMOJI_OPTIONS.map((emoji) => (
-                <button
-                  key={emoji}
-                  type="button"
-                  onClick={() => setSelectedEmoji(selectedEmoji === emoji ? null : emoji)}
-                  className={`text-xl p-1 rounded-md transition-colors hover:bg-muted ${
-                    selectedEmoji === emoji ? 'bg-muted ring-2 ring-foreground' : ''
-                  }`}
-                >
-                  {emoji}
-                </button>
-              ))}
+          {/* ---- 1. What ---- */}
+          <div className={`${onStep(1)} space-y-5`}>
+            <div className="space-y-2">
+              <Label htmlFor="name">Name</Label>
+              <Input
+                id="name"
+                name="name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="SF Beach Volleyball"
+              />
             </div>
-            {selectedEmoji && (
-              <p className="text-xs text-muted-foreground">
-                Selected: {selectedEmoji}{' '}
-                <button type="button" onClick={() => setSelectedEmoji(null)} className="underline">clear</button>
-              </p>
-            )}
-          </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
-            <textarea
-              id="description"
-              name="description"
-              placeholder="What's this circle about?"
-              rows={3}
-              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring resize-none"
-            />
-          </div>
+            <div className="space-y-2">
+              <Label htmlFor="category">Category</Label>
+              <Select
+                name="category"
+                defaultValue={""}
+                items={{ '': 'Select a category', ...Object.fromEntries(CATEGORIES.map((c) => [c, c])) }}
+              >
+                <SelectTrigger id="category" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Select a category</SelectItem>
+                  {CATEGORIES.map((cat) => (
+                    <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="category">Category</Label>
-            <Select
-              name="category"
-              defaultValue={""}
-              items={{ '': 'Select a category', ...Object.fromEntries(CATEGORIES.map((c) => [c, c])) }}
-            >
-              <SelectTrigger id="category" className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">Select a category</SelectItem>
-                {CATEGORIES.map((cat) => (
-                  <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+            <div className="space-y-2">
+              <div className="flex items-baseline justify-between">
+                <Label>Icon <span className="text-muted-foreground">(shows on the map)</span></Label>
+                {selectedEmoji && (
+                  <button type="button" onClick={() => setSelectedEmoji(null)} className="min-h-9 px-2 -mr-2 text-sm text-muted-foreground hover:text-foreground underline underline-offset-4">
+                    Clear
+                  </button>
+                )}
+              </div>
+              <input type="hidden" name="emoji" value={selectedEmoji ?? ''} />
+              {/* Forty-eight icons is six rows and most of a phone screen for
+                  an optional field. Two rows, then ask. */}
+              <div className={`grid grid-cols-8 gap-1 overflow-hidden ${showAllEmoji ? '' : 'max-h-[92px]'}`}>
+                {EMOJI_OPTIONS.map((emoji) => (
+                  <button
+                    key={emoji}
+                    type="button"
+                    onClick={() => setSelectedEmoji(selectedEmoji === emoji ? null : emoji)}
+                    aria-pressed={selectedEmoji === emoji}
+                    className={`text-xl aspect-square rounded-md transition-colors hover:bg-muted ${
+                      selectedEmoji === emoji ? 'bg-muted ring-2 ring-pen' : ''
+                    }`}
+                  >
+                    {emoji}
+                  </button>
                 ))}
-              </SelectContent>
-            </Select>
-          </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowAllEmoji((v) => !v)}
+                className="min-h-9 text-sm text-muted-foreground hover:text-foreground underline underline-offset-4"
+              >
+                {showAllEmoji ? 'Show fewer' : 'Show all icons'}
+              </button>
+            </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="location">Location name</Label>
-            <Input id="location" name="location" placeholder="Dolores Park, Mission District..." />
+            <div className="space-y-2">
+              <Label htmlFor="description">Description <span className="text-muted-foreground">(optional)</span></Label>
+              <textarea
+                id="description"
+                name="description"
+                placeholder="What's this circle about?"
+                rows={3}
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring resize-none"
+              />
+            </div>
           </div>
 
           <input type="hidden" name="latitude" value={pin?.latitude ?? ''} />
@@ -196,46 +251,59 @@ export default function NewCircleClient({
           <input type="hidden" name="neighborhood" value={neighborhood ?? ''} />
           <input type="hidden" name="city" value={city ?? ''} />
 
-          <div className="space-y-2">
-            <Label>Location search</Label>
-            <LocationSearch
-              onSelect={({ longitude, latitude, neighborhood: hood, city: c }) => {
-                setPin({ longitude, latitude })
-                setNeighborhood(hood)
-                setCity(c)
-              }}
-            />
-            <p className="text-xs text-muted-foreground">Or click the map directly to drop a pin</p>
-          </div>
+          {/* ---- 2. Where ---- */}
+          <div className={`${onStep(2)} space-y-5`}>
+            {/* Search, then map, then what to call it. The old order put a
+                free-text "Location name" box above the finder and the pin,
+                so the first thing asked was the last thing you could answer,
+                and two of the three looked like the same question. */}
+            <div className="space-y-2">
+              <Label>Search for the spot</Label>
+              <LocationSearch
+                onSelect={({ longitude, latitude, neighborhood: hood, city: c }) => {
+                  setPin({ longitude, latitude })
+                  setNeighborhood(hood)
+                  setCity(c)
+                }}
+              />
+              <p className="text-xs text-muted-foreground">Or tap the map to drop a pin yourself.</p>
+            </div>
 
-          <div className="space-y-1">
-            <Label>Pin *</Label>
-            {pin ? (
-              <div className="text-xs text-muted-foreground space-y-0.5">
-                <p>
-                  {pin.latitude.toFixed(5)}, {pin.longitude.toFixed(5)}{' '}
+            <div className={`border p-3 ${pin ? 'border-pen bg-pen-bg' : 'border-border'}`}>
+              {pin ? (
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium">
+                      {geocoding ? 'Finding the neighbourhood…' : neighborhood ?? 'Pin dropped'}
+                    </p>
+                    <p className="num text-xs text-muted-foreground mt-0.5">
+                      {pin.latitude.toFixed(5)}, {pin.longitude.toFixed(5)}
+                    </p>
+                  </div>
                   <button
                     type="button"
-                    onClick={() => { setPin(null); setNeighborhood(null) }}
-                    className="underline ml-1"
+                    onClick={() => { setPin(null); setNeighborhood(null); setCity(null) }}
+                    className="min-h-9 px-2 -mr-2 text-sm text-muted-foreground hover:text-foreground underline underline-offset-4 flex-shrink-0"
                   >
-                    remove
+                    Remove
                   </button>
-                </p>
-                {geocoding && <p className="text-muted-foreground">Detecting neighborhood...</p>}
-                {!geocoding && neighborhood && (
-                  <p className="text-foreground font-medium">{neighborhood}</p>
-                )}
-                {!geocoding && !neighborhood && pin && (
-                  <p className="text-muted-foreground italic">No neighborhood detected</p>
-                )}
-              </div>
-            ) : (
-              <p className="text-xs text-muted-foreground">Click anywhere on the map to drop a pin</p>
-            )}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">No pin yet. Tap the map above.</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="location">What to call it <span className="text-muted-foreground">(optional)</span></Label>
+              <Input id="location" name="location" placeholder="Dolores Park" />
+              <p className="text-xs text-muted-foreground">
+                The name people will read, like &ldquo;the tennis courts&rdquo; or &ldquo;Fleet Street Royal Farms&rdquo;.
+              </p>
+            </div>
           </div>
 
-          {/* Visibility */}
+          {/* ---- 3. When ---- */}
+          <div className={`${onStep(3)} space-y-5`}>
           <div className="space-y-2">
             <Label>Visibility</Label>
             <input type="hidden" name="visibility" value={visibility} />
@@ -295,12 +363,11 @@ export default function NewCircleClient({
           {/* Schedule section */}
           <div className="border-t pt-4 space-y-4">
             <div className="flex items-baseline justify-between">
-              <Label>When it meets *</Label>
+              <Label>When it meets</Label>
               <span className="label normal-case tracking-normal">every circle has a schedule</span>
             </div>
 
-            {hasSchedule && (
-              <div className="space-y-4">
+            <div className="space-y-4">
                 {/* Day picker */}
                 <div className="space-y-2">
                   <Label>Days</Label>
@@ -377,18 +444,54 @@ export default function NewCircleClient({
                     placeholder="Weather permitting, bring your own ball..."
                   />
                 </div>
-              </div>
-            )}
+            </div>
+          </div>
           </div>
 
-          {(!pin || selectedDays.length === 0) && (
-            <p className="label normal-case tracking-normal">
-              {!pin ? 'Drop a pin on the map to continue.' : 'Pick at least one day it meets.'}
-            </p>
-          )}
-          <Button type="submit" className="w-full" disabled={loading || !pin || selectedDays.length === 0}>
-            {loading ? 'Creating...' : 'Create Circle'}
-          </Button>
+          {/* Phones: Back and Next, and Create only on the last step. The
+              gate message says which field is missing rather than leaving a
+              dead button and no explanation. */}
+          <div className="md:hidden space-y-2 pt-2">
+            {blocked && <p className="label normal-case tracking-normal">{blocked}</p>}
+            <div className="flex gap-2">
+              {step > 1 && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="rounded-full min-h-11 px-6"
+                  onClick={() => setStep((n) => n - 1)}
+                >
+                  Back
+                </Button>
+              )}
+              {step < 3 ? (
+                <Button
+                  type="button"
+                  className="rounded-full min-h-11 flex-1"
+                  disabled={!!blocked}
+                  onClick={() => setStep((n) => n + 1)}
+                >
+                  Next
+                </Button>
+              ) : (
+                <Button type="submit" className="rounded-full min-h-11 flex-1" disabled={loading || !!blocked || !pin}>
+                  {loading ? 'Creating…' : 'Create circle'}
+                </Button>
+              )}
+            </div>
+          </div>
+
+          {/* Desktop: one page, one button. */}
+          <div className="hidden md:block space-y-2">
+            {(!pin || selectedDays.length === 0 || !name.trim()) && (
+              <p className="label normal-case tracking-normal">
+                {!name.trim() ? 'Give it a name.' : !pin ? 'Drop a pin on the map.' : 'Pick at least one day it meets.'}
+              </p>
+            )}
+            <Button type="submit" className="w-full" disabled={loading || !pin || selectedDays.length === 0 || !name.trim()}>
+              {loading ? 'Creating...' : 'Create Circle'}
+            </Button>
+          </div>
         </form>
       </aside>
 
@@ -396,7 +499,7 @@ export default function NewCircleClient({
       {/* Phones stack this above the form at a usable height. Side by side,
           the fixed w-96 form left about 6px of map on a 390px screen --
           enough to see it exists, not to drop a pin on it. */}
-      <main className="h-[45vh] min-h-[280px] md:h-auto md:min-h-0 flex-shrink-0 md:flex-1 relative border-b md:border-b-0 sticky top-14 md:static">
+      <main className={`${step === 2 ? 'block' : 'hidden'} md:block h-[55vh] min-h-[300px] md:h-auto md:min-h-0 flex-shrink-0 md:flex-1 relative border-b md:border-b-0 sticky top-14 md:static`}>
         <Map
           initialViewState={initialView}
           style={{ width: '100%', height: '100%', background: COFFEE }}
@@ -425,7 +528,7 @@ export default function NewCircleClient({
           )}
         </Map>
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/60 text-white text-xs px-3 py-1.5 rounded-full pointer-events-none">
-          Click to place your circle&apos;s location
+          Tap to place your circle&apos;s location
         </div>
       </main>
     </div>
