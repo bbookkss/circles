@@ -469,7 +469,7 @@ export default function ExploreClient({ circles, people, initialView, origin: or
           )}
         />
         {selected && (
-          <div className="absolute bottom-[8.5rem] md:bottom-6 left-1/2 -translate-x-1/2 bg-background border border-foreground shadow-lg px-5 py-3 flex items-center gap-4 min-w-[260px] max-w-[calc(100%-2rem)]">
+          <div className="absolute bottom-[5.5rem] md:bottom-6 left-1/2 -translate-x-1/2 bg-background border border-foreground shadow-lg px-5 py-3 flex items-center gap-4 min-w-[260px] max-w-[calc(100%-2rem)]">
             <div className="flex-1 min-w-0">
               <p className="font-display font-semibold text-lg leading-tight truncate">
                 {selected.emoji && <span className="mr-1.5">{selected.emoji}</span>}{selected.name}

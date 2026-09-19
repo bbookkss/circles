@@ -380,8 +380,12 @@ export default function CirclesMap({
 
       {/* Bottom, not centre: dead centre is exactly where someone is looking
           and dragging, so it covered the map and followed them around. */}
+      {/* pb-20 on phones, not p-4. The Map/List pill floats over the map's
+          bottom 56px, so anything drawn at the map's own bottom edge lands
+          under it: the empty-state card's buttons came out half-covered by
+          the switch. Desktop has no pill and keeps the tighter inset. */}
       {emptyOverlay && nothingInView && (
-        <div className="absolute inset-x-0 bottom-0 flex justify-center p-4 pointer-events-none">
+        <div className="absolute inset-x-0 bottom-0 flex justify-center p-4 pb-20 md:pb-4 pointer-events-none">
           <div className="pointer-events-auto">{emptyOverlay({ showAll, canShowAll, areaName })}</div>
         </div>
       )}
