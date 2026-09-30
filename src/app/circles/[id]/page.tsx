@@ -18,6 +18,7 @@ import { relativeDayLabel, dayNameISO, checkInWindow } from '@/lib/schedule'
 import MeetZone from '@/components/MeetZone'
 import DistanceFromYou from '@/components/DistanceFromYou'
 import AttendanceRegister from '@/components/AttendanceRegister'
+import RoleToggle from '@/components/RoleToggle'
 
 const DAY_LONG = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 
@@ -604,6 +605,14 @@ export default async function CirclePage({
                             <span className={`label ${st === 'yes' ? 'text-pen' : ''}`}>
                               {st === 'yes' ? 'going' : st === 'maybe' ? 'maybe' : "can't"}
                             </span>
+                          )}
+                          {isAdmin && !m.isMe && (
+                            <RoleToggle
+                              circleId={id}
+                              userId={m.user_id}
+                              name={m.full_name}
+                              isAdmin={m.role === 'admin'}
+                            />
                           )}
                           {!m.isMe && (
                             <FollowButton targetId={m.user_id} circleId={id} initialIsFollowing={m.isFollowing} />

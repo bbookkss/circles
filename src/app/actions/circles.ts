@@ -233,7 +233,7 @@ export async function leaveCircle(formData: FormData) {
     .from('circle_members').select('user_id').eq('circle_id', circle_id).eq('role', 'admin')
   const soleAdmin = (admins ?? []).length === 1 && admins![0].user_id === user.id
   if (soleAdmin) {
-    redirectWithError(`/circles/${circle_id}`, 'Make someone else an admin before you leave.')
+    redirectWithError(`/circles/${circle_id}`, 'You are the only admin. Make someone else an admin from the member list first.')
   }
 
   const { error } = await supabase.from('circle_members').delete()
