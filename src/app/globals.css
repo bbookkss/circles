@@ -422,3 +422,31 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover {
 ::-webkit-scrollbar-corner {
   background: transparent;
 }
+
+/* Base UI's hidden form input, kept out of the page box.
+ *
+ * A Select with a `name` renders a 1px native input so the value reaches a
+ * form submit. Base UI styles it `position: absolute` with no offsets, so it
+ * keeps its static position — which is wherever the Select sits in the flow,
+ * potentially deep inside a scroller. Absolute means its containing block is
+ * the nearest *positioned* ancestor, and a plain `overflow-y: auto` scroller
+ * is `position: static`, so it neither contains nor clips it. The input
+ * projects its offset onto the page box and the document grows to reach it.
+ *
+ * On /circles/new that was 459px of empty paper below the fold: the sidebar
+ * scrolls internally, the Frequency select sits ~1230px down its content, and
+ * the page stretched to 1230px to hold a 1px input nobody can see.
+ *
+ * `fixed` is what Base UI already gives the same element when it has no name
+ * (see visuallyHidden vs visuallyHiddenInput), so this is the vendor's own
+ * treatment applied to both cases. It still submits with the form.
+ *
+ * Fixing it here rather than per-page is deliberate: the alternative is
+ * `position: relative` on every scroll container, which works until somebody
+ * adds the next scroller and silently gets the bug back.
+ */
+input[aria-hidden="true"][tabindex="-1"] {
+  position: fixed !important;
+  top: 0;
+  left: 0;
+}
