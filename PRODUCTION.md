@@ -1,17 +1,21 @@
 # Production readiness
 
-> **▶ RESUME HERE: run `supabase/cohosts-2026-09-29.sql`.** It is committed
-> and the UI that calls it is deployed, but the function is not in the live
-> database — checked 2026-09-29, `set_member_role` is absent. An admin using
-> the role toggle gets "Could not find the function public.set_member_role"
-> under the button. Rehearsed (7 assertions, rolled back), never applied.
+> **Migrations: up to date.** `cohosts-2026-09-29.sql` applied 2026-09-29 and
+> verified against the live database: `set_member_role` present and
+> `security definer`, and `circle_members.role` still carries no direct UPDATE
+> grant (`authenticated` holds `email_reminders` and nothing else), which is
+> the post-condition that keeps the function meaningful.
 >
-> Earlier migrations are applied: `schedule-timezone-2026-09-08.sql` and
-> `check-ins-2026-09-08.sql` on 2026-09-09, verified against the live
-> database (all 9 circles carry a timezone — Florida Eastern, the rest
-> Pacific; the timezone guard rejects unknown zone names; `circle_check_ins`
-> has RLS on with 4 policies and no `anon` grant), and
+> Earlier: `schedule-timezone-2026-09-08.sql` and `check-ins-2026-09-08.sql` on
+> 2026-09-09, verified against the live database (all 9 circles carry a
+> timezone — Florida Eastern, the rest Pacific; the timezone guard rejects
+> unknown zone names; `circle_check_ins` has RLS on with 4 policies and no
+> `anon` grant); `attendance-2026-09-14.sql` on 2026-09-14;
 > `in-common-2026-09-14.sql` by function presence on 2026-09-29.
+>
+> `function-grants-2026-09-29.sql` is written and **not** applied. It is the
+> exception to the rule below: nothing calls it, nothing degrades without it,
+> and it changes no observable behaviour. See Known issues.
 >
 > When a migration is written but not yet applied, replace this block with a
 > ▶ RESUME HERE banner naming the file — the failure mode is silent (the page
@@ -298,7 +302,13 @@ works fine from this machine.
       wraps: picker on one line, counter and Post on the next, and the picker
       truncates instead of overflowing.
 
-- [ ] **Run `supabase/cohosts-2026-09-29.sql`.** Taken from Partiful, which
+- [x] **`supabase/cohosts-2026-09-29.sql` applied 2026-09-29.** Verified live:
+      the function is present and `security definer`, `circle_members.role`
+      has no direct UPDATE grant, and an anonymous caller hitting the RPC
+      through PostgREST is refused `42501 not authenticated`. Not yet
+      exercised through the UI by a real admin — see Untested.
+
+      Taken from Partiful, which
       puts "Add cohosts" on the event form: an admin can promote another
       member, so a circle is not stranded when the one organiser gets tired.
       Also the only way to satisfy `leaveCircle`'s "make someone else an
@@ -411,6 +421,15 @@ works fine from this machine.
 Everything below has proven database logic (rolled-back transactions) but has
 never been exercised through the UI by a real person.
 
+- [ ] **The role toggle, by a real admin.** `set_member_role` is live and its
+      seven assertions pass in a rolled-back transaction, but no admin has
+      clicked the toggle on `hicircles.com`. What the rehearsal cannot cover:
+      that `RoleToggle` sends the right circle and person, that
+      `revalidatePath` actually repaints the member list, and that the refusal
+      text is legible where it renders (`max-w-[180px]`, 11px, right-aligned).
+      The refusal worth seeing is the last-admin one, since it is the only
+      message a normal user will ever hit.
+
 - [ ] **Dropdowns on a real phone.** The seven native `<select>`s became Base
       UI `Select` so the open list could be themed — the OS draws a native
       select's list and no CSS reaches it. The cost is that phones no longer
@@ -461,6 +480,33 @@ never been exercised through the UI by a real person.
 - [ ] **Signed-in non-member reading a public circle.** Follows from
       `can_read_circle_content` returning true when `uid is not null`, but was
       never observed.
+
+- [ ] **`revoke ... from public` on a function is inert against `anon`.** Every
+      `security definer` function in `public` — all 22 of them — carries an
+      explicit `anon=X` execute grant, because Supabase's default privileges
+      grant EXECUTE to `anon` and `authenticated` by name. `cohosts-2026-09-29`
+      did `revoke all on function ... from public` and then granted
+      `authenticated`, which reads as exclusive and is not: it removed the
+      PUBLIC entry and left the named grant untouched. Checked 2026-09-29.
+
+      Exactly the shape of the column-revoke trap in HANDOFF.md, and the same
+      lesson: the statement reported success and changed nothing that mattered.
+      The migration's own post-condition did not catch it because it asserts on
+      the column privilege, not the function ACL. Future migrations that add a
+      function should assert the ACL too.
+
+      **Not currently exploitable.** The three that mutate —
+      `set_member_role`, `approve_join_request`, `record_attendance` — each
+      open with `if auth.uid() is null then raise`, and all three were probed
+      anonymously through PostgREST on 2026-09-29: every one returns
+      `42501 not authenticated`. The readers leak nothing an anon caller could
+      not already reach, since they take a viewer id and answer about it.
+      So this is defence in depth rather than a live hole, and it is deliberate
+      Supabase posture rather than something a migration introduced — the same
+      note as `anon` holding DML on every table.
+
+      `supabase/function-grants-2026-09-29.sql` narrows the mutating three.
+      Unapplied, and not blocking.
 
 ## Known issues
 
