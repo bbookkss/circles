@@ -276,3 +276,15 @@ Capture things here as they come up, even one line. Better than a chat log.
   circles should be allowed to exist with no admin at all.
 - **Events.** The `events` table exists, is empty, and nothing in the app
   writes to it. Either build it or drop it.
+- **A browser test runner, probably Playwright.** Raised 2026-09-29 after the
+  dead-space bug: a 1px hidden input stretched `/circles/new` by 459px and
+  nothing in the project could have caught it, because the three unit tests
+  are pure logic and never build a layout. The guard that shipped asserts the
+  CSS rule still exists in the stylesheet, which catches deletion during a
+  refactor and nothing else — notably not Base UI changing the attributes it
+  renders, which would make the selector stop matching in silence.
+  `scripts/deadspace-sweep.js` covers that case but has to be run by hand
+  against a signed-in session. Playwright would let the sweep run per route
+  per breakpoint on every push, and would also cover the things currently
+  parked in PRODUCTION.md's Untested section for want of a real browser.
+  Not started: it is a large dependency and Ben has not signed off.
