@@ -1,10 +1,17 @@
 # Production readiness
 
-> **Migrations: up to date.** `schedule-timezone-2026-09-08.sql` and
-> `check-ins-2026-09-08.sql` were applied to production on 2026-09-09 and
-> verified against the live database: all 9 circles carry a timezone (Florida
-> Eastern, the rest Pacific), the timezone guard rejects unknown zone names,
-> and `circle_check_ins` has RLS on with 4 policies and no `anon` grant.
+> **▶ RESUME HERE: run `supabase/cohosts-2026-09-29.sql`.** It is committed
+> and the UI that calls it is deployed, but the function is not in the live
+> database — checked 2026-09-29, `set_member_role` is absent. An admin using
+> the role toggle gets "Could not find the function public.set_member_role"
+> under the button. Rehearsed (7 assertions, rolled back), never applied.
+>
+> Earlier migrations are applied: `schedule-timezone-2026-09-08.sql` and
+> `check-ins-2026-09-08.sql` on 2026-09-09, verified against the live
+> database (all 9 circles carry a timezone — Florida Eastern, the rest
+> Pacific; the timezone guard rejects unknown zone names; `circle_check_ins`
+> has RLS on with 4 policies and no `anon` grant), and
+> `in-common-2026-09-14.sql` by function presence on 2026-09-29.
 >
 > When a migration is written but not yet applied, replace this block with a
 > ▶ RESUME HERE banner naming the file — the failure mode is silent (the page
@@ -35,9 +42,15 @@ works fine from this machine.
 
 ## Blocking — do before anyone real signs up
 
-- [ ] **Run `supabase/in-common-2026-09-14.sql`.** The two things Partiful puts
-      on a profile and this did not: how many meets somebody has actually been
-      to, and who you both know.
+- [x] **`supabase/in-common-2026-09-14.sql` applied.** Confirmed against the
+      live database on 2026-09-29: `member_stats` and `mutual_members` are
+      both present and `reliability` is gone, so the app's calls resolve. That
+      is presence, not behaviour — the private-roster case is covered by
+      `in-common-2026-09-14.rehearsal.sql`, not by anything exercised through
+      the UI.
+
+      The two things Partiful puts on a profile and this did not: how many
+      meets somebody has actually been to, and who you both know.
 
       Replaces `reliability()` with `member_stats()`, which adds a lifetime
       count of confirmed attendance alongside the promise-keeping ratio. The
@@ -284,6 +297,26 @@ works fine from this machine.
       circle picker ran underneath the 0/1000 counter on phones. The row now
       wraps: picker on one line, counter and Post on the next, and the picker
       truncates instead of overflowing.
+
+- [ ] **Run `supabase/cohosts-2026-09-29.sql`.** Taken from Partiful, which
+      puts "Add cohosts" on the event form: an admin can promote another
+      member, so a circle is not stranded when the one organiser gets tired.
+      Also the only way to satisfy `leaveCircle`'s "make someone else an
+      admin before you leave".
+
+      `set_member_role` is `security definer` because an admin writes
+      somebody else's row. The only UPDATE privilege `authenticated` holds on
+      `circle_members` is the single column `email_reminders`, and the
+      migration's post-condition fails if `role` ever becomes directly
+      updatable — a plain column grant would make the function pointless.
+      It refuses to demote the last admin, since the thing that exists to
+      stop circles being stranded must not strand one.
+
+      Rehearsed against production, seven assertions, rolled back:
+      `supabase/cohosts-2026-09-29.rehearsal.sql`. **Not applied.** The UI
+      shipped in `cfa8513` and is live, so until this runs an admin using the
+      role toggle gets "Could not find the function public.set_member_role"
+      rendered under the button. Visible, not silent, but broken.
 
 ## Environment
 
