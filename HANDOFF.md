@@ -221,3 +221,61 @@ RLS**. It is not reachable through PostgREST, which never emits TRUNCATE, so
 there is no live path to it today. It would become one the moment a
 `security invoker` function callable by anon runs a TRUNCATE. Revoking
 TRUNCATE from anon costs nothing if you want the privilege gone.
+
+---
+
+# Update — 2026-09-29
+
+## A third trap: an absolutely positioned child escapes a scroller
+
+Same family as the two above, and it cost the same kind of time. `/circles/new`
+scrolled 459px past the last thing that paints. Nothing was down there.
+
+A Base UI `Select` with a `name` renders a 1px native input so its value
+reaches the form submit, styled `position: absolute` with **no offsets**. That
+combination is the trap: with no `top`/`left` it stays at its static position,
+but `absolute` means its containing block is the nearest *positioned* ancestor.
+A plain `overflow-y: auto` scroller is `position: static`, so it neither
+contains nor clips the input. The input projects its offset onto the page box
+and the document grows to reach it — 1231px, to hold a 1px input nobody can
+see, because the Frequency select sits about 1230px down the sidebar's scroll
+content.
+
+**The general rule: `overflow` only clips a descendant whose containing block
+is inside the scroller.** An absolutely positioned descendant whose containing
+block is further up is not clipped by anything in between, however many
+`overflow-hidden`s it passes through. Give a scroll container
+`position: relative` and the problem disappears, which is why this is rare
+enough to be surprising.
+
+Fixed globally in `globals.css` instead of per page, because the per-page fix
+is one `relative` per scroller and the next scroller silently gets it back.
+
+### What made it slow to find
+
+Every instinct was wrong, and each wrong instinct measured as fine:
+
+- Every element's rect was inside the viewport. Nothing looked oversized.
+- `body.scrollHeight` was 828 while `html.scrollHeight` was 1231. The overflow
+  was real but belonged to no element in the body's box.
+- Setting `overflow: hidden` on the wrapper, the row, the aside, the form, on
+  `body`, and on `html` changed nothing — none of them was the containing
+  block, so none of them clipped it.
+- Forcing the wrapper to `height: 400px` left the document at 1231px, which is
+  what finally proved the height had nothing to do with the wrapper's box.
+
+What found it: hiding subtrees one at a time and watching
+`document.documentElement.scrollHeight`, then listing every
+absolutely-positioned descendant sorted by document-space bottom. The input was
+1px tall at `top: 1231.3px`, which is why nothing that looked at rendered size
+ever saw it. `scripts/deadspace-sweep.js` is that method packaged up.
+
+### Worth knowing for next time
+
+- `dead = scrollHeight - max(innerHeight, contentBottom)`. Subtracting only
+  `contentBottom` flags every page shorter than the viewport, which is not a
+  fault: those do not scroll.
+- Not every non-zero result is a bug. Container bottom padding shows as 20-60px
+  on desktop, and at phone width `/home` and `/profile` trail 111-122px of
+  `pb-24` that exists to clear the fixed bottom nav. Removing that would be the
+  regression.
