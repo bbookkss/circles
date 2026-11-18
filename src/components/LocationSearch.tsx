@@ -6,6 +6,12 @@ import { extractFromSearchBox } from '@/lib/geocoding'
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN!
 const SF_PROXIMITY = '-122.4194,37.7749'
 
+/** The fields of a Search Box API feature that this component reads. */
+type SearchBoxFeature = Parameters<typeof extractFromSearchBox>[0] & {
+  properties?: { name?: string; full_address?: string; place_formatted?: string }
+  geometry?: { coordinates?: [number, number] }
+}
+
 type Suggestion = {
   /** "Mission Dolores Park" — the thing you were looking for. */
   name: string
@@ -55,7 +61,7 @@ export default function LocationSearch({ onSelect }: Props) {
           `https://api.mapbox.com/search/searchbox/v1/forward?q=${encodeURIComponent(value)}&proximity=${SF_PROXIMITY}&country=us&limit=6&access_token=${MAPBOX_TOKEN}`
         )
         const json = await res.json()
-        const results: Suggestion[] = (json.features ?? []).map((f: any) => {
+        const results: Suggestion[] = (json.features ?? []).map((f: SearchBoxFeature) => {
           const { neighborhood, city } = extractFromSearchBox(f)
           const props = f.properties ?? {}
           const name: string = props.name ?? props.full_address ?? ''

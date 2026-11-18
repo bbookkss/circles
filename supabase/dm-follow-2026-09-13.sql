@@ -11,7 +11,7 @@
 -- What this trades away, on purpose: a stranger can follow you and then
 -- message you. That is how every consumer app people already use behaves,
 -- and the mitigation is a block, which does not exist yet and is tracked in
--- PRODUCTION.md. Until it does, an unwanted thread can simply be ignored.
+-- docs/PRODUCTION.md. Until it does, an unwanted thread can simply be ignored.
 --
 -- Run in the dashboard SQL editor.
 -- ---------------------------------------------------------------------------

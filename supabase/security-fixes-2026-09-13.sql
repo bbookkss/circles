@@ -2,7 +2,7 @@
 -- ---------------------------------------------------------------------------
 -- Two confirmed breaks and the policy drift underneath them. Each was
 -- rehearsed against production in a rolled-back transaction before this file
--- was written; the numbers refer to the audit in PRODUCTION.md.
+-- was written; the numbers refer to the audit in docs/PRODUCTION.md.
 --
 --   1. Anyone signed in could self-join a private circle by posting its id.
 --   2. Approving a join request could not insert the member (RLS keys the
@@ -23,7 +23,7 @@ begin;
 -- ---------------------------------------------------------------------------
 -- Who counts as an admin. Security definer so it can be used inside policies
 -- on circle_members itself without recursing through RLS (the trap that
--- broke every read on 2026-09-06, see HANDOFF.md).
+-- broke every read on 2026-09-06, see docs/HANDOFF.md).
 -- ---------------------------------------------------------------------------
 create or replace function public.is_circle_admin(cid uuid, uid uuid)
 returns boolean

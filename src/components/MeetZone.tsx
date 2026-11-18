@@ -26,6 +26,7 @@ export default function MeetZone({ tz }: { tz: string }) {
     try {
       const mine = Intl.DateTimeFormat().resolvedOptions().timeZone
       if (!mine || sameWallClock(mine, tz)) return
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- the reader's zone is only known after mount; see above
       setLabel(tzAbbrev(tz))
     } catch {
       // No Intl, or an unknown zone name. Showing nothing is correct: the

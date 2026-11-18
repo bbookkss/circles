@@ -119,6 +119,7 @@ export default function CirclesMap({
    */
   useEffect(() => {
     if (!nothingInView || !map) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- clears a name fetched for a previous empty view
       setAreaName(null)
       return
     }
@@ -173,6 +174,7 @@ export default function CirclesMap({
     if (!map || !focus) return
     // Arriving from the list opens the tag too, so the fly-to lands on
     // something readable rather than a pin you then have to tap.
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- opens the tag in step with the fly-to
     setPopupCircle(focus)
     map.flyTo({
       center: [focus.longitude, focus.latitude],

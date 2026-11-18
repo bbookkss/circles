@@ -20,6 +20,7 @@
  * and are stretching the page on their own. That is the /circles/new bug:
  * see the comment on the rule at the end of src/app/globals.css.
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- called from the browser console
 async function deadspaceSweep({ paths, width = 1229, height = 772, settle = 1800 } = {}) {
   const routes = paths ?? [
     '/', '/home', '/explore', '/circles/new', '/profile', '/messages',

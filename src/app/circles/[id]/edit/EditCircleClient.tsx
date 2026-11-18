@@ -45,6 +45,7 @@ type Circle = {
   emoji?: string | null
   location?: string | null
   neighborhood?: string | null
+  city?: string | null
   visibility: string
   latitude?: number | null
   longitude?: number | null
@@ -67,7 +68,7 @@ export default function EditCircleClient({ circle, schedule }: { circle: Circle;
       : null
   )
   const [neighborhood, setNeighborhood] = useState<string | null>(circle.neighborhood ?? null)
-  const [city, setCity] = useState<string | null>((circle as any).city ?? null)
+  const [city, setCity] = useState<string | null>(circle.city ?? null)
   const [geocoding, setGeocoding] = useState(false)
   const [selectedEmoji, setSelectedEmoji] = useState<string | null>(circle.emoji ?? null)
   const [visibility, setVisibility] = useState<'public' | 'private'>(

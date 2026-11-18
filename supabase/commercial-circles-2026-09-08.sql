@@ -23,7 +23,7 @@
 -- in user may write ANY column on their own row. A plain boolean would be
 -- self-serve: one PATCH and anyone is a "verified business".
 --
--- Column-level privileges are the fix. Note the trap recorded in HANDOFF.md:
+-- Column-level privileges are the fix. Note the trap recorded in docs/HANDOFF.md:
 -- a column-level revoke is silently inert while a table-level grant stands,
 -- so the table-level UPDATE must go first and the columns be handed back one
 -- by one. is_business is simply never granted.

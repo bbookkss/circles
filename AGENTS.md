@@ -10,15 +10,15 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 # Project notes
 
-- **[PRODUCTION.md](PRODUCTION.md)** is the running list of what still needs
+- **[docs/PRODUCTION.md](docs/PRODUCTION.md)** is the running list of what still needs
   doing before launch — blocking items, environment gaps, what has never been
   tested, and decisions not yet made. Read it before starting work, and add to
   it whenever a new feature leaves something undone. Do not let this knowledge
   live only in a chat transcript.
-- **[ROADMAP.md](ROADMAP.md)** is the desired-features list — things we want
+- **[docs/ROADMAP.md](docs/ROADMAP.md)** is the desired-features list — things we want
   to build, specced enough to start cold. Add to its "Ideas not yet specced"
   section rather than leaving a feature idea in a chat log.
-- **[HANDOFF.md](HANDOFF.md)** is the historical record: what was changed, why,
+- **[docs/HANDOFF.md](docs/HANDOFF.md)** is the historical record: what was changed, why,
   and the traps that cost real time (RLS recursion, silently inert column
   revokes).
 - Database changes are checked-in SQL files under `supabase/`, named

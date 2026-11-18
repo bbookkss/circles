@@ -58,7 +58,7 @@ export default async function ExplorePage() {
   // tested without a request; this only supplies the inputs.
   const h = await headers()
   const geo = geoFromHeaders((name) => h.get(name))
-  const { view: initialView, place } = resolveMapView(myCirclesResult.data ?? [], geo)
+  const { view: initialView } = resolveMapView(myCirclesResult.data ?? [], geo)
   // City-level, from the IP, and good enough to sort a list by and say
   // "about 3 mi". The browser's own fix replaces it client-side when the
   // person has already granted location, or taps the locate button.

@@ -10,7 +10,11 @@ it is the consolidated live policy state and explains the reasoning.
 
 ---
 
-## STOP — production is currently inconsistent
+## Resolved — production was inconsistent
+
+> **Resolved 2026-09-08** in commit `41ca7ec`, which committed the circle page
+> change, `supabase/rls-applied-2026-09-06.sql` and this file together. The
+> section below is kept as written at the time.
 
 The RLS changes are **live in Supabase**, but the matching app change is
 **uncommitted and undeployed**. Result: on a public circle page, a logged-out

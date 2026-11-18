@@ -161,7 +161,7 @@ works fine from this machine.
 
 - [x] **Mapbox usage alerts set** (2026-09-09): Map Loads for Web at 25,000
       and 40,000 monthly, against a 50,000 free tier, so both fire before any
-      charge. Sent to benjaminabookstaver@gmail.com.
+      charge. Sent to the account owner's email.
 
       **Correction to what this list said before: Mapbox has no spend cap.**
       The earlier note called a spend limit "the actual guard". There is no
@@ -271,7 +271,7 @@ works fine from this machine.
 - [x] **Full reset applied 2026-09-13.** Verified against the database
       afterwards rather than trusting the editor's output. All 19 tables are
       empty except `auth.users` 1, `profiles` 1, `platform_admins` 1. The
-      surviving account is `benjaminabookstaver@gmail.com`, confirmed, not
+      surviving account is the owner's, confirmed, not
       banned, not soft-deleted, and still a platform admin.
 
       Checked three things beyond the row counts. The site serves 200 on the

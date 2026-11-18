@@ -9,6 +9,7 @@ import CheckInControl from '@/components/CheckInControl'
 import { todayISO, dayNameISO, daysBetweenISO, relativeDayLabel, formatTime, checkInWindow, meetPhase } from '@/lib/schedule'
 import MeetZone from '@/components/MeetZone'
 import { cookies } from 'next/headers'
+import type { ComponentProps } from 'react'
 
 /** ISO date n days after iso. Dates only, so noon UTC sidesteps DST edges. */
 function addDaysISO(iso: string, n: number): string {
@@ -68,13 +69,13 @@ export default async function HomePage() {
           .from('circles')
           .select('id, name, emoji, category, location, neighborhood, visibility, kind, timezone')
           .in('id', circleIds)
-      : Promise.resolve({ data: [] as any[] }),
+      : Promise.resolve({ data: [] as never[] }),
     hasCircles
       ? supabase
           .from('circle_schedules')
           .select('circle_id, days_of_week, start_time, end_time, frequency')
           .in('circle_id', circleIds)
-      : Promise.resolve({ data: [] as any[] }),
+      : Promise.resolve({ data: [] as never[] }),
     hasCircles
       ? supabase.rpc('circles_next_occurrence', { cids: circleIds })
       : Promise.resolve({ data: [] as { circle_id: string; occurs_on: string }[] }),
@@ -85,7 +86,7 @@ export default async function HomePage() {
           .in('circle_id', circleIds)
           .order('created_at', { ascending: false })
           .limit(20)
-      : Promise.resolve({ data: [] as any[] }),
+      : Promise.resolve({ data: [] as never[] }),
   ])
 
   const circles = circlesResult.data ?? []
@@ -98,8 +99,8 @@ export default async function HomePage() {
   const circleMap = Object.fromEntries(circles.map((c) => [c.id, c]))
 
   type Upcoming = {
-    circle: any
-    schedule: any
+    circle: (typeof circles)[number]
+    schedule: (typeof schedules)[number]
     occursOn: string
     daysAway: number
   }
@@ -149,7 +150,7 @@ export default async function HomePage() {
           .select('id, post_id, user_id, content, created_at')
           .in('post_id', postIds)
           .order('created_at', { ascending: true })
-      : Promise.resolve({ data: [] as any[] }),
+      : Promise.resolve({ data: [] as never[] }),
   ])
 
   const meetKey = (circleId: string, occursOn: string) => `${circleId}|${occursOn}`
@@ -202,7 +203,7 @@ export default async function HomePage() {
     if (l.user_id === user.id) commentLikedByMe.add(l.comment_id)
   }
 
-  const commentsByPost: Record<string, any[]> = {}
+  const commentsByPost: Record<string, ComponentProps<typeof PostItem>['initialComments']> = {}
   for (const c of commentRows ?? []) {
     ;(commentsByPost[c.post_id] ??= []).push({
       id: c.id,

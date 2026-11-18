@@ -54,10 +54,11 @@
 
 begin;
 
--- Ben's id, resolved by email so a copy-pasted UUID cannot silently target
--- the wrong row.
+-- The owner's id, resolved by email so a copy-pasted UUID cannot silently
+-- target the wrong row. Substitute the real address before running; left as
+-- the placeholder, the check below finds no account and aborts.
 create temporary table keeper on commit drop as
-select id from auth.users where email = 'benjaminabookstaver@gmail.com';
+select id from auth.users where email = 'owner@example.com';
 
 do $$
 begin

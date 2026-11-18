@@ -22,8 +22,10 @@ const LABEL_HALO = '#e8dfce'    // light halo so labels read on the land
 type StyledMap = {
   getStyle: () => { layers?: { id: string; type: string }[] } | undefined
   // Loose signatures so Mapbox's strongly-typed methods are assignable.
+  /* eslint-disable @typescript-eslint/no-explicit-any */
   setPaintProperty: (...args: any[]) => unknown
   getPaintProperty?: (...args: any[]) => unknown
+  /* eslint-enable @typescript-eslint/no-explicit-any */
   isStyleLoaded?: () => boolean
   on?: (event: string, handler: () => void) => unknown
 }
