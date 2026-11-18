@@ -267,7 +267,9 @@ export async function requestToJoin(formData: FormData) {
   const rows = (admins ?? [])
     .filter((a) => a.user_id !== user.id)
     .map((a) => ({ user_id: a.user_id, actor_id: user.id, type: 'join_request', circle_id }))
-  if (rows.length > 0) await supabase.from('notifications').insert(rows)
+  // One insert per admin: RLS refuses a notification across a block, and a
+  // refused row would sink the whole batch, so nobody would hear of it.
+  await Promise.all(rows.map((row) => supabase.from('notifications').insert(row)))
 
   redirect(`/circles/${circle_id}`)
 }

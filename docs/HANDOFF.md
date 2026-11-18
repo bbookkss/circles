@@ -283,3 +283,34 @@ ever saw it. `scripts/deadspace-sweep.js` is that method packaged up.
   on desktop, and at phone width `/home` and `/profile` trail 111-122px of
   `pb-24` that exists to clear the fixed bottom nav. Removing that would be the
   regression.
+
+---
+
+## 2026-11-18 — The location blur was reversible
+
+`approxArea()` displaced each circle's point by an offset derived from FNV-1a
+of the circle's id. Deterministic on purpose: a random offset per request
+could be averaged away by reloading. But the id is in every circle URL and
+the function was in a public repo, so anyone could compute the offset and
+subtract it. The blur protected nothing from someone who read the source.
+
+Two more gaps sat beside it. No column grants on `circles`, so the anon key
+that ships in every page could read `latitude` and `longitude` straight from
+PostgREST. And `location`, the venue name, was printed to logged-out
+visitors and returned by `circle_preview()`.
+
+The fix moves the decision into the database
+(`location-privacy-2026-11-18.sql`, `location-lockdown-2026-11-18.sql`): a
+random offset drawn once per circle and stored in columns no client can
+read, the shown centre computed by trigger, the exact columns withheld, and
+`circle_places()` for members.
+
+### Worth knowing for next time
+
+- "Stable" and "secret" are separate requirements for an obfuscating offset.
+  A hash of a public value gives the first and not the second.
+- A server-side transform protects nothing while the raw column is readable
+  through the API. Check what PostgREST will hand the anon key, not just what
+  the page renders.
+- Column grants are now the rule on `circles`: a new column is unreadable
+  until a migration grants it.

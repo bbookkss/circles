@@ -12,13 +12,38 @@ import CopyLinkButton from '@/components/CopyLinkButton'
 import FollowButton from '@/components/FollowButton'
 import BackButton from '@/components/BackButton'
 import CircleLocationMap from '@/components/map/CircleLocationMap'
-import { approxArea } from '@/lib/approxLocation'
+import { BLUR_RADIUS_M, type CirclePlace } from '@/lib/approxLocation'
 import CheckInControl from '@/components/CheckInControl'
 import { relativeDayLabel, dayNameISO, checkInWindow } from '@/lib/schedule'
 import MeetZone from '@/components/MeetZone'
 import DistanceFromYou from '@/components/DistanceFromYou'
 import AttendanceRegister from '@/components/AttendanceRegister'
 import RoleToggle from '@/components/RoleToggle'
+import ReportButton from '@/components/ReportButton'
+
+// Everything on circles except the exact place, which only members may read
+// (location-lockdown-2026-11-18.sql). Members get it from circle_places().
+const CIRCLE_COLUMNS =
+  'id, name, description, category, emoji, neighborhood, city, visibility, kind, timezone, created_by, area_latitude, area_longitude'
+
+/** A circles row as selected above, or the slimmer row circle_preview() returns. */
+type CircleView = {
+  id: string
+  name: string
+  description: string | null
+  category: string | null
+  emoji: string | null
+  neighborhood: string | null
+  visibility: string
+  kind: string
+  city?: string | null
+  timezone?: string
+  created_by?: string | null
+  area_latitude?: number | null
+  area_longitude?: number | null
+  member_count?: number
+  creator_name?: string | null
+}
 
 const DAY_LONG = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 
@@ -80,7 +105,7 @@ export default async function CirclePage({
 
   const { data: fullCircle } = await supabase
     .from('circles')
-    .select('*')
+    .select(CIRCLE_COLUMNS)
     .eq('id', id)
     .single()
 
@@ -88,14 +113,14 @@ export default async function CirclePage({
   // the select above returns nothing for outsiders. Fall back to the preview
   // RPC (security definer, preview columns only — no coordinates) so a shared
   // link still renders a join prompt instead of a 404.
-  let circle = fullCircle
+  let circle: CircleView | null = fullCircle
   let isPreviewOnly = false
   if (!circle) {
     const { data: preview } = await supabase
       .rpc('circle_preview', { circle_id: id })
       .maybeSingle()
     if (preview) {
-      circle = preview
+      circle = preview as CircleView
       isPreviewOnly = true
     }
   }
@@ -127,8 +152,24 @@ export default async function CirclePage({
         .select('status').eq('circle_id', id).eq('user_id', user.id).maybeSingle()
     : { data: null }
 
+  // The exact point and venue name. The database returns them only to
+  // members, so for everyone else this is empty and they get the area.
+  const { data: places } = user && !isPreviewOnly
+    ? await supabase.rpc('circle_places', { cids: [id] })
+    : { data: null }
+  const exact = ((places ?? []) as CirclePlace[])[0] ?? null
+  const exactPoint =
+    exact && exact.latitude != null && exact.longitude != null
+      ? { latitude: exact.latitude, longitude: exact.longitude }
+      : null
+  // Displaced on write by the database; a preview carries none.
+  const area =
+    circle.area_latitude != null && circle.area_longitude != null
+      ? { latitude: circle.area_latitude as number, longitude: circle.area_longitude as number, radiusM: BLUR_RADIUS_M }
+      : null
+
   const schedule = schedules?.[0] ?? null
-  const place = circle.location ?? circle.neighborhood ?? null
+  const place = exact?.location ?? circle.neighborhood ?? null
   const creatorFirst = creator?.full_name?.split(' ')[0] ?? null
   const count = memberCount ?? 0
 
@@ -147,14 +188,8 @@ export default async function CirclePage({
 
   // Unauthenticated, or signed in without access — show preview card
   if (!user || isPreviewOnly) {
-    // Nobody on this branch is a member, so the location is always coarse.
-    // Computed here, on the server, so the precise figures never reach the
-    // page: a blur drawn in the browser over real coordinates protects
-    // nothing from anyone who opens the source.
-    const previewArea =
-      circle.latitude != null && circle.longitude != null
-        ? approxArea(circle.latitude, circle.longitude, circle.id)
-        : null
+    // Nobody on this branch is a member, so the location is always the area.
+    const previewArea = area
     return (
       <>
         {user ? <TopNav /> : (
@@ -193,23 +228,23 @@ export default async function CirclePage({
             </header>
 
             {/* Location map */}
-            {circle.latitude != null && circle.longitude != null && (
+            {previewArea && (
               <div className="fade-rise stagger-1">
                 <p className="label mb-2">Where</p>
                 <div className="h-52 border border-foreground overflow-hidden">
                   <CircleLocationMap
-                    longitude={previewArea!.longitude}
-                    latitude={previewArea!.latitude}
-                    radiusM={previewArea!.radiusM}
+                    longitude={previewArea.longitude}
+                    latitude={previewArea.latitude}
+                    radiusM={previewArea.radiusM}
                     emoji={circle.emoji}
                   />
                 </div>
                 <p className="label mt-2 normal-case tracking-normal">
-                  {(circle.neighborhood || circle.location) && <span>{circle.neighborhood ?? circle.location} · </span>}
+                  {circle.neighborhood && <span>{circle.neighborhood} · </span>}
                   <DistanceFromYou
-                    latitude={previewArea!.latitude}
-                    longitude={previewArea!.longitude}
-                    initial={fromYou(previewArea!.latitude, previewArea!.longitude)}
+                    latitude={previewArea.latitude}
+                    longitude={previewArea.longitude}
+                    initial={fromYou(previewArea.latitude, previewArea.longitude)}
                   />
                   {geo && ' · '}exact spot shown to members
                 </p>
@@ -255,6 +290,12 @@ export default async function CirclePage({
                 )}
               </div>
             </div>
+
+            {user && (
+              <div className="text-xs">
+                <ReportButton targetType="circle" targetId={id} label="Report this circle" />
+              </div>
+            )}
 
           </div>
         </div>
@@ -385,11 +426,6 @@ export default async function CirclePage({
   const myName = myProfile?.full_name ?? 'You'
 
   const isMember = !!membership
-  // Same rule for signed-in non-members: an area, never the point.
-  const area =
-    circle.latitude != null && circle.longitude != null
-      ? approxArea(circle.latitude, circle.longitude, circle.id)
-      : null
   const isAdmin = membership?.role === 'admin'
   const hasPendingRequest = joinRequest?.status === 'pending'
   const totalMembers = memberCount ?? 0
@@ -534,7 +570,7 @@ export default async function CirclePage({
                     </p>
                     <p className="num text-sm text-foreground/80">
                       {formatTime(schedule.start_time)} – {formatTime(schedule.end_time)}
-                      <MeetZone tz={circle.timezone} />
+                      {circle.timezone && <MeetZone tz={circle.timezone} />}
                     </p>
                   </div>
                   <p className={`label ${window.open ? 'text-pen' : 'normal-case tracking-normal'}`}>
@@ -675,17 +711,17 @@ export default async function CirclePage({
 
             {/* Right column: where */}
             <aside className="space-y-6 min-w-0">
-              {circle.latitude != null && circle.longitude != null && (
+              {(exactPoint || area) && (
                 <div className="fade-rise stagger-1">
                   <p className="label mb-2">Where</p>
                   {/* Members get the place; everyone else gets an area. The
-                      choice is made here rather than in the component, so the
-                      precise coordinates are never sent to a non-member at all. */}
+                      database decides: circle_places() returns nothing to a
+                      non-member, so there is no point here to leak. */}
                   <div className="h-56 border border-foreground overflow-hidden">
-                    {isMember ? (
+                    {exactPoint ? (
                       <CircleLocationMap
-                        longitude={circle.longitude}
-                        latitude={circle.latitude}
+                        longitude={exactPoint.longitude}
+                        latitude={exactPoint.latitude}
                         emoji={circle.emoji}
                       />
                     ) : (
@@ -698,13 +734,13 @@ export default async function CirclePage({
                     )}
                   </div>
                   <p className="label mt-2 normal-case tracking-normal">
-                    {(circle.neighborhood || circle.location) && <span>{circle.neighborhood ?? circle.location} · </span>}
+                    {(circle.neighborhood || exact?.location) && <span>{circle.neighborhood ?? exact?.location} · </span>}
                     <DistanceFromYou
-                      latitude={isMember ? circle.latitude : area!.latitude}
-                      longitude={isMember ? circle.longitude : area!.longitude}
-                      initial={isMember ? fromYou(circle.latitude, circle.longitude) : fromYou(area!.latitude, area!.longitude)}
+                      latitude={(exactPoint ?? area)!.latitude}
+                      longitude={(exactPoint ?? area)!.longitude}
+                      initial={fromYou((exactPoint ?? area)!.latitude, (exactPoint ?? area)!.longitude)}
                     />
-                    {!isMember && <span>{geo ? ' · ' : ''}exact spot shown to members</span>}
+                    {!exactPoint && <span>{geo ? ' · ' : ''}exact spot shown to members</span>}
                   </p>
                 </div>
               )}
@@ -718,6 +754,11 @@ export default async function CirclePage({
                   {schedules && schedules.length > 1 && (
                     <p className="label mt-2 normal-case tracking-normal">+{schedules.length - 1} more schedule{schedules.length > 2 ? 's' : ''}</p>
                   )}
+                </div>
+              )}
+              {circle.created_by !== user.id && (
+                <div className="text-xs">
+                  <ReportButton targetType="circle" targetId={id} label="Report this circle" />
                 </div>
               )}
             </aside>

@@ -5,22 +5,28 @@
  * is exactly the information needed to wait for someone. Members need the
  * address to turn up; nobody else does, so nobody else gets it.
  *
+ * The blur lives in the database, not here. supabase/location-privacy-
+ * 2026-11-18.sql stores a shown centre (area_latitude, area_longitude) for
+ * every circle, displaced from the real point by an offset drawn at random
+ * once and kept. Non-members can read only that. Members read the point
+ * and the venue name through circle_places(), which checks membership.
+ *
  * Three properties matter, and each rules out a tempting shortcut:
  *
- * 1. The precise point must never leave the server. Drawing a blur circle in
- *    the browser around real coordinates hides nothing: the numbers are in the
- *    page source. So this runs server-side and the exact figures are simply
- *    not sent.
+ * 1. The precise point must never leave the server. Drawing a blur in the
+ *    browser around real coordinates hides nothing: the numbers are in the
+ *    page source. Blurring on the Next server was not enough either, because
+ *    the anon key ships in every page and PostgREST would hand the columns to
+ *    anyone who asked. So the columns themselves are withheld.
  *
- * 2. The shown area must not be centred on the truth. A circle centred on the
- *    meeting place announces it in the middle — the blur becomes a target
- *    ring. The centre is therefore displaced, and the real point sits
- *    somewhere off-centre inside.
+ * 2. The shown area must not be centred on the truth, or the blur becomes a
+ *    target ring. The offset is 300-700m, inside a 1100m radius.
  *
- * 3. The displacement must be stable per circle. If it were random per
- *    request, anyone could reload a few dozen times and average the centres
- *    back to the true location. It is derived from the circle's id instead, so
- *    it is the same on every render and averaging reveals nothing.
+ * 3. The offset must be stable and secret. Stable, or reloading and
+ *    averaging recovers the point. Secret, or subtracting it does. The first
+ *    version derived it from a hash of the circle's id: stable, but the id is
+ *    in every URL and the hash was in this file, so the offset was public.
+ *    A stored random offset is both.
  */
 
 /**
@@ -33,68 +39,10 @@
  */
 export const BLUR_RADIUS_M = 1100
 
-/**
- * How far the shown centre is displaced from the truth, in metres.
- *
- * The floor keeps the centre from being a good guess at the point. The
- * ceiling keeps the point comfortably inside the drawn area, so the disc is
- * never a near miss that excludes the very place it is meant to contain.
- */
-const OFFSET_MIN_M = 300
-const OFFSET_MAX_M = 700
-
-const EARTH_M = 6_378_137
-
-/**
- * FNV-1a. Not a security hash and does not need to be: it decides an offset,
- * it does not protect one. What it must be is stable and well spread, so the
- * same circle always lands the same way and neighbouring ids do not land
- * together.
- */
-function hash(seed: string): number {
-  let h = 2166136261
-  for (let i = 0; i < seed.length; i++) {
-    h ^= seed.charCodeAt(i)
-    h = Math.imul(h, 16777619)
-  }
-  return h >>> 0
-}
-
-export type ApproxArea = {
-  /** Centre of the area to draw. Deliberately not the meeting place. */
-  latitude: number
-  longitude: number
-  radiusM: number
-}
-
-/**
- * A stable area containing the point, whose centre is not the point.
- */
-export function approxArea(
-  latitude: number,
-  longitude: number,
-  seed: string
-): ApproxArea {
-  const h = hash(seed)
-
-  // Two independent values out of the one hash: direction, and how far.
-  const bearing = ((h & 0xffff) / 0x10000) * 2 * Math.PI
-  const distance =
-    OFFSET_MIN_M + (((h >>> 16) & 0xffff) / 0x10000) * (OFFSET_MAX_M - OFFSET_MIN_M)
-
-  const dNorth = distance * Math.cos(bearing)
-  const dEast = distance * Math.sin(bearing)
-
-  // Metres to degrees. Longitude degrees shorten towards the poles, hence the
-  // cos(latitude) term; without it the offset is wrong everywhere but the
-  // equator, and wrong by a factor of two by the time you reach Scotland.
-  const dLat = (dNorth / EARTH_M) * (180 / Math.PI)
-  const dLng =
-    (dEast / (EARTH_M * Math.cos((latitude * Math.PI) / 180))) * (180 / Math.PI)
-
-  return {
-    latitude: latitude + dLat,
-    longitude: longitude + dLng,
-    radiusM: BLUR_RADIUS_M,
-  }
+/** The exact point and venue name, as circle_places() returns them to members. */
+export type CirclePlace = {
+  circle_id: string
+  latitude: number | null
+  longitude: number | null
+  location: string | null
 }

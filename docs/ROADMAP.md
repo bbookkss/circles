@@ -239,9 +239,10 @@ afterwards, so the gate never costs them their place.
 **What a signed-out visitor may see.** This is the part to get right,
 because the same data that entices is the data that endangers.
 
-- Coarse areas only, never pins. `approxArea` already exists and is what
-  the circle page uses; signed-out explore must use it for every circle
-  without exception, since there are no memberships to exempt.
+- Coarse areas only, never pins. Since 2026-11-18 the database stores the
+  area (`area_latitude`, `area_longitude`) and withholds the point, so
+  signed-out explore gets areas by construction: anon cannot read anything
+  else.
 - Counts rather than identities: "7 circles meet within a mile", "12 going
   this week". Aggregates are the enticement and carry no personal data.
 - Cluster at low zoom so the shape of a neighbourhood's activity is
@@ -271,7 +272,18 @@ Capture things here as they come up, even one line. Better than a chat log.
   uneditable by everyone, since every write policy is `auth.uid() = user_id`
   and that is never true against null. Means an admin cannot remove an abusive
   post left behind by someone who deleted their account. Also in
-  `PRODUCTION.md` under known issues.
+  `PRODUCTION.md` under known issues. Partly covered from 2026-11-18: a
+  reported post or comment can be removed from `/admin` by a platform admin,
+  whoever wrote it.
+- **iOS app via TestFlight.** Expo / React Native on the same Supabase
+  backend. Reuses the database, RLS, SQL functions and accounts; rewrites
+  the UI, moves the 13 server-action files to Postgres functions or API
+  routes, swaps `mapbox-gl` for `@rnmapbox/maps` (needs a dev build), and
+  keeps sessions in SecureStore. Prerequisites now in place: location
+  privacy enforced in the database rather than the Next server, and report
+  and block (App Store guideline 1.2). Still needed: in-app account
+  deletion ported, location permission strings, privacy labels. Push
+  notifications would cover much of `SMS-LOOP.md`.
 - **Backfill an admin into the 5 adminless circles**, and decide whether
   circles should be allowed to exist with no admin at all.
 - **Events.** The `events` table exists, is empty, and nothing in the app

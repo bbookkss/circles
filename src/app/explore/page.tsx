@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import TopNav from '@/components/TopNav'
 import ExploreClient from './ExploreClient'
 import { geoFromHeaders, resolveMapView } from '@/lib/mapView'
-import { approxArea } from '@/lib/approxLocation'
+import type { CirclePlace } from '@/lib/approxLocation'
 
 export default async function ExplorePage() {
   const supabase = await createClient()
@@ -12,26 +12,28 @@ export default async function ExplorePage() {
   if (!user) redirect('/login')
 
   // Wave 1 — nothing here needs anything from the others.
-  const [{ data: circles }, { data: people }, { data: myMemberships }] = await Promise.all([
+  const [{ data: circles }, { data: people }, { data: myMemberships }, { data: myBlocks }] = await Promise.all([
     supabase
       .from('circles')
-      .select('id, name, description, category, emoji, location, neighborhood, city, latitude, longitude, kind')
-      .not('latitude', 'is', null)
-      .not('longitude', 'is', null),
+      .select('id, name, description, category, emoji, neighborhood, city, area_latitude, area_longitude, kind')
+      .not('area_latitude', 'is', null)
+      .not('area_longitude', 'is', null),
     supabase
       .from('profiles')
       .select('id, full_name, instagram')
       .neq('id', user.id),
     // The circles this user is already in are the best guess at where they are.
     supabase.from('circle_members').select('circle_id').eq('user_id', user.id),
+    supabase.from('blocks').select('blocked_id').eq('blocker_id', user.id),
   ])
 
-  const peopleList = (people ?? []).filter((p) => p.full_name)
+  const blocked = new Set((myBlocks ?? []).map((b) => b.blocked_id))
+  const peopleList = (people ?? []).filter((p) => p.full_name && !blocked.has(p.id))
   const myCircleIds = (myMemberships ?? []).map((m) => m.circle_id)
   const circleIds = (circles ?? []).map((c) => c.id)
 
-  // Wave 2 — member counts and schedules for the pins, plus the coordinates of
-  // this user's own circles for the initial view.
+  // Wave 2 — member counts and schedules for the pins, plus the exact place of
+  // this user's own circles, which only circle_places() will hand over.
   //
   // Counts come from one grouped RPC. This used to be a query per circle: fine
   // at seven, ruinous at two hundred, and an explore page exists to have more
@@ -45,20 +47,18 @@ export default async function ExplorePage() {
       ? supabase.from('circle_schedules').select('circle_id, days_of_week').in('circle_id', circleIds)
       : Promise.resolve({ data: [] as { circle_id: string; days_of_week: number[] }[] }),
     myCircleIds.length > 0
-      ? supabase
-          .from('circles')
-          .select('latitude, longitude')
-          .in('id', myCircleIds)
-          .not('latitude', 'is', null)
-          .not('longitude', 'is', null)
-      : Promise.resolve({ data: [] as { latitude: number | null; longitude: number | null }[] }),
+      ? supabase.rpc('circle_places', { cids: myCircleIds })
+      : Promise.resolve({ data: [] as CirclePlace[] }),
   ])
+  const myPlaces = ((myCirclesResult.data ?? []) as CirclePlace[])
+    .filter((p) => p.latitude != null && p.longitude != null)
+  const placeOf = new Map(myPlaces.map((p) => [p.circle_id, p]))
 
   // Decision and header parsing both live in lib/mapView so they can be
   // tested without a request; this only supplies the inputs.
   const h = await headers()
   const geo = geoFromHeaders((name) => h.get(name))
-  const { view: initialView } = resolveMapView(myCirclesResult.data ?? [], geo)
+  const { view: initialView } = resolveMapView(myPlaces, geo)
   // City-level, from the IP, and good enough to sort a list by and say
   // "about 3 mi". The browser's own fix replaces it client-side when the
   // person has already granted location, or taps the locate button.
@@ -80,23 +80,17 @@ export default async function ExplorePage() {
     scheduleMap[s.circle_id] = s.days_of_week
   }
 
-  // Only circles you belong to are plotted where they actually meet.
-  // Everything else is displaced onto its stable coarse area before it leaves
-  // the server, so a non-member's browser never receives the real
-  // coordinates. Doing this here rather than in the map component is the
-  // whole point: anything handed to the client is readable by the client.
-  const mine = new Set(myCircleIds)
-  const enriched = circles.map((c) => {
-    const exact = mine.has(c.id)
-    const area =
-      !exact && c.latitude != null && c.longitude != null
-        ? approxArea(c.latitude, c.longitude, c.id)
-        : null
+  // Only circles you belong to are plotted where they actually meet. The rest
+  // go on their area, the displaced centre the database stores; the real
+  // coordinates of a circle you are not in are never read at all.
+  const enriched = circles.map(({ area_latitude, area_longitude, ...c }) => {
+    const exact = placeOf.get(c.id)
     return {
       ...c,
-      latitude: area ? area.latitude : c.latitude,
-      longitude: area ? area.longitude : c.longitude,
-      approximate: !!area,
+      latitude: exact ? exact.latitude! : area_latitude,
+      longitude: exact ? exact.longitude! : area_longitude,
+      location: exact?.location ?? null,
+      approximate: !exact,
       member_count: countMap[c.id] ?? 0,
       days_of_week: scheduleMap[c.id] ?? [],
     }

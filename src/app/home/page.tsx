@@ -9,6 +9,7 @@ import CheckInControl from '@/components/CheckInControl'
 import { todayISO, dayNameISO, daysBetweenISO, relativeDayLabel, formatTime, checkInWindow, meetPhase } from '@/lib/schedule'
 import MeetZone from '@/components/MeetZone'
 import { cookies } from 'next/headers'
+import type { CirclePlace } from '@/lib/approxLocation'
 import type { ComponentProps } from 'react'
 
 /** ISO date n days after iso. Dates only, so noon UTC sidesteps DST edges. */
@@ -63,11 +64,11 @@ export default async function HomePage() {
   // Wave 2 — everything that needs only the circle ids. The recurrence maths
   // stays in the database, so biweekly and monthly are honoured; this page
   // used to just find the nearest matching weekday and ignore frequency.
-  const [circlesResult, schedulesResult, occurrencesResult, postsResult] = await Promise.all([
+  const [circlesResult, schedulesResult, occurrencesResult, postsResult, placesResult] = await Promise.all([
     hasCircles
       ? supabase
           .from('circles')
-          .select('id, name, emoji, category, location, neighborhood, visibility, kind, timezone')
+          .select('id, name, emoji, category, neighborhood, visibility, kind, timezone')
           .in('id', circleIds)
       : Promise.resolve({ data: [] as never[] }),
     hasCircles
@@ -87,7 +88,13 @@ export default async function HomePage() {
           .order('created_at', { ascending: false })
           .limit(20)
       : Promise.resolve({ data: [] as never[] }),
+    // Venue names. Every circle here is one of the reader's, so the database
+    // returns them all; it is just the only way to read them.
+    hasCircles
+      ? supabase.rpc('circle_places', { cids: circleIds })
+      : Promise.resolve({ data: [] as CirclePlace[] }),
   ])
+  const venueOf = new Map(((placesResult.data ?? []) as CirclePlace[]).map((p) => [p.circle_id, p.location]))
 
   const circles = circlesResult.data ?? []
   const schedules = schedulesResult.data ?? []
@@ -290,7 +297,7 @@ export default async function HomePage() {
                     schedule.end_time,
                     circle.timezone
                   )
-                  const where = circle.neighborhood ?? circle.location
+                  const where = circle.neighborhood ?? venueOf.get(circle.id) ?? null
                   // Day labels are computed in the circle's own timezone,
                   // not the reader's. A Sunday 11am meet in San Francisco is
                   // still "Today" at 1am Monday in New York.

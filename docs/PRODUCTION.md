@@ -1,6 +1,25 @@
 # Production readiness
 
-> **Migrations: up to date.** `cohosts-2026-09-29.sql` applied 2026-09-29 and
+> **▶ RESUME HERE — three migrations written 2026-11-18, none applied.** The
+> app on `main` after this point depends on the first two. Order matters:
+>
+> 1. `safety-2026-11-18.sql` (block and report). Additive; the deployed app
+>    is unaffected. Then `safety-2026-11-18.rehearsal.sql`.
+> 2. `location-privacy-2026-11-18.sql` (area columns, `circle_places()`,
+>    `circle_preview()` without `location`). Additive; the deployed app only
+>    loses the venue name on private-circle previews.
+> 3. **Deploy the app.** It reads `area_latitude`/`area_longitude` and calls
+>    `circle_places()`, so before step 2 the circle, explore and home pages
+>    fail.
+> 4. `location-lockdown-2026-11-18.sql` (revokes SELECT on the exact
+>    columns). Before step 3 this breaks the old app, which selects
+>    `circles.*`. Then `location-privacy-2026-11-18.rehearsal.sql`.
+>
+> Each migration checks its own post-conditions and rolls back on failure.
+> None has been run against a database: there was no local Postgres to test
+> on, so the first run is the rehearsal.
+>
+> Before that: `cohosts-2026-09-29.sql` applied 2026-09-29 and
 > verified against the live database: `set_member_role` present and
 > `security definer`, and `circle_members.role` still carries no direct UPDATE
 > grant (`authenticated` holds `email_reminders` and nothing else), which is
@@ -124,7 +143,8 @@ works fine from this machine.
         `created_by`, not the admin role. After `delete_own_account` hands
         admin to an heir, `created_by` is null and nobody can ever edit it.
       - Admins have no moderation power at all: cannot remove members,
-        delete others' posts/comments. No report, no block.
+        delete others' posts/comments. No report, no block. (Report and
+        block written 2026-11-18 in `safety-2026-11-18.sql`; see the banner.)
       - Any user can insert a notification addressed to anyone
         (`notifications: actor insert` only checks actor_id).
       - `circles.visibility` has no CHECK; `'banana'` is accepted.
@@ -287,8 +307,8 @@ works fine from this machine.
       "Start a conversation" list on /messages and the error copy all assume
       the new policy; until it is applied, sends to non-mutual follows are
       refused with the follow-first message. Trade-off, deliberately taken:
-      a stranger can follow you and message you. Mitigation is block, which
-      does not exist yet.
+      a stranger can follow you and message you. Mitigation is block,
+      written 2026-11-18 in `safety-2026-11-18.sql`; see the banner.
 
 - [ ] **Pilot feedback 2026-09-13, shipped:** followers / following /
       circles counts open lists (`/profile/[id]/followers|following`,
@@ -508,6 +528,25 @@ never been exercised through the UI by a real person.
       `supabase/function-grants-2026-09-29.sql` narrows the mutating three.
       Unapplied, and not blocking.
 
+- [ ] **Block and report have never run in a browser** (2026-11-18). Built
+      and type-checked; `npm run build` passes; the SQL is covered by
+      `safety-2026-11-18.rehearsal.sql` but that has not been run either.
+      Walk it with two accounts: report a post, a comment, a person (from
+      their profile and from the message thread) and a circle; check the
+      email arrives and `/admin` lists each with its snapshot; Remove a post
+      from `/admin`. Then block from a profile: the thread should vanish for
+      both, follows go both ways, posts disappear in a shared circle, and the
+      person shows under Blocked on `/profile` with a working Unblock.
+- [ ] **Location after the lockdown, from each seat** (2026-11-18). Logged
+      out on a public circle: area disc, neighbourhood, no venue name. Signed
+      in, not a member: same. Member: exact pin and venue, on the circle
+      page, Home and Explore. Admin: the edit page still loads the pin and
+      venue and saving keeps them.
+- [ ] **Rehearsals need real profiles.** `safety-2026-11-18.rehearsal.sql`
+      needs a platform admin plus two other profiles;
+      `location-privacy-2026-11-18.rehearsal.sql` needs two. After the
+      2026-09-13 reset there may be fewer.
+
 ## Known issues
 
 - [x] **Explore map pins are blurred too** (verified in code 2026-09-13).
@@ -516,7 +555,8 @@ never been exercised through the UI by a real person.
       pointless one page over. It does not. `src/app/explore/page.tsx` runs
       the same `approxArea` over every circle the viewer does not belong to,
       server-side, before the props are serialised. Non-members' browsers
-      never receive a real coordinate.
+      never receive a real coordinate. (Superseded 2026-11-18: `approxArea`
+      was reversible, see HANDOFF.md. The area now comes from the database.)
 
 - [x] **Coffee map theme now self-heals** (2026-09-13). The recolour ran once
       on `load`; Mapbox rebuilds the style in a few situations and each
@@ -562,6 +602,51 @@ never been exercised through the UI by a real person.
       null. Deliberate — a departed person's words should not become editable
       by someone else — but it means an admin cannot remove an abusive post
       left behind by a deleted account.
+
+- [ ] **New columns on `circles` are unreadable until granted** (from
+      `location-lockdown-2026-11-18.sql`). SELECT is granted per column, so a
+      column added later returns a permission error to the app until a grant
+      names it. Put the grant in the migration that adds the column.
+- [ ] **Block does not remove anyone from a circle.** Two people who block
+      each other stay in shared circles, see each other in member lists and
+      check-ins, and can turn up at the same meet. Removing a member is the
+      circle admin's job ("members: admin remove"), but there is no button
+      for it yet.
+- [ ] **Location text can still leak through posts.** Anyone signed in can
+      read posts in a public circle, and "meet at the north gate" is a post.
+      The venue name and pin are protected; what members write is not.
+- [ ] **Business circles get the same blur.** A cafe hosting a circle
+      probably wants to be found. If so, `kind = 'commercial'` could skip the
+      offset and grant the venue name. Not decided.
+- [ ] **No ban.** A platform admin can remove a reported post or comment,
+      but cannot suspend an account. Repeated abuse needs that.
+- [ ] **Joining reveals the place, and joining a public circle is
+      self-service.** One account can script join, `circle_places()`, leave
+      across every public circle. The lockdown stops anonymous and passive
+      scraping, not that. A fix would be membership age, or rate-limiting
+      joins.
+- [ ] **Block leaves likes and join requests alone.** `post_likes` and
+      `comment_likes` reads have no block check, so a blocked person's likes
+      still count on your posts; `circle_join_requests` are not filtered.
+      Comments are covered: the insert policy's `EXISTS` on `posts` runs
+      under the commenter's RLS, which hides a blocker's posts (rehearsal
+      B10).
+- [ ] **A circle admin who blocks a member stops seeing that member's
+      posts**, so cannot moderate them in their own circle. Removing the
+      member is the answer, and there is no button for it yet.
+- [ ] **`events.location` is readable for public circles** ("events: read
+      public or own"). Harmless while `events` is empty and unused; decide
+      before building events.
+- [ ] **`private` schema must stay unexposed.** `private.blocked_with()`
+      answers "has this person blocked me?". Supabase's API settings expose
+      `public` and `graphql_public` by default; if `private` is ever added
+      there, the block becomes discoverable.
+- [ ] **After the lockdown, rolling the app back breaks it.** Builds from
+      before 2026-11-18 select `circles.*`, which is refused once
+      `location-lockdown-2026-11-18.sql` is applied. Roll back by re-granting
+      table SELECT first, or not at all. Straight after applying, smoke-test
+      the writes through PostgREST: create a circle, edit one, run the
+      neighbourhood backfill on `/profile`.
 
 ## Decisions not yet made
 

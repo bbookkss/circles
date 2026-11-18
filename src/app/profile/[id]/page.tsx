@@ -4,6 +4,9 @@ import { createClient } from '@/lib/supabase/server'
 import TopNav from '@/components/TopNav'
 import { followUser, unfollowUser } from '@/app/actions/follows'
 import { Button } from '@/components/ui/button'
+import { unblockUser } from '@/app/actions/safety'
+import BlockButton from '@/components/BlockButton'
+import ReportButton from '@/components/ReportButton'
 
 export default async function UserProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -31,6 +34,7 @@ export default async function UserProfilePage({ params }: { params: Promise<{ id
     { data: reliability },
     { data: sharedCircleIds },
     { data: mutualMemberIds },
+    { data: blockRow },
   ] = await Promise.all([
     supabase.from('circle_members').select('circle_id').eq('user_id', id),
     supabase.from('follows').select('*', { count: 'exact', head: true }).eq('following_id', id),
@@ -42,7 +46,10 @@ export default async function UserProfilePage({ params }: { params: Promise<{ id
     // the viewer from auth.uid(), so neither can be pointed at two strangers.
     supabase.rpc('shared_circles', { p_other: id }),
     supabase.rpc('mutual_members', { p_other: id }),
+    // Only ever your own blocks; whether they blocked you is not readable.
+    supabase.from('blocks').select('blocked_id').eq('blocker_id', user.id).eq('blocked_id', id).maybeSingle(),
   ])
+  const iBlocked = !!blockRow
 
   const stats = ((reliability ?? []) as { meets_attended: number; committed: number; kept: number }[])[0]
   const showsUp = stats && stats.committed >= 3 ? stats : null
@@ -64,7 +71,7 @@ export default async function UserProfilePage({ params }: { params: Promise<{ id
   const { data: circles } = circleIds.length > 0
     ? await supabase
         .from('circles')
-        .select('id, name, emoji, category, neighborhood, location')
+        .select('id, name, emoji, category, neighborhood, city')
         .in('id', circleIds)
         .eq('visibility', 'public')
     : { data: [] }
@@ -104,18 +111,32 @@ export default async function UserProfilePage({ params }: { params: Promise<{ id
                 </a>
               )}
               {profile.bio && <p className="text-sm text-muted-foreground">{profile.bio}</p>}
-              <div className="flex items-center gap-2 pt-1">
-                <form action={isFollowing ? unfollowUser : followUser}>
-                  <input type="hidden" name="following_id" value={id} />
-                  <Button type="submit" size="sm" variant={isFollowing ? 'outline' : 'default'}>
-                    {isFollowing ? 'Following' : 'Follow'}
-                  </Button>
-                </form>
-                {canMessage && (
-                  <Link href={`/messages/${id}`}>
-                    <Button size="sm" variant="outline">Message</Button>
-                  </Link>
-                )}
+              {iBlocked ? (
+                <div className="flex items-center gap-3 pt-1">
+                  <p className="text-sm text-foreground/75">You blocked {profile.full_name ?? 'them'}.</p>
+                  <form action={unblockUser}>
+                    <input type="hidden" name="user_id" value={id} />
+                    <Button type="submit" size="sm" variant="outline">Unblock</Button>
+                  </form>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 pt-1">
+                  <form action={isFollowing ? unfollowUser : followUser}>
+                    <input type="hidden" name="following_id" value={id} />
+                    <Button type="submit" size="sm" variant={isFollowing ? 'outline' : 'default'}>
+                      {isFollowing ? 'Following' : 'Follow'}
+                    </Button>
+                  </form>
+                  {canMessage && (
+                    <Link href={`/messages/${id}`}>
+                      <Button size="sm" variant="outline">Message</Button>
+                    </Link>
+                  )}
+                </div>
+              )}
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 pt-1 text-xs">
+                <ReportButton targetType="user" targetId={id} />
+                {!iBlocked && <BlockButton userId={id} name={profile.full_name ?? 'them'} />}
               </div>
             </div>
           </div>
@@ -201,8 +222,8 @@ export default async function UserProfilePage({ params }: { params: Promise<{ id
                       <span className="text-lg">{circle.emoji ?? '●'}</span>
                       <div className="flex-1 min-w-0">
                         <p className="font-display font-semibold truncate">{circle.name}</p>
-                        {(circle.neighborhood || circle.location) && (
-                          <p className="text-xs text-foreground/75 truncate">{circle.neighborhood ?? circle.location}</p>
+                        {(circle.neighborhood || circle.city) && (
+                          <p className="text-xs text-foreground/75 truncate">{circle.neighborhood ?? circle.city}</p>
                         )}
                       </div>
                       {circle.category && (

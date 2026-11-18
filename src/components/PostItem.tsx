@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { toggleLike, toggleCommentLike, addComment, deleteComment, deletePost } from '@/app/actions/posts'
+import ReportButton from '@/components/ReportButton'
 
 type Comment = {
   id: string
@@ -181,12 +182,16 @@ export default function PostItem({
             >
               {comments.length > 0 ? `${comments.length} comment${comments.length !== 1 ? 's' : ''}` : 'Comment'}
             </button>
-            {isMyPost && (
+            {isMyPost ? (
               <form action={deletePost} className="ml-auto">
                 <input type="hidden" name="post_id" value={post.id} />
                 <input type="hidden" name="circle_id" value={post.circleId} />
                 <button type="submit" className="text-muted-foreground hover:text-destructive transition-colors">delete</button>
               </form>
+            ) : (
+              <span className="ml-auto">
+                <ReportButton targetType="post" targetId={post.id} />
+              </span>
             )}
           </div>
 
@@ -211,7 +216,7 @@ export default function PostItem({
                           <span className="text-xs font-medium text-muted-foreground">{c.author_name}</span>
                         )}
                         <span className="text-[10px] text-muted-foreground">{timeAgo(c.created_at)}</span>
-                        {mine && (
+                        {mine ? (
                           <button
                             type="button"
                             onClick={() => onDeleteComment(c.id)}
@@ -219,6 +224,14 @@ export default function PostItem({
                           >
                             delete
                           </button>
+                        ) : !c.id.startsWith('temp-') && (
+                          <span className="ml-auto">
+                            <ReportButton
+                              targetType="comment"
+                              targetId={c.id}
+                              className="text-[10px] text-muted-foreground hover:text-destructive"
+                            />
+                          </span>
                         )}
                       </div>
                       <p className="text-xs whitespace-pre-wrap break-words">{c.content}</p>

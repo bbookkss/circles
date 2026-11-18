@@ -5,6 +5,7 @@ import TopNav from '@/components/TopNav'
 import EditProfileForm from './EditProfileForm'
 import DeleteAccountForm from './DeleteAccountForm'
 import { logout } from '@/app/actions/auth'
+import { unblockUser } from '@/app/actions/safety'
 
 export default async function ProfilePage() {
   const supabase = await createClient()
@@ -22,6 +23,7 @@ export default async function ProfilePage() {
     { count: followerCount },
     { count: followingCount },
     { data: reliability },
+    { data: blockRows },
   ] = await Promise.all([
     supabase.from('circle_members').select('circle_id, role').eq('user_id', user.id),
     supabase.from('follows').select('*', { count: 'exact', head: true }).eq('following_id', user.id),
@@ -29,6 +31,7 @@ export default async function ProfilePage() {
     // Aggregate only, and deliberately so: two integers say how reliable
     // somebody is without saying which circles they go to.
     supabase.rpc('member_stats', { uids: [user.id] }),
+    supabase.from('blocks').select('blocked_id').eq('blocker_id', user.id).order('created_at', { ascending: false }),
   ])
 
   // Under three confirmed meets a ratio is noise and an unlucky first week
@@ -40,6 +43,13 @@ export default async function ProfilePage() {
   const { data: circles } = circleIds.length > 0
     ? await supabase.from('circles').select('id, name, emoji, category, visibility').in('id', circleIds)
     : { data: [] }
+
+  // Blocked people vanish from feeds and messages, so this list is the one
+  // place left to find them again.
+  const blockedIds = (blockRows ?? []).map((b) => b.blocked_id)
+  const { data: blockedProfiles } = blockedIds.length > 0
+    ? await supabase.from('profiles').select('id, full_name').in('id', blockedIds)
+    : { data: [] as { id: string; full_name: string | null }[] }
 
   const initials = profile?.full_name
     ? profile.full_name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
@@ -132,6 +142,25 @@ export default async function ProfilePage() {
               <p className="text-sm text-muted-foreground">No circles yet.</p>
             )}
           </div>
+
+          {blockedProfiles && blockedProfiles.length > 0 && (
+            <div className="pt-4 border-t space-y-2">
+              <p className="label">Blocked</p>
+              <ul className="divide-y divide-border border-t border-b">
+                {blockedProfiles.map((b) => (
+                  <li key={b.id} className="flex items-center gap-3 py-2.5">
+                    <span className="flex-1 text-sm">{b.full_name ?? 'Someone'}</span>
+                    <form action={unblockUser}>
+                      <input type="hidden" name="user_id" value={b.id} />
+                      <button type="submit" className="text-sm text-muted-foreground hover:text-foreground underline underline-offset-2">
+                        Unblock
+                      </button>
+                    </form>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           {/* Business */}
           <div className="pt-4 border-t space-y-2">

@@ -26,12 +26,22 @@ before it starts. Live at [hicircles.com](https://hicircles.com).
 ## Design decisions
 
 **Non-members never receive a circle's exact location.** A circle publishes
-when and where a group of people will be, so the precise point is for members
-only. For everyone else, `src/lib/approxLocation.ts` replaces it on the server
-with an area about 1.1 km in radius, on both the circle page and the
-explore map. The area is deliberately off-centre so its middle is not a target, and
-the offset is derived from the circle's id so it is stable across requests.
-Reloading and averaging recovers nothing.
+when and where a group of people will be, so the precise point and the venue
+name are for members only. This is enforced in Postgres, not the web server.
+SELECT on the exact columns is withheld from every client role, so no query
+can read them or even filter on them. Members get them through a
+`security definer` function that checks membership. Everyone else sees an
+area about 1.1 km in radius. A trigger computes its centre from the point
+plus a per-circle offset that is random, stored, and never readable. It is
+random so it cannot be recomputed from public data, and stored so reloading
+and averaging recovers nothing.
+
+**Block and report are enforced by the same policies that gate everything
+else.** A block hides the conversation, posts, comments and notifications in
+both directions and cuts follows, through one helper that only ever answers
+about the caller. Reports go through a function that checks the reporter can
+see what they are reporting and snapshots it, so the evidence survives the
+author deleting it.
 
 **Row-level security on every table, with column-level grants.** Every table
 in the `public` schema has RLS enabled, and the app queries Postgres with
@@ -95,8 +105,9 @@ npm test
 ```
 
 Unit tests use Node's built-in test runner and cover the parts with real
-logic: schedule and timezone maths, map view resolution, and location
-blurring. Database behaviour is covered by the `.rehearsal.sql` files.
+logic: schedule and timezone maths, and map view resolution. Database
+behaviour, including location privacy and blocking, is covered by the
+`.rehearsal.sql` files.
 
 ## Project notes
 

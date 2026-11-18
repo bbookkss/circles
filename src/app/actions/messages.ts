@@ -12,14 +12,15 @@ export async function sendMessage(recipientId: string, content: string) {
   if (!text) return { error: 'Message cannot be empty' }
   if (text.length > 2000) return { error: 'Message too long' }
 
-  // RLS enforces the rule (you must follow the recipient); this only turns
-  // its refusal into a sentence.
+  // RLS enforces the rule (you must follow the recipient, and neither of you
+  // has blocked the other); this only turns its refusal into a sentence. The
+  // sentence does not say which, so a block is not announced.
   const { error } = await supabase.from('messages').insert({
     sender_id: user.id,
     recipient_id: recipientId,
     content: text,
   })
-  if (error) return { error: 'Follow them first, then you can message them.' }
+  if (error) return { error: 'This message could not be sent. You can only message people you follow.' }
 
   revalidatePath(`/messages/${recipientId}`)
   revalidatePath('/messages')
