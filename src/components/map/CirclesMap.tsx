@@ -158,15 +158,30 @@ export default function CirclesMap({
    */
   const groups = useMemo<Group[]>(() => {
     if (!map) return circles.map((c) => ({ key: c.id, anchor: c, members: [c], samePlace: true }))
+    // Each tag's on-screen box, from the text it will show: about 7px a
+    // character plus the emoji and padding, capped where the tag clips its
+    // name. A fixed width let long names overlap without ever merging.
+    const tagWidth = (c: CirclePin) => Math.min(214, 7.2 * c.name.length + (c.emoji ? 26 : 10) + 22 + (c.is_free === false ? 22 : 0))
+    const GROUP_W = 118
+    const H = 30
+    const GAP = 6
+    type Placed = Group & { x: number; y: number; w: number }
+    const overlaps = (a: Placed, x: number, y: number, w: number) =>
+      Math.abs(a.x - x) < (a.w + w) / 2 + GAP && Math.abs(a.y - y) < H + GAP
     const order = [...circles].sort((a, b) => (b.memberCount ?? 0) - (a.memberCount ?? 0))
-    const out: (Group & { x: number; y: number })[] = []
+    const out: Placed[] = []
     for (const c of order) {
       const p = map.project([c.longitude, c.latitude])
+      const w = tagWidth(c)
       if (c.id !== popupCircle?.id) {
-        const hit = out.find((g) => g.anchor.id !== popupCircle?.id && Math.abs(g.x - p.x) < 120 && Math.abs(g.y - p.y) < 34)
-        if (hit) { hit.members.push(c); continue }
+        const hit = out.find((g) => g.anchor.id !== popupCircle?.id && overlaps(g, p.x, p.y, w))
+        if (hit) {
+          hit.members.push(c)
+          hit.w = GROUP_W // it now shows as an "N circles" badge
+          continue
+        }
       }
-      out.push({ key: c.id, anchor: c, members: [c], samePlace: true, x: p.x, y: p.y })
+      out.push({ key: c.id, anchor: c, members: [c], samePlace: true, x: p.x, y: p.y, w })
     }
     return out.map((g) => ({
       anchor: g.anchor,
@@ -174,7 +189,6 @@ export default function CirclesMap({
       key: g.members.length > 1 ? 'g:' + g.members.map((m) => m.id).sort().join(',') : g.key,
       samePlace: g.members.every((m) => metres(m, g.anchor) < 40),
     }))
-    // viewTick is how camera moves reach this memo.
   }, [circles, map, viewTick, popupCircle?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   /** Open a group: same spot shows a list; nearby spots zoom in to split. */
