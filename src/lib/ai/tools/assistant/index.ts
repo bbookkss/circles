@@ -1,9 +1,8 @@
 import 'server-only'
 import type Anthropic from '@anthropic-ai/sdk'
-import { forwardGeocode } from '@/lib/geocoding'
 import { loadWeek, meetForModel } from './week'
 import { myMessages } from './messages'
-import { searchCircles } from './search'
+import { searchCircles, findPlace } from './search'
 import type { Card, Ctx, Status, ToolOutput } from './types'
 import { ISO_DATE, STATUSES, UUID, meetKey } from './types'
 
@@ -75,20 +74,44 @@ export const ASSISTANT_TOOLS: Anthropic.Beta.BetaTool[] = [
   {
     name: 'search_circles',
     description:
-      "Find circles by activity or name, near the person, or near `place` (a city or neighbourhood) when given. Returns up to 5. Circles they're not in show only an area, never an exact spot.",
+      "Find circles by activity or name near the person. For anywhere else, call find_place first and then circles_near with its coordinates. Circles they're not in show only an area, never an exact spot.",
     strict: true,
-    input_schema: obj({ query: { type: 'string' }, place: { type: ['string', 'null'] } }, ['query', 'place']),
+    input_schema: obj({ query: { type: 'string' } }, ['query']),
+  },
+  {
+    name: 'find_place',
+    description:
+      'Turn a city or neighbourhood name into coordinates: { found, label, lat, lng, zoom }. Use before circles_near or go_to_place for any named place. If it is not found, try a broader or differently spelled name once, then say so.',
+    strict: true,
+    input_schema: obj({ name: { type: 'string' } }, ['name']),
+  },
+  {
+    name: 'circles_near',
+    description:
+      "Circles within radius_km of a point from find_place, optionally matching an activity (query may be empty for everything). Radius: about 1 for walking distance, 3 for a neighbourhood, 10 for a city, up to 50.",
+    strict: true,
+    input_schema: obj(
+      { lat: { type: 'number' }, lng: { type: 'number' }, radius_km: { type: 'number' }, query: { type: 'string' }, label: { type: 'string' } },
+      ['lat', 'lng', 'radius_km', 'query', 'label']
+    ),
   },
   {
     name: 'go_to_place',
     description:
-      'Move the Explore map to a city or neighbourhood. Shows the person a button that opens the map there. Use for "take me to…", "show me…", or after they say where they will be.',
+      'Move the Explore map to a point from find_place. Shows the person a button that opens the map there. Use for "take me to…", "show me…", or after they say where they will be.',
     strict: true,
-    input_schema: obj({ name: { type: 'string' } }, ['name']),
+    input_schema: obj({ lat: { type: 'number' }, lng: { type: 'number' }, zoom: { type: 'number' }, label: { type: 'string' } }, ['lat', 'lng', 'zoom', 'label']),
   },
 ]
 
 type Input = Record<string, unknown>
+const round = (n: number) => Math.round(n * 10000) / 10000
+/** Coordinates from the model, accepted only if they are real numbers in range. */
+function point(lat: unknown, lng: unknown) {
+  const a = Number(lat), b = Number(lng)
+  if (!Number.isFinite(a) || !Number.isFinite(b) || a < -90 || a > 90 || b < -180 || b > 180) return null
+  return { latitude: a, longitude: b }
+}
 const str = (v: unknown, max = 200) => (typeof v === 'string' ? v.slice(0, max) : '')
 
 /** Runs one tool call. Inputs are re-validated here: strict schemas are not trusted alone. */
@@ -143,18 +166,34 @@ export async function runAssistantTool(ctx: Ctx, name: string, input: Input): Pr
         unread_only: input.unread_only === true,
       })
 
-    case 'search_circles': {
-      const query = str(input.query, 120)
-      const place = typeof input.place === 'string' && input.place.trim() ? str(input.place, 80) : null
-      return searchCircles(ctx, { query, place })
+    case 'search_circles':
+      return searchCircles(ctx, { query: str(input.query, 120) })
+
+    case 'find_place': {
+      const p = await findPlace(ctx, str(input.name, 80))
+      if (!p) return { forModel: { found: false, note: 'Not a known city or neighbourhood, and no circles are tagged with it.' }, cards: [] }
+      return {
+        forModel: { found: true, label: p.label, lat: round(p.latitude), lng: round(p.longitude), zoom: p.zoom, from: p.from },
+        cards: [],
+      }
+    }
+
+    case 'circles_near': {
+      const pt = point(input.lat, input.lng)
+      if (!pt) return { forModel: { error: 'lat and lng must be real coordinates from find_place.' }, cards: [] }
+      // Clamped: a few hundred metres to a metro area, whatever the model asks.
+      const radius = Math.min(50, Math.max(0.2, Number(input.radius_km) || 3))
+      return searchCircles(ctx, { query: str(input.query, 120), near: { ...pt, label: str(input.label, 80) || null }, radiusKm: radius })
     }
 
     case 'go_to_place': {
-      const p = await forwardGeocode(str(input.name, 80))
-      if (!p) return { forModel: { error: "Couldn't find that place." }, cards: [] }
+      const pt = point(input.lat, input.lng)
+      if (!pt) return { forModel: { error: 'lat and lng must be real coordinates from find_place.' }, cards: [] }
+      const zoom = Math.min(16, Math.max(9, Number(input.zoom) || 13))
+      const label = str(input.label, 80) || 'There'
       return {
-        forModel: { moved_to: p.label, note: 'The person sees a button that opens Explore there.' },
-        cards: [{ kind: 'navigate', lat: p.latitude, lng: p.longitude, zoom: p.zoom, label: p.label }],
+        forModel: { moved_to: label, note: 'The person sees a button that opens Explore there.' },
+        cards: [{ kind: 'navigate', lat: pt.latitude, lng: pt.longitude, zoom, label }],
       }
     }
 

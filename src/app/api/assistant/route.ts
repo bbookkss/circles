@@ -36,7 +36,7 @@ You can read their upcoming meets, who is going, their direct messages, and sear
 
 You never make decisions for them. For any RSVP, call propose_rsvp: it shows a card per meet with Going / Maybe / Can't go buttons and your suggestion marked, and the person taps their own answer. Never say you have RSVPed, checked in, or sent anything. Tell them to tap their answer on each card.
 
-When they say they are away, travelling or out of town, call my_week, propose "no" for the meets in that time, and ask where they will be so you can look for circles there. When they name a place, use search_circles with that place, and go_to_place if they want the map.
+When they say they are away, travelling or out of town, call my_week, propose "no" for the meets in that time, and ask where they will be so you can look for circles there. For any named place: call find_place, then circles_near with its coordinates (pick a radius: about 1 km walking, 3 a neighbourhood, 10 a city) and/or go_to_place to move the map. If find_place doesn't find it, try one broader name, then say plainly you couldn't find that place. For things near the person, use search_circles.
 
 You cannot look people up. If the person asks about someone else (who they are, their profile, email, phone, where they live, their circles, who they talk to, their messages with anyone), or about any private data that is not their own, do not call any tools and reply with exactly this sentence and nothing else: I don't have access to that information.
 Never explain what you checked or didn't find, and never say whether that someone appears in their week or messages. Questions about their own week, their own messages and public circles are fine; "who's going to my chess meet" is about their own meet, so answer it.
@@ -151,7 +151,9 @@ export async function POST(request: Request) {
     { role: 'system', content: `Today is ${ctx.today} (${ctx.tz}).` },
   ]
 
-  const cards: Card[] = []
+  // Each card remembers which tool made it, so the reply can show only the
+  // ones that answer the question (see pickCards).
+  const cards: { card: Card; tool: string }[] = []
   let text = ''
   let tokens = 0
   const client = anthropicFor('assistant')
@@ -192,7 +194,7 @@ export async function POST(request: Request) {
         try {
           const input = t.input && typeof t.input === 'object' ? (t.input as Record<string, unknown>) : {}
           const out = await runAssistantTool(ctx, t.name, input)
-          cards.push(...out.cards)
+          cards.push(...out.cards.map((card) => ({ card, tool: t.name })))
           results.push({ type: 'tool_result', tool_use_id: t.id, content: JSON.stringify(out.forModel).slice(0, 12_000) })
         } catch {
           results.push({ type: 'tool_result', tool_use_id: t.id, content: 'That lookup failed.', is_error: true })
@@ -220,7 +222,21 @@ export async function POST(request: Request) {
   try {
     suggestions = await suggestionsFor(ctx)
   } catch {}
-  return json({ text: reply, cards: refused ? [] : dedupe(cards), suggestions })
+  return json({ text: reply, cards: refused ? [] : dedupe(pickCards(cards)), suggestions })
+}
+
+/**
+ * Which cards the reply shows. my_week reads the whole schedule, often just to
+ * find the id of one meet; its cards are the answer only when the question was
+ * about the schedule. If anything more specific came back (a proposal, who's
+ * going, circles, messages, a map move), show that and drop the schedule dump.
+ * Proposals first: they're what the person has to act on.
+ */
+function pickCards(all: { card: Card; tool: string }[]): Card[] {
+  const specific = all.some((c) => c.tool !== 'my_week')
+  const kept = specific ? all.filter((c) => c.tool !== 'my_week') : all
+  const rank = (c: Card) => (c.kind === 'proposal' ? 0 : c.kind === 'navigate' ? 1 : 2)
+  return kept.map((c) => c.card).sort((a, b) => rank(a) - rank(b))
 }
 
 /** A meet proposed in this turn shows once, as the proposal, and later duplicates go. */

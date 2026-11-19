@@ -19,37 +19,58 @@ const STOP = new Set(
  * Matching is plain keyword matching in code over what RLS returned, not a
  * query string built from model input.
  */
-export async function searchCircles(ctx: Ctx, input: { query: string; place?: string | null }): Promise<ToolOutput> {
-  const { supabase, userId } = ctx
-  const words = String(input.query ?? '')
+const wordsOf = (text: string, min = 2, max = 8) =>
+  text
     .toLowerCase()
     .replace(/[^a-z0-9& ]/g, ' ')
     .split(/\s+/)
-    .filter((w) => w.length > 1 && !STOP.has(w))
-    .slice(0, 8)
+    .filter((w) => w.length >= min && !STOP.has(w))
+    .slice(0, max)
 
-  let center = ctx.near
-  let placeLabel: string | null = null
-  // A place can be a circle's own name or neighbourhood ("Salesforce Park",
-  // "the Mission"). Those words must all appear for a circle to count as being
-  // there, which works even when no map lookup is possible.
-  const placeWords = String(input.place ?? '')
-    .toLowerCase()
-    .replace(/[^a-z0-9& ]/g, ' ')
-    .split(/\s+/)
-    .filter((w) => w.length > 2 && !STOP.has(w))
-    .slice(0, 4)
-  let byName = false
-  if (input.place) {
-    const p = await forwardGeocode(String(input.place))
-    if (p) {
-      center = { latitude: p.latitude, longitude: p.longitude }
-      placeLabel = p.label
-    } else {
-      byName = placeWords.length > 0
-      if (!byName) return { forModel: { error: `Couldn't find a place called "${String(input.place).slice(0, 60)}".` }, cards: [] }
-    }
-  }
+export type PlaceHit = { label: string; latitude: number; longitude: number; zoom: number; from: 'map' | 'circles' }
+
+/**
+ * A place name to coordinates. The map geocoder first (cities and
+ * neighbourhoods only). If it doesn't know the name, which happens with
+ * newer neighbourhood names like East Cut, fall back to the circles
+ * themselves: the middle of the areas of circles whose neighbourhood or name
+ * contains it. Those are shown areas, already displaced, so this reveals
+ * nothing a non-member can't see on the map.
+ */
+export async function findPlace(ctx: Ctx, name: string): Promise<PlaceHit | null> {
+  const p = await forwardGeocode(name)
+  if (p) return { label: p.label, latitude: p.latitude, longitude: p.longitude, zoom: p.zoom, from: 'map' }
+  const words = wordsOf(name, 3, 4)
+  if (!words.length) return null
+  const { data } = await ctx.supabase
+    .from('circles')
+    .select('name, neighborhood, city, area_latitude, area_longitude')
+    .not('area_latitude', 'is', null)
+    .limit(500)
+  const hits = (data ?? []).filter((c) => {
+    const hay = `${c.name} ${c.neighborhood ?? ''} ${c.city ?? ''}`.toLowerCase()
+    return words.every((w) => hay.includes(w))
+  })
+  if (!hits.length) return null
+  const lat = hits.reduce((a, c) => a + (c.area_latitude as number), 0) / hits.length
+  const lng = hits.reduce((a, c) => a + (c.area_longitude as number), 0) / hits.length
+  const label = (hits.find((c) => c.neighborhood && words.every((w) => String(c.neighborhood).toLowerCase().includes(w)))?.neighborhood as string | undefined) ?? name
+  return { label: String(label).slice(0, 80), latitude: lat, longitude: lng, zoom: 14, from: 'circles' }
+}
+
+/**
+ * Circles by activity, near the person, or within radiusKm of a point that
+ * find_place produced. With no activity, everything nearby.
+ */
+export async function searchCircles(
+  ctx: Ctx,
+  input: { query: string; near?: { latitude: number; longitude: number; label?: string | null } | null; radiusKm?: number | null }
+): Promise<ToolOutput> {
+  const { supabase, userId } = ctx
+  const words = wordsOf(String(input.query ?? ''))
+  const center = input.near ?? ctx.near
+  const placeLabel = input.near ? (input.near.label ?? 'that spot') : null
+  const radius = input.radiusKm ?? (input.near ? 3 : 60)
 
   const [{ data: circles }, { data: mine }] = await Promise.all([
     supabase
@@ -65,20 +86,17 @@ export async function searchCircles(ctx: Ctx, input: { query: string; place?: st
   const scored = (circles ?? [])
     .map((c) => {
       const hay = `${c.name} ${c.description ?? ''} ${c.category ?? ''} ${c.neighborhood ?? ''} ${c.city ?? ''}`.toLowerCase()
-      // Named after the place, or in it: either way, it's "at" that place.
-      const atPlace = placeWords.length > 0 && placeWords.every((w) => hay.includes(w))
-      if (byName && !atPlace) return { c, score: 0, km: null }
-      const score = (words.length ? words.filter((w) => hay.includes(w)).length : 1) + (atPlace ? 2 : 0)
+      const score = words.length ? words.filter((w) => hay.includes(w)).length : 1
       const km = center
         ? distanceKm(center, { latitude: c.area_latitude as number, longitude: c.area_longitude as number })
         : null
       return { c, score, km }
     })
     .filter((x) => x.score > 0)
-    // Within a metro of the place asked about. Without any location, nearest is meaningless.
-    .filter((x) => x.km === null || x.km <= (placeLabel ? 40 : 60))
+    // Within the radius asked for (default: a few km of a place, a metro of the person).
+    .filter((x) => x.km === null || x.km <= radius)
     .sort((a, b) => b.score - a.score || (a.km ?? 0) - (b.km ?? 0))
-    .slice(0, input.place ? 8 : 5)
+    .slice(0, input.near ? 8 : 5)
 
   const ids = scored.map((x) => x.c.id as string)
   const memberIds = ids.filter((id) => memberOf.has(id))
