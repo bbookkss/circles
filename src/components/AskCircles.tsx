@@ -37,12 +37,22 @@ const LABEL: Record<Status, string> = { yes: 'Going', maybe: 'Maybe', no: "Can't
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 const keyOf = (m: Meet) => `${m.circle_id}|${m.occurs_on}`
 
-function load(): { turns: Turn[]; open: boolean } {
+/**
+ * A conversation is a session: after 15 minutes without the person sending
+ * anything, Radius starts fresh. Old turns would otherwise ride along as
+ * context into an unrelated question an hour later, and a stale "you haven't
+ * answered" card is worse than none.
+ */
+const IDLE_MS = 15 * 60 * 1000
+const stale = (lastAt: number | null) => lastAt !== null && Date.now() - lastAt > IDLE_MS
+
+function load(): { turns: Turn[]; open: boolean; lastAt: number | null } {
   try {
     const v = JSON.parse(sessionStorage.getItem(STORE) || 'null')
-    if (v && Array.isArray(v.turns)) return { turns: v.turns.slice(-30), open: !!v.open }
+    const lastAt = typeof v?.lastAt === 'number' ? v.lastAt : null
+    if (v && Array.isArray(v.turns) && !stale(lastAt)) return { turns: v.turns.slice(-30), open: !!v.open, lastAt }
   } catch {}
-  return { turns: [], open: false }
+  return { turns: [], open: false, lastAt: null }
 }
 
 /** The logo ring; it spins up while a request is in flight (Logo's busy prop). */
@@ -64,6 +74,8 @@ export default function AskCircles() {
     return () => document.documentElement.removeAttribute('data-ask-open')
   }, [open])
   const [turns, setTurns] = useState<Turn[]>(() => load().turns)
+  // When the person last sent something; the 15-minute clock runs from here.
+  const lastAt = useRef<number | null>(load().lastAt)
   const [suggestions, setSuggestions] = useState<string[]>([])
   const [input, setInput] = useState('')
   const [busy, setBusy] = useState(false)
@@ -74,11 +86,16 @@ export default function AskCircles() {
   const logRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    try { sessionStorage.setItem(STORE, JSON.stringify({ turns: turns.slice(-30), open })) } catch {}
+    try { sessionStorage.setItem(STORE, JSON.stringify({ turns: turns.slice(-30), open, lastAt: lastAt.current })) } catch {}
   }, [turns, open])
 
   useEffect(() => {
     if (!open) return
+    // Reopened after a long quiet spell in the same tab: start fresh.
+    if (stale(lastAt.current)) {
+      lastAt.current = null
+      setTurns([])
+    }
     let live = true
     fetch('/api/assistant', { cache: 'no-store' })
       .then((r) => (r.ok ? r.json() : null))
@@ -99,8 +116,12 @@ export default function AskCircles() {
   async function ask(q: string) {
     const message = q.trim().slice(0, 500)
     if (!message || busy) return
-    const history = turns.filter((t) => !t.error).map((t) => ({ role: t.role, text: t.text })).slice(-16)
-    setTurns((t) => [...t, { role: 'user', text: message }])
+    // Left open and quiet for 15 minutes, then typed into: this is a new
+    // conversation, so none of the old one goes to the model.
+    const fresh = stale(lastAt.current)
+    const history = fresh ? [] : turns.filter((t) => !t.error).map((t) => ({ role: t.role, text: t.text })).slice(-16)
+    lastAt.current = Date.now()
+    setTurns((t) => [...(fresh ? [] : t), { role: 'user', text: message }])
     setInput('')
     setBusy(true)
     try {
