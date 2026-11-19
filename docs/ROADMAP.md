@@ -264,6 +264,65 @@ circle in a city and correlate.
 visitor. Leaning no: its existence is arguably the thing its members
 would not want published.
 
+## AI: public search and the in-app assistant
+
+Tools, data access and guardrails for each agent are drawn out in
+[agents/](agents/README.md); open `agents/agents.html` for the diagram.
+
+Decided 2026-11-18. Mocked in `mockups/` (git-excluded): the search on
+`index.html` and the "Ask Circles" panel (`assistant.js`) on every signed-in page.
+
+**Both run inside the Next app.** Route handlers call the Claude Messages API
+with `@anthropic-ai/sdk` and tool use, and the tools query Supabase *as the
+visitor*. That way RLS, not the prompt, decides what each agent can see.
+Managed Agents was considered and rejected: it bills session runtime and is too
+slow to start for a search bar.
+
+### Public search: `POST /api/find`, landing page, signed out
+- Model: Claude Haiku 5.5. Prompt: "What do you want to find?"
+- One tool, `search_public_circles(query, near?)`, on the **anon** Supabase
+  client. It does keyword matching over public circles' name, description and
+  category. It returns name, neighbourhood, days and member count, plus the area
+  for the map. Never the venue or exact point: after
+  `location-lockdown-2026-11-18.sql`, anon cannot read them anyway, so this
+  depends on those migrations being applied first.
+- Every answer ends by asking the visitor to create an account.
+- Abuse: a per-IP limit only (about 10 per hour; the exact number isn't decided),
+  tracked in Supabase. Short inputs (120 characters) and a small cap on tool
+  calls and tokens per search.
+
+### In-app assistant: `POST /api/assistant`, every signed-in page
+- Model: Claude Sonnet 5.5. Tools run on the user's own server client (RLS):
+  - `my_week`: upcoming meets, check-in state, who's going
+  - `search_circles`
+  - `circle_details`
+  - `propose_rsvp`: never writes. It lays out one card per meet, with its own
+    Going / Maybe / Can't go buttons and the suggested answer marked. The person
+    taps each one, and each card shows "not answered", "suggested, not sent",
+    "sent" or "scheduled", with Undo after a tap. If check-in hasn't opened yet,
+    the tap is **scheduled** for when it opens. That's new backend work: there's
+    no queued-RSVP table, and the check-in trigger refuses early answers.
+  - `my_messages`: recent and unread messages by person, filtered by blocks.
+    When a message is about an unanswered meet, that meet's card goes next to it.
+  - Suggested prompts are worked out from the person's week and inbox, with no
+    model call, and refresh after every reply.
+  - Travel follow-up: "I'm out of town" means it RSVPs no, then asks where the
+    user will be and searches circles there.
+  - Every circle it mentions comes with a thumbnail map: an exact dot for
+    circles you're a member of, an area for everything else. That needs
+    member-only coordinates from `circle_places()`.
+  - `go_to_place`: geocodes with `lib/geocoding.ts`, and the client moves the
+    Explore map. Navigation is a client action the route returns, not a
+    server side effect.
+- Streams its replies. The panel's logo ring spins while a tool runs.
+
+### Not decided
+- The per-IP limit number, and where the counter lives: a Supabase table or
+  Vercel KV.
+- Whether conversations are stored. They aren't in the mockup.
+- The `ANTHROPIC_API_KEY` env var is needed in Vercel (all environments) and in
+  `.env.example`.
+
 ## Ideas not yet specced
 
 Capture things here as they come up, even one line. Better than a chat log.

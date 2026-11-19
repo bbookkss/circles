@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Circles agents</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Host+Grotesk:wght@300;400;500;600&display=swap">
+<style>
+/* Same tokens as mockups/circles.css: Arctic thermal palette, 60-30-10.
+   Here, heat marks the one thing that matters most in each diagram: where a
+   person's decision happens. */
+:root {
+  --paper: #f7f8fa; --ink: #1a2230; --quiet: #5c6878; --rule: #e3e7ed;
+  --cool: #e2e9f1; --cool-2: #cfdbe8; --heat: #f2a531; --heat-ink: #8f5a00; --on-heat: #1a2230;
+  color-scheme: light;
+  --font: "Host Grotesk", "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #252b34; --ink: #e8ecf1; --quiet: #a1abb8; --rule: #353d48;
+    --cool: #2e3640; --cool-2: #3a4450; --heat: #f5b44c; --heat-ink: #f5b44c; --on-heat: #1a2230;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #252b34; --ink: #e8ecf1; --quiet: #a1abb8; --rule: #353d48;
+  --cool: #2e3640; --cool-2: #3a4450; --heat: #f5b44c; --heat-ink: #f5b44c; --on-heat: #1a2230;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--paper); color: var(--ink); font-family: var(--font); font-size: 16px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+code, .t { font-family: var(--font); font-weight: 500; font-size: .95em; }
+.page { max-width: 980px; margin: 0 auto; padding: 56px max(16px, env(safe-area-inset-left, 0px)) 96px max(16px, env(safe-area-inset-right, 0px)); }
+.top { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
+h1 { margin: 0; font-weight: 300; font-size: clamp(2.2rem, 6vw, 3.4rem); letter-spacing: -0.035em; line-height: 1.04; }
+.lede { color: var(--quiet); font-size: 18px; max-width: 58ch; margin: 14px 0 0; }
+.theme { border: 0; background: var(--cool); color: var(--ink); border-radius: 999px; padding: 8px 14px; font: inherit; font-size: 14px; cursor: pointer; white-space: nowrap; }
+.theme:focus-visible, a:focus-visible { outline: 2px solid var(--heat); outline-offset: 2px; }
+a { color: inherit; text-decoration: underline; text-decoration-color: var(--cool-2); text-underline-offset: 3px; text-decoration-thickness: 1px; }
+
+.rule { margin-top: 36px; padding: 22px 24px; border-radius: 20px; background: var(--cool); display: grid; gap: 6px; }
+.rule b { font-weight: 500; font-size: 18px; letter-spacing: -0.01em; }
+.rule p { margin: 0; color: var(--quiet); max-width: 70ch; }
+
+.legend { display: flex; flex-wrap: wrap; gap: 10px 18px; margin-top: 28px; font-size: 14px; color: var(--quiet); align-items: center; }
+.legend span { display: inline-flex; align-items: center; gap: 8px; }
+.sw { width: 22px; height: 14px; border-radius: 5px; display: inline-block; }
+.sw.server { background: var(--cool); }
+.sw.client { border: 1.5px dashed var(--quiet); }
+.sw.rls { border: 1.5px solid var(--ink); }
+.sw.you { background: var(--heat); }
+
+section.agent { margin-top: 72px; }
+.agent-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 6px 16px; border-bottom: 1px solid var(--rule); padding-bottom: 14px; }
+.agent-head h2 { margin: 0; font-weight: 300; font-size: clamp(1.7rem, 4vw, 2.3rem); letter-spacing: -0.03em; }
+.agent-head p { margin: 0; color: var(--quiet); font-size: 15px; }
+
+/* the flow: a single column of stages joined by a line */
+.flow { margin-top: 28px; display: grid; gap: 0; }
+.stage { position: relative; display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 4px 24px; padding-bottom: 26px; }
+.stage::before { content: ""; position: absolute; left: 6px; top: 22px; bottom: 0; width: 1.5px; background: var(--cool-2); }
+.stage:last-child::before { display: none; }
+.stage .k { font-size: 14px; color: var(--quiet); display: flex; align-items: center; gap: 10px; padding-top: 2px; }
+.stage .k::before { content: ""; flex: none; width: 13px; height: 13px; border-radius: 50%; border: 1.5px solid var(--ink); background: var(--paper); position: relative; z-index: 1; }
+.box { border-radius: 16px; background: var(--cool); padding: 14px 18px; min-width: 0; }
+.box .t { font-size: 17px; }
+.box p { margin: 4px 0 0; color: var(--quiet); font-size: 15px; }
+.box.client { background: transparent; border: 1.5px dashed var(--quiet); }
+.box.you { background: var(--heat); color: var(--on-heat); }
+.box.you p { color: var(--on-heat); opacity: .8; }
+.gate { display: grid; gap: 8px; }
+
+.rls { border: 1.5px solid var(--ink); border-radius: 20px; padding: 14px; display: grid; gap: 10px; min-width: 0; }
+.rls-label { font-size: 14px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 12px; padding: 2px 4px 4px; }
+.rls-label span { color: var(--quiet); }
+.tool { border-radius: 14px; background: var(--cool); padding: 12px 14px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; align-items: start; }
+.tool .t { font-size: 16px; overflow-wrap: anywhere; }
+.tool p { grid-column: 1 / -1; margin: 0; font-size: 14px; color: var(--quiet); }
+.reads { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.reads span { font-size: 13px; padding: 2px 9px; border-radius: 999px; background: var(--paper); color: var(--ink); }
+.reads span.rpc { border: 1px solid var(--cool-2); background: transparent; }
+.reads span.none { background: transparent; color: var(--quiet); padding-left: 0; }
+
+.chip { font-size: 12px; padding: 2px 9px; border-radius: 999px; white-space: nowrap; border: 1px solid var(--cool-2); color: var(--quiet); }
+.chip.new { border-color: var(--quiet); color: var(--ink); }
+
+.split { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.notes { margin-top: 10px; list-style: none; padding: 0; display: grid; gap: 10px; }
+.notes li { padding-left: 16px; position: relative; color: var(--quiet); max-width: 72ch; }
+.notes li::before { content: ""; position: absolute; left: 0; top: .7em; width: 6px; height: 6px; border-radius: 50%; background: var(--cool-2); }
+.notes b { color: var(--ink); font-weight: 500; }
+
+.files { margin-top: 72px; border-top: 1px solid var(--rule); padding-top: 22px; font-size: 15px; color: var(--quiet); }
+
+@media (max-width: 680px) {
+  .stage { grid-template-columns: 1fr; padding-left: 26px; }
+  .stage::before { left: 6px; top: 22px; }
+  .stage .k { margin-left: -26px; }
+  .split { grid-template-columns: 1fr; }
+  .page { padding-top: 32px; }
+}
+</style>
+<script>try { const t = localStorage.getItem("circles-theme"); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
+</head>
+<body>
+<main class="page">
+  <div class="top">
+    <div>
+      <h1>Circles agents</h1>
+      <p class="lede">The two Claude agents in Circles: who calls them, which model answers, every tool they can use, and exactly what each tool can read or change.</p>
+    </div>
+    <button class="theme" type="button" id="theme">Dark</button>
+  </div>
+
+  <div class="rule">
+    <b>Every tool runs as the person asking.</b>
+    <p>Each tool queries Supabase with the visitor's own client, so row-level security and column grants decide what the agent can see, not its prompt. The agent can never reach more than that person could open in the app. And the agent proposes; the person decides. No tool changes anything on its own.</p>
+  </div>
+
+  <div class="legend" aria-label="Key">
+    <span><i class="sw server"></i>Runs on the server</span>
+    <span><i class="sw client"></i>Happens in the browser</span>
+    <span><i class="sw rls"></i>Inside RLS: runs as the visitor</span>
+    <span><i class="sw you"></i>The person decides</span>
+    <span><i class="chip">exists today</i></span>
+    <span><i class="chip new">new work</i></span>
+  </div>
+
+  <!-- ============================== PUBLIC SEARCH ============================== -->
+  <section class="agent" aria-labelledby="ps">
+    <div class="agent-head">
+      <h2 id="ps">Public search</h2>
+      <p>Landing page, signed out. <a href="public-search.md">public-search.md</a></p>
+    </div>
+
+    <div class="flow">
+      <div class="stage">
+        <div class="k">Who asks</div>
+        <div class="box client"><span class="t">A visitor with no account</span><p>Types into "What do you want to find?" on the landing page. Up to 120 characters.</p></div>
+      </div>
+      <div class="stage">
+        <div class="k">Route</div>
+        <div class="gate">
+          <div class="box"><span class="t">POST /api/find</span> <span class="chip new">new work</span><p>Checks the per-IP limit first, about 10 an hour. Over the limit, it answers "sign up to keep searching" without calling the model.</p></div>
+          <div class="box"><span class="t">geoFromHeaders</span> <span class="chip">exists today</span><p>The visitor's city from Vercel's IP headers, passed in as <code>near</code>. The model doesn't guess a location.</p></div>
+        </div>
+      </div>
+      <div class="stage">
+        <div class="k">Model</div>
+        <div class="box"><span class="t">Claude Haiku 5.5</span><p>The prompt's job: turn an activity into a search, describe what's out there in a sentence or two, and always end by asking the visitor to make an account. A few tool calls at most, with a small token budget.</p></div>
+      </div>
+      <div class="stage">
+        <div class="k">Tools</div>
+        <div class="rls">
+          <div class="rls-label"><b>Anon Supabase client</b><span>Public circles only, area-level columns only</span></div>
+          <div class="tool">
+            <span class="t">search_public_circles(query, near?)</span><span class="chip new">new work</span>
+            <p>Keyword match on name, description and category, sorted by distance. Returns name, neighbourhood, days, member count and area point. Never the venue or exact point.</p>
+            <div class="reads"><span>circles</span><span>circle_schedules</span><span class="rpc">circle_member_counts</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="stage">
+        <div class="k">Answer</div>
+        <div class="box client"><span class="t">Results, then "Create an account"</span><p>Matching areas heat up on the hero map. Where they meet and who's going come after sign-up.</p></div>
+      </div>
+    </div>
+
+    <ul class="notes">
+      <li><b>Depends on the location lockdown.</b> Once <code>location-lockdown-2026-11-18.sql</code> is applied, anon can't select <code>latitude</code>, <code>longitude</code> or <code>location</code> at all. Ship this agent after that, not before.</li>
+      <li><b>No memory.</b> Each search stands alone. Only the rate-limit counter is kept.</li>
+    </ul>
+  </section>
+
+  <!-- ============================== ASSISTANT ============================== -->
+  <section class="agent" aria-labelledby="as">
+    <div class="agent-head">
+      <h2 id="as">Ask Circles</h2>
+      <p>Every signed-in page. <a href="assistant.md">assistant.md</a></p>
+    </div>
+
+    <div class="flow">
+      <div class="stage">
+        <div class="k">Who asks</div>
+        <div class="gate">
+          <div class="box client"><span class="t">A signed-in member</span><p>Opens the panel from any page and asks a question or makes a request.</p></div>
+          <div class="box client"><span class="t">Suggested prompts</span> <span class="chip new">new work</span><p>Built from the person's week and unread messages when the panel opens. There's no model call and no tokens spent: "Are you going to Thursday chess tomorrow?", "Read Maya's message".</p></div>
+        </div>
+      </div>
+      <div class="stage">
+        <div class="k">Route</div>
+        <div class="box"><span class="t">POST /api/assistant</span> <span class="chip new">new work</span><p>Streams the reply. Uses the user's server Supabase client.</p></div>
+      </div>
+      <div class="stage">
+        <div class="k">Model</div>
+        <div class="box"><span class="t">Claude Sonnet 5.5</span><p>The prompt's job: answer from the tools, lay out choices instead of making them, attach a map to every circle it mentions, and say plainly what has and hasn't been sent.</p></div>
+      </div>
+      <div class="stage">
+        <div class="k">Tools</div>
+        <div class="rls">
+          <div class="rls-label"><b>The user's Supabase client</b><span>RLS on every read</span></div>
+          <div class="tool">
+            <span class="t">my_week(days)</span><span class="chip new">new work</span>
+            <p>Upcoming meets, the user's own answer and who's going.</p>
+            <div class="reads"><span>circle_members</span><span>circles</span><span>circle_schedules</span><span>circle_check_ins</span><span>profiles</span></div>
+          </div>
+          <div class="tool">
+            <span class="t">whos_going(circle_id, occurs_on)</span><span class="chip new">new work</span>
+            <p>Who said yes or maybe to one meet.</p>
+            <div class="reads"><span>circle_check_ins</span><span>profiles</span></div>
+          </div>
+          <div class="tool">
+            <span class="t">propose_rsvp(items)</span><span class="chip new">new work</span>
+            <p>Turns "say no to both" into one proposal per meet. It writes nothing.</p>
+            <div class="reads"><span class="none">Reads and writes nothing</span></div>
+          </div>
+          <div class="tool">
+            <span class="t">my_messages(from?, unread_only?)</span><span class="chip new">new work</span>
+            <p>Recent or unread messages, optionally from one person. Replying happens in the conversation itself.</p>
+            <div class="reads"><span>messages</span><span>profiles</span><span>blocks</span></div>
+          </div>
+          <div class="tool">
+            <span class="t">search_circles(query, place?)</span><span class="chip new">new work</span>
+            <p>Circles by activity, near the user or in a named place.</p>
+            <div class="reads"><span>circles</span><span>circle_schedules</span><span class="rpc">circle_member_counts</span></div>
+          </div>
+          <div class="tool">
+            <span class="t">circle_details(circle_id)</span><span class="chip new">new work</span>
+            <p>One circle's schedule and members. The exact place is included only for members.</p>
+            <div class="reads"><span>circles</span><span class="rpc">circle_places</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="stage">
+        <div class="k">Outside RLS</div>
+        <div class="tool" style="background:var(--cool)">
+          <span class="t">go_to_place(name)</span><span class="chip new">new work</span>
+          <p>Forward-geocodes a place name with Mapbox. Today <code>src/lib/geocoding.ts</code> only does reverse geocoding. It touches no database, and returns a map move for the browser to carry out.</p>
+        </div>
+      </div>
+      <div class="stage">
+        <div class="k">In the browser</div>
+        <div class="split">
+          <div class="box client"><span class="t">Move the Explore map</span><p>From <code>go_to_place</code>. Opens <code>/explore</code> at the coordinates.</p></div>
+          <div class="box client"><span class="t">Open conversation</span><p>From <code>my_messages</code>. Reading it there calls <code>markConversationRead</code> <span class="chip">exists today</span>.</p></div>
+          <div class="box client"><span class="t">Thumbnail map per circle</span><p>An exact dot for your circles, an area for the rest.</p></div>
+          <div class="box client"><span class="t">One card per meet</span><p>Labelled Not answered, Suggested and not sent, Sent, or Scheduled. Undo after sending.</p></div>
+        </div>
+      </div>
+      <div class="stage">
+        <div class="k">The person decides</div>
+        <div class="gate">
+          <div class="box you"><span class="t">Confirm, on each card</span><p>Calls the <code>setCheckIn</code> server action as the user, the same as tapping Going on Home. The model isn't in this path, and there's no "confirm all".</p></div>
+          <div class="split">
+            <div class="box"><span class="t">setCheckIn / clearCheckIn</span> <span class="chip">exists today</span><p>Writes <code>circle_check_ins</code> when the window is open. Undo uses <code>clearCheckIn</code>, or the previous answer.</p></div>
+            <div class="box"><span class="t">scheduled_check_ins</span> <span class="chip new">new work</span><p>When the window isn't open yet, the <code>validate_check_in</code> trigger refuses the answer. A new table holds it, and a cron applies it once the window opens.</p></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <ul class="notes">
+      <li><b>No writes from the model.</b> Every change goes through a button the person taps, and runs as that person.</li>
+      <li><b>RLS covers what it can't see.</b> It can't see private circles you're not in, messages with someone you've blocked, or another circle's exact place, because you can't.</li>
+      <li><b>Not decided:</b> whether conversations are stored, how far ahead <code>my_week</code> looks, and the forward-geocoding provider (Mapbox is the likely one; the token exists).</li>
+    </ul>
+  </section>
+
+  <p class="files">Text versions with tool tables: <a href="README.md">README.md</a>, <a href="public-search.md">public-search.md</a>, <a href="assistant.md">assistant.md</a>. The source spec is in <a href="../ROADMAP.md">ROADMAP.md</a>.</p>
+</main>
+<script>
+const btn = document.getElementById("theme");
+const sys = matchMedia("(prefers-color-scheme: dark)");
+const dark = () => (document.documentElement.dataset.theme || (sys.matches ? "dark" : "light")) === "dark";
+const label = () => { btn.textContent = dark() ? "Light" : "Dark"; btn.setAttribute("aria-label", dark() ? "Switch to light mode" : "Switch to dark mode"); };
+btn.addEventListener("click", () => { document.documentElement.dataset.theme = dark() ? "light" : "dark"; label(); });
+sys.addEventListener("change", label);
+label();
+</script>
+</body>
+</html>

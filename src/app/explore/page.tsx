@@ -6,7 +6,23 @@ import ExploreClient from './ExploreClient'
 import { geoFromHeaders, resolveMapView } from '@/lib/mapView'
 import type { CirclePlace } from '@/lib/approxLocation'
 
-export default async function ExplorePage() {
+/**
+ * ?lat=&lng=&zoom= opens the map somewhere specific. Ask Circles uses it for
+ * "take me to Oakland". Only a view: it changes which circles are on screen,
+ * not which circles the person can see, and invalid numbers are ignored.
+ */
+function viewFromParams(sp: Record<string, string | string[] | undefined>) {
+  const num = (k: string) => {
+    const v = sp[k]
+    return typeof v === 'string' && v.length <= 20 ? Number(v) : NaN
+  }
+  const latitude = num('lat'), longitude = num('lng'), zoom = num('zoom')
+  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return null
+  if (Math.abs(latitude) > 90 || Math.abs(longitude) > 180) return null
+  return { latitude, longitude, zoom: Number.isFinite(zoom) ? Math.min(16, Math.max(3, zoom)) : 12 }
+}
+
+export default async function ExplorePage({ searchParams }: PageProps<'/explore'>) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
@@ -58,7 +74,8 @@ export default async function ExplorePage() {
   // tested without a request; this only supplies the inputs.
   const h = await headers()
   const geo = geoFromHeaders((name) => h.get(name))
-  const { view: initialView } = resolveMapView(myPlaces, geo)
+  const { view: resolvedView } = resolveMapView(myPlaces, geo)
+  const initialView = viewFromParams(await searchParams) ?? resolvedView
   // City-level, from the IP, and good enough to sort a list by and say
   // "about 3 mi". The browser's own fix replaces it client-side when the
   // person has already granted location, or taps the locate button.

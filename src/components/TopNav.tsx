@@ -4,6 +4,7 @@ import { logout } from '@/app/actions/auth'
 import Circled from '@/components/Circled'
 import BottomNav from '@/components/BottomNav'
 import FeedbackButton from '@/components/FeedbackButton'
+import AskCircles from '@/components/AskCirclesLoader'
 
 export default async function TopNav() {
   const supabase = await createClient()
@@ -32,6 +33,7 @@ export default async function TopNav() {
         the viewport. Every signed-in page carries this component, so it is
         still the one place for a control that should be everywhere. */}
     {user && <FeedbackButton />}
+    {user && <AskCircles />}
     {user && <BottomNav unread={unread ?? 0} unreadDms={unreadDms ?? 0} />}
     <nav className="fixed top-0 left-0 right-0 z-50 h-14 bg-background/80 backdrop-blur-md border-b flex items-center px-4 gap-4">
       {/* Logo */}

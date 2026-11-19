@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { Button } from '@/components/ui/button'
 import DemoWheel from '@/components/DemoWheel'
 import AsciiField from '@/components/AsciiField'
+import PublicSearch from '@/components/PublicSearch'
 
 /**
  * The argument, in three steps, ending where the headline started.
@@ -68,6 +69,7 @@ export default async function Landing() {
             <p className="text-foreground/75 text-base md:text-lg mt-5 max-w-md">
               Same place, same time, the same people. Close enough to walk to, and you see who is coming before you go.
             </p>
+            <PublicSearch />
             <div className="flex flex-wrap gap-3 mt-8">
               <Link href="/signup">
                 <Button size="lg" className="rounded-full">

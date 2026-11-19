@@ -44,3 +44,39 @@ export function extractFromSearchBox(feature: {
 
   return { neighborhood, city }
 }
+
+export type Place = { latitude: number; longitude: number; label: string; zoom: number }
+
+/**
+ * A place name to coordinates, for "take me to Oakland". Server-side only in
+ * practice (the assistant's go_to_place tool), though the token is the same
+ * public one the map uses.
+ *
+ * Towns, localities and neighbourhoods only: no addresses or points of
+ * interest, so the assistant can move the map to an area but cannot be used
+ * to look up a specific address.
+ */
+export async function forwardGeocode(name: string): Promise<Place | null> {
+  const q = name.replace(/[\u0000-\u001f]/g, ' ').trim().slice(0, 80)
+  if (!q || !MAPBOX_TOKEN) return null
+  try {
+    const res = await fetch(
+      `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(q)}.json?types=place,locality,neighborhood&limit=1&access_token=${MAPBOX_TOKEN}`,
+      { signal: AbortSignal.timeout(5000) }
+    )
+    if (!res.ok) return null
+    const json = await res.json()
+    const f = json.features?.[0]
+    const [longitude, latitude] = (f?.center ?? []) as number[]
+    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return null
+    const isPlace = (f.place_type ?? []).includes('place')
+    return {
+      latitude,
+      longitude,
+      label: String(f.place_name ?? f.text ?? q).slice(0, 80),
+      zoom: isPlace ? 11.5 : 13,
+    }
+  } catch {
+    return null
+  }
+}

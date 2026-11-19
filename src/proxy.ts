@@ -65,6 +65,10 @@ export async function proxy(request: NextRequest) {
     // Called by pg_cron with a bearer token, not a session. The route checks
     // the secret itself and refuses outright when it is unset.
     pathname.startsWith('/api/cron') ||
+    // Public search on the landing page, used by people with no account.
+    // Exact match: nothing else under /api is public by accident. The route
+    // guards itself with a bot check and per-IP quota before any model call.
+    pathname === '/api/find' ||
     // Circle detail pages are publicly viewable (page handles the unauthed state)
     /^\/circles\/[^/]+$/.test(pathname)
 

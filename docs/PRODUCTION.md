@@ -436,6 +436,47 @@ works fine from this machine.
       ship. Signup was cut to three fields in the meantime, which is most of
       the same benefit without the wait.
 
+## AI agents: built 2026-11-18, not switched on
+
+Public search (`/api/find`, landing page) and Ask Circles (`/api/assistant`,
+every signed-in page). The design and the threat model are in
+[docs/agents/](agents/README.md). The code is in, but nothing runs until these
+are done, in this order:
+
+- [ ] **Apply the location and safety migrations first** (see the banner).
+      Public search's "areas only" promise rests on the lockdown, and
+      Ask Circles' block filter rests on `blocks`.
+- [ ] **Apply `supabase/ai-2026-11-18.sql`.** Quotas and scheduled RSVPs. It
+      checks its own grants and rolls back on failure. pg_cron jobs:
+      `apply-scheduled-check-ins` runs every 15 minutes, and `ai-quota-prune`
+      runs daily.
+- [ ] **Two Anthropic workspaces, each with its own key and a monthly spend
+      limit.** Set `ANTHROPIC_API_KEY_PUBLIC` and `ANTHROPIC_API_KEY_ASSISTANT`
+      in Vercel. In production a missing key switches that agent off; it never
+      falls back to a shared key. The spend limit is the backstop that caps
+      the worst case.
+- [ ] **Cloudflare Turnstile:** `TURNSTILE_SECRET_KEY` and
+      `NEXT_PUBLIC_TURNSTILE_SITE_KEY`. Without the secret, public search
+      refuses every request in production.
+- [ ] **`SUPABASE_SERVICE_ROLE_KEY` in every environment that runs the
+      agents.** The quota store needs it. Without it, both agents return 503
+      (fail closed) rather than run unmetered.
+- [ ] **Run `node scripts/ai-redteam.mjs` against a dev server with keys**,
+      plus the stored-injection fixtures in docs/agents/README.md. It has
+      never been run, because there was no key on the build machine.
+- [ ] **Never exercised end to end.** Every model call is untested: tool
+      loops, refusals, fallbacks, prompt caching, token accounting. So are
+      the Ask Circles panel in a browser, scheduled RSVPs being applied by
+      cron, and Explore opening at `?lat=&lng=&zoom=`.
+- [ ] **A refused request still counts against earlier buckets.** Quota
+      rules are taken in order (per IP/user first, global last). When the
+      global cap refuses, the per-user count has already gone up. Fails
+      safe; noted so it isn't mistaken for a bug.
+- [ ] **Limits are first guesses.** 10 per IP per hour, 30 per day, 5,000
+      public searches a day overall; 30 per user per hour, 120 a day, 400k
+      tokens. Each can be overridden by an `AI_*` env var (see
+      `src/lib/ai/limits.ts`), so they can be tightened without a deploy.
+
 ## Untested
 
 Everything below has proven database logic (rolled-back transactions) but has
