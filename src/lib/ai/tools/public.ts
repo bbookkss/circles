@@ -55,6 +55,9 @@ export type PublicCircle = {
   days: number[]
   members: number
   km: number | null
+  /** The shown area, already displaced in the database. Never the meeting place. */
+  lat: number | null
+  lng: number | null
 }
 
 const DAY = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
@@ -124,6 +127,8 @@ export async function searchPublicCircles(
           days: daysOf.get(c.id as string) ?? [],
           members: countOf.get(c.id as string) ?? 0,
           km: km === null ? null : Math.round(km * 10) / 10,
+          lat: typeof c.area_latitude === 'number' ? Math.round(c.area_latitude * 1000) / 1000 : null,
+          lng: typeof c.area_longitude === 'number' ? Math.round(c.area_longitude * 1000) / 1000 : null,
         } satisfies PublicCircle,
         about: typeof c.description === 'string' ? c.description.slice(0, 140) : '',
       }

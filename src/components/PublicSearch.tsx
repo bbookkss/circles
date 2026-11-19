@@ -1,6 +1,9 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import Logo from '@/components/Logo'
+import MapThumb from '@/components/MapThumb'
+import { useNearMe, nearLabel } from '@/components/useNearMe'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 
@@ -24,6 +27,8 @@ type Circle = {
   city: string | null
   days: number[]
   members: number
+  lat: number | null
+  lng: number | null
   km: number | null
 }
 
@@ -56,6 +61,7 @@ export default function PublicSearch() {
   const widgetEl = useRef<HTMLDivElement>(null)
   const widgetId = useRef<string | null>(null)
   const token = useRef<string | null>(null)
+  const { near, status: nearStatus, ask: askNear, forget: forgetNear } = useNearMe()
 
   useEffect(() => {
     if (!SITE_KEY) return
@@ -87,7 +93,7 @@ export default function PublicSearch() {
       const res = await fetch('/api/find', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: text, turnstileToken: token.current }),
+        body: JSON.stringify({ query: text, turnstileToken: token.current, near }),
       })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) {
@@ -133,8 +139,28 @@ export default function PublicSearch() {
         </Button>
       </form>
 
+      <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+        {nearStatus === 'on' ? (
+          <span className="inline-flex items-center gap-2 text-foreground">
+            <span className="w-1.5 h-1.5 rounded-full bg-heat" aria-hidden />
+            {nearLabel(nearStatus)}
+            <button type="button" onClick={forgetNear} className="text-muted-foreground underline underline-offset-[3px] decoration-cool-2 hover:decoration-current">Stop</button>
+          </span>
+        ) : (
+          <button
+            type="button"
+            onClick={askNear}
+            disabled={nearStatus === 'asking'}
+            className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 -ml-3 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors disabled:opacity-60"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M12 21s7-5.6 7-11a7 7 0 1 0-14 0c0 5.4 7 11 7 11z" /><circle cx="12" cy="10" r="2.5" /></svg>
+            {nearLabel(nearStatus)}
+          </button>
+        )}
+      </div>
+
       {!result && !error && !loading && (
-        <p className="text-sm text-muted-foreground mt-3">
+        <p className="text-sm text-muted-foreground mt-2">
           Try{' '}
           {EXAMPLES.map((ex, i) => (
             <span key={ex}>
@@ -155,8 +181,8 @@ export default function PublicSearch() {
 
       <div aria-live="polite" className="mt-3 grid gap-3">
         {loading && (
-          <p className="text-sm text-muted-foreground flex items-center gap-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/70 animate-pulse motion-reduce:animate-none" />
+          <p className="text-sm text-muted-foreground flex items-center gap-2.5">
+            <Logo size={18} busy className="text-foreground" />
             Searching public circles…
           </p>
         )}
@@ -175,16 +201,28 @@ export default function PublicSearch() {
 
         {result && (
           <>
-            {result.sentence && <p>{result.sentence}</p>}
+            {result.sentence && (
+              // The answer comes from Circles' own search, so it sits beside the mark.
+              <div className="flex items-start gap-3">
+                <span className="mt-0.5 shrink-0 text-foreground"><Logo size={20} /></span>
+                <p className="min-w-0">{result.sentence}</p>
+              </div>
+            )}
             {result.circles.length > 0 && (
               <ul className="grid gap-2">
                 {result.circles.map((c) => (
-                  <li key={c.id} className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-3.5 gap-y-1 items-baseline rounded-2xl bg-background px-4 py-3">
-                    <p className="font-medium">{c.name}</p>
-                    <p className="text-sm text-muted-foreground">{c.members ? `${c.members} members` : ''}</p>
-                    <p className="col-span-2 text-sm text-muted-foreground">
-                      {[c.neighborhood ?? c.city, daysText(c.days)].filter(Boolean).join(', ')}
-                    </p>
+                  <li key={c.id} className="flex items-center gap-3.5 rounded-2xl bg-background p-2 pr-4">
+                    {/* The area as a glow, never a pin: signed out, nobody sees the spot. */}
+                    {c.lat !== null && c.lng !== null
+                      ? <MapThumb lat={c.lat} lng={c.lng} exact={false} label={c.name} />
+                      : <span className="w-16 h-14 shrink-0 rounded-xl bg-muted" aria-hidden />}
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium truncate">{c.name}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {[c.neighborhood ?? c.city, daysText(c.days), c.members ? `${c.members} ${c.members === 1 ? 'member' : 'members'}` : '']
+                          .filter(Boolean).join(', ')}
+                      </p>
+                    </div>
                   </li>
                 ))}
               </ul>

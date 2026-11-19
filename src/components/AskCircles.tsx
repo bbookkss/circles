@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation'
 import { setCheckIn, clearCheckIn } from '@/app/actions/checkins'
 import { scheduleCheckIn, cancelScheduledCheckIn } from '@/app/actions/scheduled'
 import MapThumb from '@/components/MapThumb'
+import { useNearMe, nearLabel } from '@/components/useNearMe'
 import type { Card, Meet, Status } from '@/lib/ai/tools/assistant/types'
 
 /**
@@ -66,6 +67,7 @@ export default function AskCircles() {
   const [suggestions, setSuggestions] = useState<string[]>([])
   const [input, setInput] = useState('')
   const [busy, setBusy] = useState(false)
+  const { near, status: nearStatus, ask: askNear, forget: forgetNear } = useNearMe()
   const [rsvp, setRsvp] = useState<Record<string, RsvpState>>({})
   const inputRef = useRef<HTMLInputElement>(null)
   const buttonRef = useRef<HTMLButtonElement>(null)
@@ -105,7 +107,7 @@ export default function AskCircles() {
       const res = await fetch('/api/assistant', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message, history }),
+        body: JSON.stringify({ message, history, near }),
       })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) {
@@ -232,7 +234,7 @@ export default function AskCircles() {
               )
             )}
 
-            {busy && <p className="text-sm text-muted-foreground flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-muted-foreground animate-pulse motion-reduce:animate-none" />Looking…</p>}
+            {busy && <p className="text-sm text-muted-foreground flex items-center gap-2.5"><span className="text-foreground"><Logo size={16} busy /></span>Looking…</p>}
             {!busy && last?.role === 'assistant' && suggestions.length > 0 && <Chips items={suggestions.slice(0, 3)} onPick={ask} />}
           </div>
 
@@ -240,6 +242,19 @@ export default function AskCircles() {
             onSubmit={(e) => { e.preventDefault(); ask(input) }}
             className="shrink-0 m-2.5 mt-0 p-1.5 pl-2 rounded-[20px] bg-background flex gap-2 items-center"
           >
+            {/* Location: off until tapped; the browser asks, and only a rounded
+                position (about 1 km) is sent. Gold while it's in use. */}
+            <button
+              type="button"
+              onClick={nearStatus === 'on' ? forgetNear : askNear}
+              disabled={nearStatus === 'asking'}
+              aria-pressed={nearStatus === 'on'}
+              aria-label={nearStatus === 'on' ? 'Stop using your location' : nearLabel(nearStatus)}
+              title={nearLabel(nearStatus)}
+              className={`w-9 h-9 shrink-0 grid place-items-center rounded-full transition-colors ${nearStatus === 'on' ? 'bg-heat text-[#1a2230]' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M12 21s7-5.6 7-11a7 7 0 1 0-14 0c0 5.4 7 11 7 11z" /><circle cx="12" cy="10" r="2.5" /></svg>
+            </button>
             <label htmlFor="ask-circles-input" className="sr-only">Ask Radius</label>
             <input
               id="ask-circles-input"

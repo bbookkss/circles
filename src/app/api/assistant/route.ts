@@ -9,6 +9,7 @@ import { geoFromHeaders } from '@/lib/mapView'
 import { todayISO, APP_TZ } from '@/lib/schedule'
 import { ASSISTANT_TOOLS, runAssistantTool, makeCtx, type Card } from '@/lib/ai/tools/assistant'
 import { suggestionsFor } from '@/lib/ai/tools/assistant/suggestions'
+import { parseNear } from '@/lib/ai/near'
 
 /**
  * Radius: the signed-in assistant. See docs/agents/assistant.md.
@@ -108,7 +109,7 @@ export async function POST(request: Request) {
   if (declared > MAX_BODY_BYTES) return json({ error: 'That message is too long.' }, 413)
   const raw = await request.text()
   if (raw.length > MAX_BODY_BYTES) return json({ error: 'That message is too long.' }, 413)
-  let body: { message?: unknown; history?: unknown }
+  let body: { message?: unknown; history?: unknown; near?: unknown }
   try {
     body = JSON.parse(raw)
   } catch {
@@ -117,6 +118,10 @@ export async function POST(request: Request) {
   const message = cleanInput(body.message, ASSISTANT.maxInputChars)
   if (!message) return json({ error: 'Ask something first.' }, 400)
   const history = parseHistory(body.history)
+  // The location the person chose to share (rounded to about 1 km) beats the
+  // rough city from their connection.
+  const shared = parseNear(body.near)
+  if (shared) ctx.near = { latitude: shared.latitude, longitude: shared.longitude }
 
   // 3. Quota, before the model.
   const userHour = { bucket: `asst:u:${userId}:h`, windowSeconds: HOUR }

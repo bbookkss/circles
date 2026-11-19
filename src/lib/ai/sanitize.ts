@@ -31,7 +31,14 @@ export function plainText(input: unknown, maxChars: number): string {
     .replace(/[ \t]+/g, ' ')
     .replace(/\n{3,}/g, '\n\n')
     .trim()
-  if (s.length > maxChars) s = s.slice(0, maxChars - 1).replace(/\s+\S*$/, '') + '…'
+  if (s.length > maxChars) {
+    // Prefer ending on a whole sentence, so a long answer stops cleanly
+    // instead of trailing off mid-thought. Only fall back to a word boundary
+    // and an ellipsis when there is no sentence end in the back half.
+    const cut = s.slice(0, maxChars)
+    const end = Math.max(cut.lastIndexOf('. '), cut.lastIndexOf('! '), cut.lastIndexOf('? '), /[.!?]$/.test(cut) ? cut.length - 1 : -1)
+    s = end >= maxChars * 0.4 ? cut.slice(0, end + 1) : cut.slice(0, maxChars - 1).replace(/\s+\S*$/, '') + '…'
+  }
   return s
 }
 

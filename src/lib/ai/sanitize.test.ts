@@ -56,3 +56,8 @@ test('cleanInput trims, collapses and caps', () => {
   assert.equal(cleanInput('  pickup\n\n basketball\u0000 ', 120), 'pickup basketball')
   assert.equal(cleanInput('x'.repeat(500), 120).length, 120)
 })
+
+test('a long answer ends on a whole sentence, not mid-word', () => {
+  const s = 'I found one circle for that. It meets on Thursdays near the park. Try an activity keyword like running or chess for more.'
+  assert.equal(plainText(s, 80), 'I found one circle for that. It meets on Thursdays near the park.')
+})
