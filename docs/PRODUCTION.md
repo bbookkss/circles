@@ -659,7 +659,7 @@ never been exercised through the UI by a real person.
 - [ ] **Location text can still leak through posts.** Anyone signed in can
       read posts in a public circle, and "meet at the north gate" is a post.
       The venue name and pin are protected; what members write is not.
-- [ ] **Business circles get the same blur.** A cafe hosting a circle
+- [ ] **Business circles get the same blur.** (Partly decided 2026-11-18: listings owned by the Circles account now show at their real location, since their venues are public; see listings-exact-location-2026-11-18.sql. People's circles, business ones included, keep the blur.) A cafe hosting a circle
       probably wants to be found. If so, `kind = 'commercial'` could skip the
       offset and grant the venue name. Not decided.
 - [ ] **No ban.** A platform admin can remove a reported post or comment,
