@@ -3,10 +3,11 @@
 import { useEffect, useRef } from 'react'
 
 /**
- * The Circles mark: five people gathered round a dot, each a head and a pair
- * of shoulders facing the middle, the way a circle sits round a table. It
- * grew out of a ring of five dashes; the dashes became the shoulders. The
- * people turn slowly together (globals.css, .logo-ring).
+ * The Circles mark: five pairs of shoulders round one shared head. Each
+ * shoulder is a small dome, rounded toward the centre, so with the dot in the
+ * middle each reads as a person, and together as a group gathered round one
+ * point. It grew out of a ring of five dashes. The shoulders turn slowly round
+ * the head (globals.css, .logo-ring).
  *
  * Point at it, or at the link or button it sits in, and it speeds up; press
  * and it goes faster again; let go and it coasts back down. `busy` spins it
@@ -20,18 +21,11 @@ import { useEffect, useRef } from 'react'
 
 const RATE = { idle: 1, hover: 3, press: 6, busy: 8 }
 
-// Five people at 72° apart, the first at the top. Shoulders are 40° arcs on a
-// radius-7.9 ring; heads sit at radius 5. Precomputed (see the commit that
-// introduced them) so the server and client render identical markup.
+// Five shoulders at 72° apart, the first at the top: each a dome, flat along
+// the ring and rounded toward the middle, so the centre dot is everyone's
+// head. Precomputed so the server and client render identical markup.
 const SHOULDERS =
-  'M7.298 2.576A7.9 7.9 0 0 1 12.702 2.576' +
-  'M16.225 5.136A7.9 7.9 0 0 1 17.895 10.276' +
-  'M16.549 14.418A7.9 7.9 0 0 1 12.178 17.594' +
-  'M7.822 17.594A7.9 7.9 0 0 1 3.451 14.418' +
-  'M2.105 10.276A7.9 7.9 0 0 1 3.775 5.136'
-const HEADS: [number, number][] = [
-  [10, 5], [14.755, 8.455], [12.939, 14.045], [7.061, 14.045], [5.245, 8.455],
-]
+  'M7.200 1.600A2.800 2.700 0.00 0 0 12.800 1.600A8.400 8.400 0 0 0 7.200 1.600ZM17.124 4.741A2.800 2.700 72.00 0 0 18.854 10.067A8.400 8.400 0 0 0 17.124 4.741ZM17.203 15.150A2.800 2.700 144.00 0 0 12.672 18.442A8.400 8.400 0 0 0 17.203 15.150ZM7.328 18.442A2.800 2.700 -144.00 0 0 2.797 15.150A8.400 8.400 0 0 0 7.328 18.442ZM1.146 10.067A2.800 2.700 -72.00 0 0 2.876 4.741A8.400 8.400 0 0 0 1.146 10.067Z'
 
 export default function Logo({ size = 20, className = '', busy = false }: { size?: number; className?: string; busy?: boolean }) {
   const ringRef = useRef<SVGGElement>(null)
@@ -98,20 +92,11 @@ export default function Logo({ size = 20, className = '', busy = false }: { size
 
   return (
     <svg width={size} height={size} viewBox="0 0 20 20" aria-hidden className={`block overflow-visible ${className}`}>
-      <g ref={ringRef} className="logo-ring" fill="currentColor">
-        {/* Shoulders: five arcs on the ring. Heads: just inside each, facing in. */}
-        <path
-          d={SHOULDERS}
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2.1"
-          strokeLinecap="round"
-        />
-        {HEADS.map(([x, y]) => (
-          <circle key={`${x},${y}`} cx={x} cy={y} r="1.15" />
-        ))}
+      <g ref={ringRef} className="logo-ring">
+        <path d={SHOULDERS} fill="currentColor" stroke="currentColor" strokeWidth="0.5" strokeLinejoin="round" />
       </g>
-      <circle cx="10" cy="10" r="2.2" fill="currentColor" />
+      {/* The shared head. It stays still while the shoulders turn round it. */}
+      <circle cx="10" cy="10" r="2.6" fill="currentColor" />
     </svg>
   )
 }

@@ -1,13 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <!-- The Circles mark for browser tabs: five people (a head and shoulders
-       each) round a dot, in paper on an ink square so it holds an edge against
-       a pale tab strip. Same geometry as components/Logo.tsx, scaled to 32. -->
+  <!-- The Circles mark for browser tabs: five pairs of shoulders round one
+       shared head, in paper on an ink square so it holds an edge against a
+       pale tab strip. Same geometry as components/Logo.tsx, scaled to 32. -->
   <rect width="32" height="32" rx="7" fill="#1a2230"/>
-  <path fill="none" stroke="#f7f8fa" stroke-width="3.4" stroke-linecap="round"
-        d="M12.169 5.475A11.2 11.2 0 0 1 19.831 5.475M24.826 9.105A11.2 11.2 0 0 1 27.193 16.391M25.285 22.263A11.2 11.2 0 0 1 19.087 26.766M12.913 26.766A11.2 11.2 0 0 1 6.715 22.263M4.807 16.391A11.2 11.2 0 0 1 7.174 9.105"/>
-  <g fill="#f7f8fa">
-    <circle cx="16" cy="9" r="1.9"/><circle cx="22.657" cy="13.837" r="1.9"/><circle cx="20.114" cy="21.663" r="1.9"/>
-    <circle cx="11.886" cy="21.663" r="1.9"/><circle cx="9.343" cy="13.837" r="1.9"/>
-    <circle cx="16" cy="16" r="2.9"/>
-  </g>
+  <path fill="#f7f8fa" stroke="#f7f8fa" stroke-width="0.8" stroke-linejoin="round" d="M11.500 2.600A4.500 4.300 0.00 0 0 20.500 2.600A13.400 13.400 0 0 0 11.500 2.600ZM27.354 7.579A4.500 4.300 72.00 0 0 30.135 16.139A13.400 13.400 0 0 0 27.354 7.579ZM27.517 24.196A4.500 4.300 144.00 0 0 20.236 29.486A13.400 13.400 0 0 0 27.517 24.196ZM11.764 29.486A4.500 4.300 -144.00 0 0 4.483 24.196A13.400 13.400 0 0 0 11.764 29.486ZM1.865 16.139A4.500 4.300 -72.00 0 0 4.646 7.579A13.400 13.400 0 0 0 1.865 16.139Z"/>
+  <circle cx="16" cy="16" r="4.2" fill="#f7f8fa"/>
 </svg>
