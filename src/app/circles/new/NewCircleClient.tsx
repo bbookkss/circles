@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { CATEGORIES } from '@/lib/categories'
 import CostField from '@/components/CostField'
 import Map, { Marker, NavigationControl, GeolocateControl } from 'react-map-gl/mapbox'
 import 'mapbox-gl/dist/mapbox-gl.css'
@@ -18,10 +19,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN!
 const SF_CENTER = { longitude: -122.4194, latitude: 37.7749, zoom: 12 }
 
-const CATEGORIES = [
-  'Music', 'Sports', 'Food & Drink', 'Arts & Culture',
-  'Outdoors', 'Tech', 'Social', 'Other',
-]
 
 const EMOJI_OPTIONS = [
   '🏐', '⚽', '🏀', '🎾', '🏄', '🚴', '🧗', '🥾',

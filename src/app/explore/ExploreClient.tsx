@@ -1,6 +1,7 @@
 'use client'
 
 import dynamic from 'next/dynamic'
+import { CATEGORIES } from '@/lib/categories'
 import Link from 'next/link'
 import { useState, useMemo, useEffect } from 'react'
 import type { CirclePin } from '@/components/map/CirclesMap'
@@ -17,7 +18,6 @@ const CirclesMap = dynamic(() => import('@/components/map/CirclesMap'), {
   ),
 })
 
-const CATEGORIES = ['Music', 'Sports', 'Food & Drink', 'Arts & Culture', 'Outdoors', 'Tech', 'Social', 'Other']
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
 type CircleWithMeta = CirclePin & {
