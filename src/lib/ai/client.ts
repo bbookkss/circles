@@ -16,22 +16,27 @@ import Anthropic from '@anthropic-ai/sdk'
 
 type Agent = 'public' | 'assistant'
 
-const ENV: Record<Agent, string> = {
-  public: 'ANTHROPIC_API_KEY_PUBLIC',
-  assistant: 'ANTHROPIC_API_KEY_ASSISTANT',
+// The first name is the documented one. The second is what production
+// actually uses: Vercel won't rename a saved secret, and re-creating the
+// keys to fix a name isn't worth it. LIGHTWEIGHT = public search (Haiku).
+const ENV: Record<Agent, string[]> = {
+  public: ['ANTHROPIC_API_KEY_PUBLIC', 'LIGHTWEIGHT_AGENT_CIRCLES'],
+  assistant: ['ANTHROPIC_API_KEY_ASSISTANT', 'ASSISTANT_AGENT_CIRCLES'],
 }
+
+const keyFor = (agent: Agent) => ENV[agent].map((n) => process.env[n]).find(Boolean)
 
 const clients: Partial<Record<Agent, Anthropic>> = {}
 
 export function aiConfigured(agent: Agent) {
-  return Boolean(process.env[ENV[agent]] || (process.env.NODE_ENV !== 'production' && process.env.ANTHROPIC_API_KEY))
+  return Boolean(keyFor(agent) || (process.env.NODE_ENV !== 'production' && process.env.ANTHROPIC_API_KEY))
 }
 
 export function anthropicFor(agent: Agent): Anthropic {
   const existing = clients[agent]
   if (existing) return existing
-  const key = process.env[ENV[agent]] ?? (process.env.NODE_ENV !== 'production' ? process.env.ANTHROPIC_API_KEY : undefined)
-  if (!key) throw new Error(`${ENV[agent]} is not set`)
+  const key = keyFor(agent) ?? (process.env.NODE_ENV !== 'production' ? process.env.ANTHROPIC_API_KEY : undefined)
+  if (!key) throw new Error(`${ENV[agent][0]} is not set`)
   // Short timeout and one retry: a person is waiting on the other end.
   const client = new Anthropic({ apiKey: key, timeout: 30_000, maxRetries: 1 })
   clients[agent] = client
