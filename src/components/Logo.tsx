@@ -3,8 +3,10 @@
 import { useEffect, useRef } from 'react'
 
 /**
- * The Circles mark: a dot inside a ring of five dashes that turns slowly
- * (globals.css, .logo-ring).
+ * The Circles mark: five people gathered round a dot, each a head and a pair
+ * of shoulders facing the middle, the way a circle sits round a table. It
+ * grew out of a ring of five dashes; the dashes became the shoulders. The
+ * people turn slowly together (globals.css, .logo-ring).
  *
  * Point at it, or at the link or button it sits in, and it speeds up; press
  * and it goes faster again; let go and it coasts back down. `busy` spins it
@@ -18,8 +20,21 @@ import { useEffect, useRef } from 'react'
 
 const RATE = { idle: 1, hover: 3, press: 6, busy: 8 }
 
+// Five people at 72° apart, the first at the top. Shoulders are 40° arcs on a
+// radius-7.9 ring; heads sit at radius 5. Precomputed (see the commit that
+// introduced them) so the server and client render identical markup.
+const SHOULDERS =
+  'M7.298 2.576A7.9 7.9 0 0 1 12.702 2.576' +
+  'M16.225 5.136A7.9 7.9 0 0 1 17.895 10.276' +
+  'M16.549 14.418A7.9 7.9 0 0 1 12.178 17.594' +
+  'M7.822 17.594A7.9 7.9 0 0 1 3.451 14.418' +
+  'M2.105 10.276A7.9 7.9 0 0 1 3.775 5.136'
+const HEADS: [number, number][] = [
+  [10, 5], [14.755, 8.455], [12.939, 14.045], [7.061, 14.045], [5.245, 8.455],
+]
+
 export default function Logo({ size = 20, className = '', busy = false }: { size?: number; className?: string; busy?: boolean }) {
-  const ringRef = useRef<SVGCircleElement>(null)
+  const ringRef = useRef<SVGGElement>(null)
   const busyRef = useRef(busy)
   const target = useRef(busy ? RATE.busy : RATE.idle)
   const kick = useRef<() => void>(() => {})
@@ -83,20 +98,20 @@ export default function Logo({ size = 20, className = '', busy = false }: { size
 
   return (
     <svg width={size} height={size} viewBox="0 0 20 20" aria-hidden className={`block overflow-visible ${className}`}>
-      <circle
-        ref={ringRef}
-        className="logo-ring"
-        cx="10"
-        cy="10"
-        r="8"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinecap="round"
-        pathLength={50}
-        strokeDasharray="6.4 3.6"
-      />
-      <circle cx="10" cy="10" r="3" fill="currentColor" />
+      <g ref={ringRef} className="logo-ring" fill="currentColor">
+        {/* Shoulders: five arcs on the ring. Heads: just inside each, facing in. */}
+        <path
+          d={SHOULDERS}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.1"
+          strokeLinecap="round"
+        />
+        {HEADS.map(([x, y]) => (
+          <circle key={`${x},${y}`} cx={x} cy={y} r="1.15" />
+        ))}
+      </g>
+      <circle cx="10" cy="10" r="2.2" fill="currentColor" />
     </svg>
   )
 }
