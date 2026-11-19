@@ -11,7 +11,7 @@ export { loadWeek } from './week'
 export type { Card, Ctx, Meet } from './types'
 
 /**
- * Ask Circles' tools. None of them writes anything.
+ * Radius' tools. None of them writes anything.
  *
  * propose_rsvp in particular only RETURNS proposals. The UI shows each one as
  * a card with its own buttons, and a tap on one of those calls the existing

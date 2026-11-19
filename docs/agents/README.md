@@ -1,5 +1,9 @@
 # Circles agents
 
+The in-app assistant is called **Radius** ("Ask Radius" on the button).
+The code still calls it the assistant (`/api/assistant`, `AskCircles.tsx`);
+older docs say "Ask Circles".
+
 Circles has two Claude-powered agents. Both are specced and mocked, and neither
 is built yet. The visual version of these docs is [agents.html](agents.html);
 open it in a browser.

@@ -11,7 +11,7 @@ import { ASSISTANT_TOOLS, runAssistantTool, makeCtx, type Card } from '@/lib/ai/
 import { suggestionsFor } from '@/lib/ai/tools/assistant/suggestions'
 
 /**
- * Ask Circles: the signed-in assistant. See docs/agents/assistant.md.
+ * Radius: the signed-in assistant. See docs/agents/assistant.md.
  *
  * Order matters, and each step is a guard for the next:
  *   1. a session, or 401
@@ -29,7 +29,7 @@ export const dynamic = 'force-dynamic'
 
 const MAX_BODY_BYTES = 16_000
 
-const SYSTEM = `You are the assistant inside Circles, an app for local groups ("circles") that meet on a regular schedule. You are helping one signed-in person.
+const SYSTEM = `You are Radius, the assistant inside Circles, an app for local groups ("circles") that meet on a regular schedule. You are helping one signed-in person.
 
 You can read their upcoming meets, who is going, their direct messages, and search circles; you can move their Explore map. You cannot send messages, join circles, or change anything.
 

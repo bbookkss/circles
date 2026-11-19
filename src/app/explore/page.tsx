@@ -7,7 +7,7 @@ import { geoFromHeaders, resolveMapView } from '@/lib/mapView'
 import type { CirclePlace } from '@/lib/approxLocation'
 
 /**
- * ?lat=&lng=&zoom= opens the map somewhere specific. Ask Circles uses it for
+ * ?lat=&lng=&zoom= opens the map somewhere specific. Radius uses it for
  * "take me to Oakland". Only a view: it changes which circles are on screen,
  * not which circles the person can see, and invalid numbers are ignored.
  */

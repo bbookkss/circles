@@ -491,3 +491,8 @@ input[aria-hidden="true"][tabindex="-1"] {
   .logo-busy .logo-ring { animation-duration: 2.4s; }
 }
 @keyframes logo-turn { to { transform: rotate(360deg); } }
+
+/* The two floating widgets in the bottom-right never cover each other: while
+   one is open, the other's button steps out of the way. */
+html[data-feedback-open] .ask-trigger,
+html[data-ask-open] .feedback-widget { display: none; }

@@ -10,7 +10,7 @@ import MapThumb from '@/components/MapThumb'
 import type { Card, Meet, Status } from '@/lib/ai/tools/assistant/types'
 
 /**
- * Ask Circles: the signed-in assistant's panel. See docs/agents/assistant.md.
+ * Radius ("Ask Radius"): the signed-in assistant's panel. See docs/agents/assistant.md.
  *
  * The assistant never answers for anyone. Every meet it brings up is a card
  * with its own Going / Maybe / Can't go buttons, its suggestion (if any)
@@ -56,6 +56,12 @@ function Ring({ spinning = false }: { spinning?: boolean }) {
 export default function AskCircles() {
   const router = useRouter()
   const [open, setOpen] = useState(() => load().open)
+  // Tell the Feedback button the panel is open, so it hides instead of sitting
+  // under the panel (globals.css, data-ask-open).
+  useEffect(() => {
+    document.documentElement.toggleAttribute('data-ask-open', open)
+    return () => document.documentElement.removeAttribute('data-ask-open')
+  }, [open])
   const [turns, setTurns] = useState<Turn[]>(() => load().turns)
   const [suggestions, setSuggestions] = useState<string[]>([])
   const [input, setInput] = useState('')
@@ -163,10 +169,10 @@ export default function AskCircles() {
           onClick={() => setOpen(true)}
           aria-expanded={false}
           aria-controls="ask-circles"
-          className="fixed z-40 right-4 bottom-[calc(8.5rem+env(safe-area-inset-bottom))] md:bottom-[4.75rem] h-11 rounded-full glass text-foreground pl-3.5 pr-4 flex items-center gap-2 text-sm font-medium hover:bg-background/70 transition-colors print:hidden"
+          className="ask-trigger fixed z-40 right-4 bottom-[calc(8.5rem+env(safe-area-inset-bottom))] md:bottom-[4.75rem] h-11 rounded-full glass text-foreground pl-3.5 pr-4 flex items-center gap-2 text-sm font-medium hover:bg-background/70 transition-colors print:hidden"
         >
           <Ring />
-          <span className="max-md:sr-only">Ask Circles</span>
+          <span className="max-md:sr-only">Ask Radius</span>
         </button>
       )}
 
@@ -174,12 +180,12 @@ export default function AskCircles() {
         <section
           id="ask-circles"
           role="dialog"
-          aria-label="Ask Circles"
+          aria-label="Radius, your Circles assistant"
           className="fixed z-50 inset-x-2 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] md:inset-x-auto md:right-4 md:bottom-6 md:w-[420px] h-[min(660px,calc(100dvh-7rem))] glass rounded-[26px] overflow-hidden flex flex-col print:hidden"
         >
           <header className="flex items-center gap-2.5 pl-5 pr-3 h-14 shrink-0">
             <Ring spinning={busy} />
-            <p className="font-medium leading-none">Ask Circles</p>
+            <p className="font-medium leading-none">Radius</p>
             <button
               type="button"
               onClick={() => { setOpen(false); setTimeout(() => buttonRef.current?.focus(), 0) }}
@@ -234,7 +240,7 @@ export default function AskCircles() {
             onSubmit={(e) => { e.preventDefault(); ask(input) }}
             className="shrink-0 m-2.5 mt-0 p-1.5 pl-2 rounded-[20px] bg-background flex gap-2 items-center"
           >
-            <label htmlFor="ask-circles-input" className="sr-only">Ask Circles</label>
+            <label htmlFor="ask-circles-input" className="sr-only">Ask Radius</label>
             <input
               id="ask-circles-input"
               ref={inputRef}

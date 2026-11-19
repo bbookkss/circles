@@ -1,5 +1,5 @@
 /**
- * A small static map for a circle mentioned by Ask Circles.
+ * A small static map for a circle mentioned by Radius.
  *
  * `exact` is only true for circles the person belongs to, where the point
  * came from circle_places(). Those get a pin. Every other circle is drawn

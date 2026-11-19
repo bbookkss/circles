@@ -12,7 +12,7 @@ import { createClient } from '@/lib/supabase/server'
  * person's own, for circles they belong to, and only before the answer has
  * been applied. A real check-in given by hand in the meantime wins.
  *
- * Called by the person tapping a button on an Ask Circles card, never by the
+ * Called by the person tapping a button on an Radius card, never by the
  * assistant itself.
  */
 

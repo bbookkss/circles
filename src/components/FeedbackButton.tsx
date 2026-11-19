@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { usePathname } from 'next/navigation'
 import { sendFeedback } from '@/app/actions/feedback'
 
@@ -15,6 +15,12 @@ import { sendFeedback } from '@/app/actions/feedback'
 export default function FeedbackButton() {
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
+  // Tell Radius the feedback window is open, so its button hides instead of
+  // covering the window (globals.css, data-feedback-open).
+  useEffect(() => {
+    document.documentElement.toggleAttribute('data-feedback-open', open)
+    return () => document.documentElement.removeAttribute('data-feedback-open')
+  }, [open])
   const [message, setMessage] = useState('')
   const [state, setState] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
   const [error, setError] = useState<string | null>(null)
@@ -46,7 +52,7 @@ export default function FeedbackButton() {
     // Lifted clear of the bottom bar on phones (64px + safe area), and the
     // trigger is a 44px circle rather than a wide pill so it stops covering
     // whatever is underneath it.
-    <div className="fixed right-4 bottom-[calc(5rem+env(safe-area-inset-bottom))] md:bottom-6 z-40 flex flex-col items-end gap-2 print:hidden">
+    <div className="feedback-widget fixed right-4 bottom-[calc(5rem+env(safe-area-inset-bottom))] md:bottom-6 z-40 flex flex-col items-end gap-2 print:hidden">
       {open && (
         <form
           onSubmit={submit}

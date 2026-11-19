@@ -1,7 +1,7 @@
 import type { createClient } from '@/lib/supabase/server'
 
 /**
- * Shared types for the Ask Circles tools.
+ * Shared types for the Radius tools.
  *
  * Every tool runs on `ctx.supabase`, the signed-in person's own client, so
  * RLS decides what it can read. `ctx.userId` comes from the session in the
