@@ -25,8 +25,8 @@ const STEPS = [
     body: "The day before, yes or no. You see who else is in before you decide, so you're never the only one who showed.",
   },
   {
-    title: 'Come back.',
-    body: 'The second week someone knows your name. By the fourth, they save you a seat.',
+    title: 'Show up.',
+    body: "That's it. Come back whenever it suits you; the circle meets every week either way.",
   },
 ]
 
@@ -110,7 +110,7 @@ export default async function Landing() {
 
       {/* How it works. A real sequence, so it keeps quiet numbers. */}
       <section className="mx-auto max-w-[1080px] px-4 pt-20 md:pt-24 pb-16 md:pb-20">
-        <h2 className="text-[1.75rem] md:text-[2.2rem] font-light tracking-[-0.03em] max-w-[20ch]">The fourth time is the point.</h2>
+        <h2 className="text-[1.75rem] md:text-[2.2rem] font-light tracking-[-0.03em] max-w-[20ch]">Getting started takes a minute.</h2>
         <ol className="mt-11 grid gap-7 md:grid-cols-3 md:gap-10">
           {STEPS.map((s, i) => (
             <li key={s.title} className="border-t border-foreground pt-4">
@@ -122,17 +122,48 @@ export default async function Landing() {
         </ol>
       </section>
 
-      {/* Privacy, the one promise worth making up front. */}
+      {/* Privacy, shown rather than claimed: the same circle as Explore draws
+          it before you join (a glow over its area, no pin) and after (the
+          pin and the venue). That is exactly what CirclesMap does with
+          `approximate` circles, so the page promises nothing the map doesn't. */}
       <section className="mx-auto max-w-[1080px] px-4 pb-24">
-        <div className="rounded-3xl bg-muted grid md:grid-cols-2 gap-8 md:gap-9 items-center p-6 md:p-10">
-          <div>
-            <h2 className="text-[22px]">The glow is the neighbourhood. The pin is for members.</h2>
-            <p className="text-muted-foreground mt-3 max-w-[44ch]">
-              Before you join, you see roughly where a circle meets. The exact spot and the venue name only show once you&apos;re in, so nobody can map where people will be.
-            </p>
-          </div>
-          <div className="h-[220px] rounded-[18px] overflow-hidden">
-            <HeatMap areas={[{ x: 0.5, y: 0.5, r: 90, temp: 0.9 }]} seed={29} />
+        <div className="rounded-3xl bg-muted p-6 md:p-10">
+          <h2 className="text-[22px]">See roughly where before you join.</h2>
+          <p className="text-muted-foreground mt-3 max-w-[56ch]">
+            On the map, a circle you haven&apos;t joined shows as a soft glow over its neighbourhood, not a pin. Join, and you see the exact spot and the venue. It keeps the places people meet every week off the open internet.
+          </p>
+          <div className="mt-7 grid gap-4 sm:grid-cols-2">
+            {[
+              { title: 'Before you join', sub: 'Thursday chess, around Mission Dolores', glow: true },
+              { title: 'Once you\'re in', sub: 'Ritual Coffee, Valencia St', glow: false },
+            ].map((v) => (
+              <figure key={v.title} className="m-0">
+                <div className="relative h-[200px] rounded-[18px] overflow-hidden">
+                  <HeatMap
+                    seed={29}
+                    areas={v.glow ? [{ x: 0.5, y: 0.5, r: 80, temp: 0.9 }] : []}
+                    label={v.glow ? 'A glow over the area where a circle meets, with no pin' : 'A pin on the exact spot where a circle meets'}
+                  />
+                  {!v.glow && (
+                    // The member's view: a real pin on the spot, like Explore's.
+                    <svg
+                      aria-hidden
+                      width="30"
+                      height="38"
+                      viewBox="0 0 30 38"
+                      className="absolute left-[53%] top-[47%] -translate-x-1/2 -translate-y-full drop-shadow-md"
+                    >
+                      <path d="M15 37s12-12.2 12-22A12 12 0 0 0 3 15c0 9.8 12 22 12 22z" className="fill-foreground stroke-background" strokeWidth="2" />
+                      <circle cx="15" cy="15" r="4.5" className="fill-background" />
+                    </svg>
+                  )}
+                </div>
+                <figcaption className="mt-3">
+                  <span className="block text-[15px] font-medium">{v.title}</span>
+                  <span className="block text-sm text-muted-foreground">{v.sub}</span>
+                </figcaption>
+              </figure>
+            ))}
           </div>
         </div>
       </section>
