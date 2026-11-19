@@ -75,7 +75,10 @@ end $$;
 reset role;
 do $$ declare n1 double precision; e1 double precision; begin
   select area_offset_north_m, area_offset_east_m into n1, e1 from public.circles where id = current_setting('rz.circle')::uuid;
-  if n1 = current_setting('rz.n0')::double precision and e1 = current_setting('rz.e0')::double precision
+  -- Compared with a tolerance: the offset round-trips through set_config as
+  -- text, which can drop the last digit. A real overwrite moves it by metres.
+  if abs(n1 - current_setting('rz.n0')::double precision) < 0.001
+     and abs(e1 - current_setting('rz.e0')::double precision) < 0.001
   then raise notice 'L3 OK: offset unchanged by a client write';
   else raise notice 'L3 FAILED: offset went from (%, %) to (%, %)', current_setting('rz.n0'), current_setting('rz.e0'), n1, e1; end if;
 end $$;

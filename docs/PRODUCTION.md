@@ -1,23 +1,25 @@
 # Production readiness
 
-> **▶ RESUME HERE — three migrations written 2026-11-18, none applied.** The
-> app on `main` after this point depends on the first two. Order matters:
+> **Migrations: up to date (2026-11-18).** Applied to production, in order:
+> `safety-2026-11-18.sql`, then its rehearsal (all OK); `location-privacy-2026-11-18.sql`
+> (10 circles given areas); deploy of `main` at `74ce49b`; `location-lockdown-2026-11-18.sql`,
+> then its rehearsal; `ai-2026-11-18.sql`. Verified against the live API afterwards:
+> anon is refused `circles.latitude` and reads `area_latitude`; anon is refused
+> `ai_quota` and `ai_take_quota()`.
 >
-> 1. `safety-2026-11-18.sql` (block and report). Additive; the deployed app
->    is unaffected. Then `safety-2026-11-18.rehearsal.sql`.
-> 2. `location-privacy-2026-11-18.sql` (area columns, `circle_places()`,
->    `circle_preview()` without `location`). Additive; the deployed app only
->    loses the venue name on private-circle previews.
-> 3. **Deploy the app.** It reads `area_latitude`/`area_longitude` and calls
->    `circle_places()`, so before step 2 the circle, explore and home pages
->    fail.
-> 4. `location-lockdown-2026-11-18.sql` (revokes SELECT on the exact
->    columns). Before step 3 this breaks the old app, which selects
->    `circles.*`. Then `location-privacy-2026-11-18.rehearsal.sql`.
+> The location rehearsal's L3 reported FAILED with identical before and after
+> values. That was a float comparison in the test (the offset round-trips
+> through `set_config` as text), not a leak: the `circles_area` trigger
+> rewrites the offset on every write. Fixed to compare with a tolerance.
+> Clients can't read the offset columns; `authenticated` still holds UPDATE on
+> them, which the trigger makes moot.
 >
-> Each migration checks its own post-conditions and rolls back on failure.
-> None has been run against a database: there was no local Postgres to test
-> on, so the first run is the rehearsal.
+> Still to do after the lockdown: smoke-test the writes as a real user
+> (create a circle, edit one, run the neighbourhood backfill on `/profile`),
+> and regenerate `supabase/schema.sql` from live state.
+>
+> The AI agents are deployed but switched off until their keys and Turnstile
+> are set. See "AI agents" below.
 >
 > Before that: `cohosts-2026-09-29.sql` applied 2026-09-29 and
 > verified against the live database: `set_member_role` present and
