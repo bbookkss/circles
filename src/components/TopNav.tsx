@@ -40,19 +40,19 @@ export default async function TopNav() {
         bar is transparent and lets clicks through around the pill. */}
     <nav className="fixed top-0 left-0 right-0 z-50 h-14 px-3 pt-2 pointer-events-none">
       <div className="glass pointer-events-auto mx-auto max-w-3xl h-12 rounded-full flex items-center gap-1 pl-4 pr-1.5">
-        <Link href="/home" className="flex items-center gap-2 font-semibold text-[1.05rem] tracking-tight mr-3 hover:opacity-75 transition-opacity">
+        <Link href="/home" className="flex items-center gap-2 font-semibold text-[1.05rem] tracking-tight mr-2 -ml-2 px-2 py-1.5 rounded-full hover:bg-muted focus-visible:bg-muted outline-none transition-colors">
           <Logo />
           Circles
         </Link>
 
         <div className="hidden md:flex items-center gap-1 flex-1 text-[0.95rem]">
-          <Link href="/home" className="px-3 py-1.5 rounded-full text-muted-foreground hover:text-foreground transition-colors">Home</Link>
-          <Link href="/explore" className="px-3 py-1.5 rounded-full text-muted-foreground hover:text-foreground transition-colors">Explore</Link>
-          <Link href="/messages" className="relative px-3 py-1.5 rounded-full text-muted-foreground hover:text-foreground transition-colors">
+          <Link href="/home" className="px-3 py-1.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted focus-visible:bg-muted outline-none transition-colors">Home</Link>
+          <Link href="/explore" className="px-3 py-1.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted focus-visible:bg-muted outline-none transition-colors">Explore</Link>
+          <Link href="/messages" className="relative px-3 py-1.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted focus-visible:bg-muted outline-none transition-colors">
             Messages
             {unreadDms ? <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-heat" aria-label={`${unreadDms} unread`} /> : null}
           </Link>
-          <Link href="/circles/new" className="px-3 py-1.5 rounded-full text-muted-foreground hover:text-foreground transition-colors whitespace-nowrap">Start a circle</Link>
+          <Link href="/circles/new" className="px-3 py-1.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted focus-visible:bg-muted outline-none transition-colors whitespace-nowrap">+ New Circle</Link>
         </div>
 
         <div className="ml-auto flex items-center gap-1">
@@ -68,7 +68,7 @@ export default async function TopNav() {
             {unread ? <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-heat" /> : null}
           </Link>
           <form action={logout} className="hidden md:block">
-            <button type="submit" className="text-sm text-muted-foreground hover:text-foreground transition-colors px-2 py-1">Sign out</button>
+            <button type="submit" className="text-sm text-muted-foreground hover:text-foreground hover:bg-muted focus-visible:bg-muted outline-none transition-colors px-3 py-1.5 rounded-full">Sign out</button>
           </form>
           <Link
             href="/profile"
