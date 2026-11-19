@@ -59,13 +59,20 @@ function milesLabel(km: number): string {
 export default function ExploreClient({ circles, people, initialView, origin: originProp = null }: Props) {
   const [selected, setSelected] = useState<CircleWithMeta | null>(null)
   const [search, setSearch] = useState('')
-  const [categoryFilter, setCategoryFilter] = useState<string | null>(null)
-  const [dayFilter, setDayFilter] = useState<number | null>(null)
+  // Chip groups are multi-select: any chip in a group can match (Trivia OR
+  // Music), and groups narrow each other (Trivia AND Free AND Wednesday).
+  const [categoryFilter, setCategoryFilter] = useState<string[]>([])
+  const [dayFilter, setDayFilter] = useState<number[]>([])
   const [neighborhoodFilter, setNeighborhoodFilter] = useState<string | null>(null)
   const [cityFilter, setCityFilter] = useState<string | null>(null)
-  const [sizeFilter, setSizeFilter] = useState<string | null>(null)
-  const [kindFilter, setKindFilter] = useState<'social' | 'commercial' | null>(null)
-  const [costFilter, setCostFilter] = useState<'free' | 'paid' | null>(null)
+  const [sizeFilter, setSizeFilter] = useState<string[]>([])
+  const [kindFilter, setKindFilter] = useState<('social' | 'commercial')[]>([])
+  const [costFilter, setCostFilter] = useState<('free' | 'paid')[]>([])
+
+  /** Add a chip to its group, or take it out if it was already in. */
+  function toggle<T>(set: (f: (prev: T[]) => T[]) => void, v: T) {
+    set((prev) => (prev.includes(v) ? prev.filter((x) => x !== v) : [...prev, v]))
+  }
   const [showFilters, setShowFilters] = useState(false)
   // Phones get one or the other, full screen. A half-height map is too small
   // to pan or pinch, and a squeezed list shows a circle and a half -- which is
@@ -88,18 +95,22 @@ export default function ExploreClient({ circles, people, initialView, origin: or
   const filtered = useMemo(() => {
     return circles.filter((c) => {
       if (search && !c.name.toLowerCase().includes(search.toLowerCase())) return false
-      if (categoryFilter && c.category !== categoryFilter) return false
+      if (categoryFilter.length && !categoryFilter.includes(c.category ?? '')) return false
       if (cityFilter && c.city !== cityFilter) return false
       if (neighborhoodFilter && c.neighborhood !== neighborhoodFilter) return false
-      if (dayFilter !== null && !c.days_of_week?.includes(dayFilter)) return false
-      if (sizeFilter === 'small' && (c.member_count ?? 0) >= 10) return false
-      if (sizeFilter === 'medium' && ((c.member_count ?? 0) < 10 || (c.member_count ?? 0) >= 50)) return false
-      if (sizeFilter === 'large' && (c.member_count ?? 0) < 50) return false
+      if (dayFilter.length && !dayFilter.some((d) => c.days_of_week?.includes(d))) return false
+      if (sizeFilter.length) {
+        const n = c.member_count ?? 0
+        const size = n < 10 ? 'small' : n < 50 ? 'medium' : 'large'
+        if (!sizeFilter.includes(size)) return false
+      }
       // Anything without an explicit kind is a social circle.
-      if (kindFilter && (c.kind ?? 'social') !== kindFilter) return false
+      if (kindFilter.length && !kindFilter.includes((c.kind ?? 'social') as 'social' | 'commercial')) return false
       // Unknown cost (circles made before it was asked) matches neither.
-      if (costFilter === 'free' && c.is_free !== true) return false
-      if (costFilter === 'paid' && c.is_free !== false) return false
+      if (costFilter.length) {
+        const cost = c.is_free === true ? 'free' : c.is_free === false ? 'paid' : null
+        if (!cost || !costFilter.includes(cost)) return false
+      }
       return true
     })
   }, [circles, search, categoryFilter, dayFilter, cityFilter, neighborhoodFilter, sizeFilter, kindFilter, costFilter])
@@ -151,20 +162,23 @@ export default function ExploreClient({ circles, people, initialView, origin: or
       .slice(0, 6)
   }, [people, search])
 
-  const hasFilters = !!(search || categoryFilter || dayFilter !== null || cityFilter || neighborhoodFilter || sizeFilter || kindFilter || costFilter)
+  const hasFilters = !!(search || categoryFilter.length || dayFilter.length || cityFilter || neighborhoodFilter || sizeFilter.length || kindFilter.length || costFilter.length)
   // Search is deliberately not counted: it has its own visible field, and
   // counting it would make the button light up while somebody types.
-  const activeFilterCount = [categoryFilter, dayFilter !== null ? 'd' : null, cityFilter, neighborhoodFilter, sizeFilter, kindFilter, costFilter].filter(Boolean).length
+  // Counts chips, not groups: two categories picked reads as two.
+  const activeFilterCount =
+    categoryFilter.length + dayFilter.length + sizeFilter.length + kindFilter.length + costFilter.length +
+    (cityFilter ? 1 : 0) + (neighborhoodFilter ? 1 : 0)
 
   function clearFilters() {
     setSearch('')
-    setCategoryFilter(null)
-    setDayFilter(null)
+    setCategoryFilter([])
+    setDayFilter([])
     setCityFilter(null)
     setNeighborhoodFilter(null)
-    setSizeFilter(null)
-    setKindFilter(null)
-    setCostFilter(null)
+    setSizeFilter([])
+    setKindFilter([])
+    setCostFilter([])
   }
 
   return (
@@ -238,9 +252,10 @@ export default function ExploreClient({ circles, people, initialView, origin: or
                 ] as const).map((k) => (
                   <button
                     key={k.value}
-                    onClick={() => setKindFilter(kindFilter === k.value ? null : k.value)}
+                    onClick={() => toggle(setKindFilter, k.value)}
+                    aria-pressed={kindFilter.includes(k.value)}
                     className={`text-sm px-3 py-1 rounded-full transition-colors ${
-                      kindFilter === k.value
+                      kindFilter.includes(k.value)
                         ? 'bg-foreground text-background border-foreground'
                         : 'bg-muted hover:bg-cool-2'
                     }`}
@@ -261,9 +276,10 @@ export default function ExploreClient({ circles, people, initialView, origin: or
                 ] as const).map((k) => (
                   <button
                     key={k.value}
-                    onClick={() => setCostFilter(costFilter === k.value ? null : k.value)}
+                    onClick={() => toggle(setCostFilter, k.value)}
+                    aria-pressed={costFilter.includes(k.value)}
                     className={`text-sm px-3 py-1 rounded-full transition-colors ${
-                      costFilter === k.value ? 'bg-foreground text-background border-foreground' : 'bg-muted hover:bg-cool-2'
+                      costFilter.includes(k.value) ? 'bg-foreground text-background border-foreground' : 'bg-muted hover:bg-cool-2'
                     }`}
                   >
                     {k.label}
@@ -279,9 +295,10 @@ export default function ExploreClient({ circles, people, initialView, origin: or
                 {CATEGORIES.map((cat) => (
                   <button
                     key={cat}
-                    onClick={() => setCategoryFilter(categoryFilter === cat ? null : cat)}
+                    onClick={() => toggle(setCategoryFilter, cat)}
+                    aria-pressed={categoryFilter.includes(cat)}
                     className={`text-sm px-3 py-1 rounded-full transition-colors ${
-                      categoryFilter === cat
+                      categoryFilter.includes(cat)
                         ? 'bg-foreground text-background border-foreground'
                         : 'bg-muted hover:bg-cool-2'
                     }`}
@@ -299,9 +316,10 @@ export default function ExploreClient({ circles, people, initialView, origin: or
                 {DAYS.map((day, i) => (
                   <button
                     key={day}
-                    onClick={() => setDayFilter(dayFilter === i ? null : i)}
+                    onClick={() => toggle(setDayFilter, i)}
+                    aria-pressed={dayFilter.includes(i)}
                     className={`text-sm px-2.5 py-1 rounded-full transition-colors ${
-                      dayFilter === i
+                      dayFilter.includes(i)
                         ? 'bg-foreground text-background border-foreground'
                         : 'bg-muted hover:bg-cool-2'
                     }`}
@@ -370,9 +388,10 @@ export default function ExploreClient({ circles, people, initialView, origin: or
                 {[['small', 'Small (<10)'], ['medium', 'Medium (10–50)'], ['large', 'Large (50+)']].map(([val, label]) => (
                   <button
                     key={val}
-                    onClick={() => setSizeFilter(sizeFilter === val ? null : val)}
+                    onClick={() => toggle(setSizeFilter, val)}
+                    aria-pressed={sizeFilter.includes(val)}
                     className={`text-sm px-3 py-1 rounded-full transition-colors ${
-                      sizeFilter === val
+                      sizeFilter.includes(val)
                         ? 'bg-foreground text-background border-foreground'
                         : 'bg-muted hover:bg-cool-2'
                     }`}
