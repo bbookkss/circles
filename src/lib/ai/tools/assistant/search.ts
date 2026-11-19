@@ -30,11 +30,25 @@ export async function searchCircles(ctx: Ctx, input: { query: string; place?: st
 
   let center = ctx.near
   let placeLabel: string | null = null
+  // A place can be a circle's own name or neighbourhood ("Salesforce Park",
+  // "the Mission"). Those words must all appear for a circle to count as being
+  // there, which works even when no map lookup is possible.
+  const placeWords = String(input.place ?? '')
+    .toLowerCase()
+    .replace(/[^a-z0-9& ]/g, ' ')
+    .split(/\s+/)
+    .filter((w) => w.length > 2 && !STOP.has(w))
+    .slice(0, 4)
+  let byName = false
   if (input.place) {
     const p = await forwardGeocode(String(input.place))
-    if (!p) return { forModel: { error: `Couldn't find a place called "${String(input.place).slice(0, 60)}".` }, cards: [] }
-    center = { latitude: p.latitude, longitude: p.longitude }
-    placeLabel = p.label
+    if (p) {
+      center = { latitude: p.latitude, longitude: p.longitude }
+      placeLabel = p.label
+    } else {
+      byName = placeWords.length > 0
+      if (!byName) return { forModel: { error: `Couldn't find a place called "${String(input.place).slice(0, 60)}".` }, cards: [] }
+    }
   }
 
   const [{ data: circles }, { data: mine }] = await Promise.all([
@@ -51,7 +65,10 @@ export async function searchCircles(ctx: Ctx, input: { query: string; place?: st
   const scored = (circles ?? [])
     .map((c) => {
       const hay = `${c.name} ${c.description ?? ''} ${c.category ?? ''} ${c.neighborhood ?? ''} ${c.city ?? ''}`.toLowerCase()
-      const score = words.length ? words.filter((w) => hay.includes(w)).length : 1
+      // Named after the place, or in it: either way, it's "at" that place.
+      const atPlace = placeWords.length > 0 && placeWords.every((w) => hay.includes(w))
+      if (byName && !atPlace) return { c, score: 0, km: null }
+      const score = (words.length ? words.filter((w) => hay.includes(w)).length : 1) + (atPlace ? 2 : 0)
       const km = center
         ? distanceKm(center, { latitude: c.area_latitude as number, longitude: c.area_longitude as number })
         : null
@@ -61,7 +78,7 @@ export async function searchCircles(ctx: Ctx, input: { query: string; place?: st
     // Within a metro of the place asked about. Without any location, nearest is meaningless.
     .filter((x) => x.km === null || x.km <= (placeLabel ? 40 : 60))
     .sort((a, b) => b.score - a.score || (a.km ?? 0) - (b.km ?? 0))
-    .slice(0, 5)
+    .slice(0, input.place ? 8 : 5)
 
   const ids = scored.map((x) => x.c.id as string)
   const memberIds = ids.filter((id) => memberOf.has(id))

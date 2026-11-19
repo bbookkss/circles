@@ -692,6 +692,16 @@ never been exercised through the UI by a real person.
       the writes through PostgREST: create a circle, edit one, run the
       neighbourhood backfill on `/profile`.
 
+- [ ] **Server-side Mapbox calls fail with the public token** (found
+      2026-11-18). NEXT_PUBLIC_MAPBOX_TOKEN is URL-restricted to the site, so
+      requests from the server are refused. Radius's place lookups broke this
+      way; forwardGeocode now uses MAPBOX_SERVER_TOKEN when set, else
+      OpenStreetMap Nominatim (areas only). `reverseGeocode` (the
+      neighbourhood backfill on /profile) still uses the public token from
+      the server and is probably failing the same way. Fix: create an
+      unrestricted, geocoding-only Mapbox token as MAPBOX_SERVER_TOKEN and
+      use it in both.
+
 ## Decisions not yet made
 
 - [ ] **Should `bio` be world-readable?** `anon` can currently read `id`,
