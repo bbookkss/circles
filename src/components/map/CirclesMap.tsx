@@ -392,7 +392,7 @@ export default function CirclesMap({
                 className="flex items-center gap-1.5 bg-background border border-foreground rounded-full shadow-[0_2px_8px_rgba(26,34,48,0.14)] px-2.5 py-1.5 text-[13px] font-medium leading-none group-hover:-translate-y-0.5 transition-transform"
                 title={g.members.map((m) => m.name).join(', ')}
               >
-                <span aria-hidden className="tracking-[-0.15em]">{g.members.slice(0, 3).map((m) => m.emoji ?? '•').join('')}</span>
+                <span aria-hidden className="flex gap-0.5">{g.members.slice(0, 3).map((m) => <span key={m.id}>{m.emoji ?? '•'}</span>)}</span>
                 {g.members.length} circles
               </span>
               <span aria-hidden className="w-px h-2 bg-foreground" />
@@ -406,15 +406,17 @@ export default function CirclesMap({
                   <ul>
                     {g.members.map((m) => (
                       <li key={m.id}>
-                        <button
-                          type="button"
-                          onClick={() => { setOpenGroup(null); handleMarkerClick(m) }}
-                          className="w-full flex items-center gap-2 px-2.5 py-2 rounded-xl hover:bg-muted text-left"
+                        {/* A row is the circle: tapping it opens the circle,
+                            which is what everyone expected it to do. */}
+                        <Link
+                          href={`/circles/${m.id}`}
+                          className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl hover:bg-muted text-left"
                         >
-                          <span aria-hidden>{m.emoji ?? '•'}</span>
+                          <span aria-hidden className="w-5 text-center">{m.emoji ?? '•'}</span>
                           <span className="flex-1 min-w-0 truncate text-sm font-medium">{m.name}</span>
                           {m.is_free === false && <span className="shrink-0 text-[11px] font-medium px-1.5 py-0.5 rounded-full bg-cool-2">{m.price_note ?? 'Paid'}</span>}
-                        </button>
+                          <svg aria-hidden width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 text-muted-foreground"><path d="M9 6l6 6-6 6" /></svg>
+                        </Link>
                       </li>
                     ))}
                   </ul>
@@ -428,6 +430,9 @@ export default function CirclesMap({
       {groups.filter((g) => g.members.length === 1).map(({ anchor: circle }) => (
         <Marker
           key={circle.id}
+          // The open card must sit above every other marker, groups included,
+          // or a neighbouring "2 circles" badge draws over its title.
+          style={{ zIndex: popupCircle?.id === circle.id ? 40 : 5 }}
           longitude={circle.longitude}
           latitude={circle.latitude}
           anchor="bottom"
@@ -480,7 +485,7 @@ export default function CirclesMap({
                     this, and expanding here put two copies of the same
                     circle on one screen. */}
                 <div
-                  className={`${circle.is_free === false ? 'bg-cool' : 'bg-background'} border shadow-[0_2px_8px_rgba(26,34,48,0.14)] rounded-full ${edge} ${
+                  className={`${circle.is_free === false && !open ? 'bg-cool' : 'bg-background'} border shadow-[0_2px_8px_rgba(26,34,48,0.14)] rounded-full ${edge} ${
                     open
                       ? 'md:rounded-2xl md:min-w-[240px] md:transition-[border-radius,min-width] md:duration-300 md:ease-out'
                       : 'md:min-w-0 group-hover:-translate-y-0.5 transition-transform duration-150'
