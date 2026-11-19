@@ -1,38 +1,21 @@
 import type { Metadata } from "next";
-import { Fraunces, Figtree, Space_Mono } from "next/font/google";
+import { Host_Grotesk } from "next/font/google";
 import "./globals.css";
 import ViewerTimezone from "@/components/ViewerTimezone";
 
 /**
- * Three faces, three jobs. This used to be one mono for everything, which
- * reads as a terminal and tires the eye at paragraph length.
+ * One family for everything: Host Grotesk. Big headings at weight 300 with
+ * tight tracking, body at 400, emphasis at 500. Numbers use tabular figures
+ * (set on <html> in globals.css) instead of a monospace face.
  *
- *   Fraunces    display: circle names, day names, the greeting. Optical sizes
- *               mean the masthead and a small italic label are the same
- *               family behaving differently.
- *   Figtree     body: anything meant to be read.
- *   Space Mono  utility only: times, dates, counts, small labels. The old
- *               site face, kept for what it is actually good at.
+ * This replaced Fraunces + Figtree + Space Mono on 2026-11-18. A soft serif
+ * with an italic accent word over a mono label is the most common look of a
+ * generated site, and it was why the app read as one. See docs/design/.
  */
-const display = Fraunces({
-  variable: "--font-fraunces",
+const host = Host_Grotesk({
+  variable: "--font-host",
   subsets: ["latin"],
-  // A variable font: weight must be "variable" for the axes to be requested.
-  axes: ["opsz", "SOFT"],
-  style: ["normal", "italic"],
-  weight: "variable",
-});
-
-const body = Figtree({
-  variable: "--font-figtree",
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
-});
-
-const utility = Space_Mono({
-  variable: "--font-space-mono",
-  subsets: ["latin"],
-  weight: ["400", "700"],
+  weight: ["300", "400", "500", "600"],
 });
 
 export const metadata: Metadata = {
@@ -41,12 +24,19 @@ export const metadata: Metadata = {
     "Nobody makes a friend at a one-off. Circles are local groups that meet on a schedule, close enough to walk to. See who is coming before you go.",
 };
 
+/**
+ * Light or dark before first paint, so the page never flashes the wrong one.
+ * Follows the system until the person picks with the toggle in the nav; the
+ * choice is kept in localStorage as "circles-theme".
+ */
+const THEME_SCRIPT = `try{var t=localStorage.getItem("circles-theme");var d=t?t==="dark":matchMedia("(prefers-color-scheme: dark)").matches;document.documentElement.classList.toggle("dark",d)}catch(e){}`;
+
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html
-      lang="en"
-      className={`${display.variable} ${body.variable} ${utility.variable} h-full antialiased`}
-    >
+    <html lang="en" className={`${host.variable} h-full antialiased`} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
+      </head>
       <body className="min-h-full flex flex-col">
         <ViewerTimezone />
         {children}

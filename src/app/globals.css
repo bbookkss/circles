@@ -7,15 +7,19 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  /* Three faces, three jobs; see layout.tsx. `font-display` is the serif,
-     `font-sans` is for reading, `font-mono` is times, dates and labels. */
-  --font-sans: var(--font-figtree), system-ui, sans-serif;
-  --font-mono: var(--font-space-mono), ui-monospace, monospace;
-  --font-display: var(--font-fraunces), Georgia, serif;
-  --font-heading: var(--font-fraunces), Georgia, serif;
-  /* Field Notes: one accent, one meaning. Pen is "you said yes" and "the
-     check-in is open". Hi is the highlighter over today. Nothing else gets
-     colour, which is what lets these two carry state. */
+  /* One family, Host Grotesk, for everything (see layout.tsx). The three
+     names stay so existing classes keep working; they all point at it.
+     `font-mono` is no longer monospace: numbers get tabular figures instead. */
+  --font-sans: var(--font-host), "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-mono: var(--font-host), "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-display: var(--font-host), "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-heading: var(--font-host), "Helvetica Neue", Helvetica, Arial, sans-serif;
+  /* Heat: one accent, one meaning. Pen (gold) is "you said yes" and "the
+     check-in is open": things you can act on now. Nothing else gets colour.
+     Cool is the blue-grey 30% of the palette: maps, glass, controls. */
+  --color-cool: var(--cool);
+  --color-cool-2: var(--cool-2);
+  --color-heat: var(--heat);
   --color-pen: var(--pen);
   --color-pen-soft: var(--pen-soft);
   --color-pen-bg: var(--pen-bg);
@@ -59,80 +63,99 @@
 }
 
 :root {
-  /* Field Notes palette: paper, ink, one pen. Chosen 2026-09-13 over the
-     bone/mono look. Paper is a touch warmer and lighter than before so the
-     ink has more to push against; muted is now a real step down from paper
-     rather than a near-match. */
-  --background: #f1ebdf;
-  --foreground: #221f1b;
-  --card: #f7f3ea;
-  --card-foreground: #221f1b;
-  --popover: #f7f3ea;
-  --popover-foreground: #221f1b;
-  --primary: #221f1b;
-  --primary-foreground: #f1ebdf;
-  --secondary: #e6dfd0;
-  --secondary-foreground: #221f1b;
-  --muted: #e6dfd0;
-  --muted-foreground: #857d70;
-  --accent: #e3ebf3;
-  --accent-foreground: #2b5c8a;
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: #d6cdbb;
-  --input: #d6cdbb;
-  --ring: #2b5c8a;
-  --pen: #2b5c8a;
-  --pen-soft: #9db3c8;
-  --pen-bg: #e3ebf3;
-  --hi: #f3e4a8;
+  /* Arctic, after FLIR's thermal palette, split 60-30-10: neutral paper and
+     ink, cool blue-grey for maps and controls, gold heat for what you can act
+     on now. Chosen 2026-11-18 over Field Notes (cream, serif, blue pen), which
+     read as generated. Mockups: docs/design/. */
+  --background: #f7f8fa;
+  --foreground: #1a2230;
+  --card: #ffffff;
+  --card-foreground: #1a2230;
+  --popover: #ffffff;
+  --popover-foreground: #1a2230;
+  --primary: #1a2230;
+  --primary-foreground: #f7f8fa;
+  --secondary: #e2e9f1;
+  --secondary-foreground: #1a2230;
+  --muted: #e2e9f1;
+  --muted-foreground: #5c6878;
+  --accent: #e2e9f1;
+  --accent-foreground: #1a2230;
+  --destructive: #b4232c;
+  --border: #e3e7ed;
+  --input: #cfdbe8;
+  --ring: #cfdbe8;
+  --cool: #e2e9f1;
+  --cool-2: #cfdbe8;
+  --heat: #f2a531;
+  /* Pen is heat as text and small marks: darker, so it reads on paper. */
+  --pen: #9a6200;
+  --pen-soft: #e9c27a;
+  --pen-bg: #fcefd6;
+  --hi: #f8dfae;
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --radius: 0.875rem;
+  --glass: rgba(255, 255, 255, 0.58);
+  --glass-edge: rgba(255, 255, 255, 0.9);
+  --shade: rgba(26, 34, 48, 0.08);
+  --sidebar: #f7f8fa;
+  --sidebar-foreground: #1a2230;
+  --sidebar-primary: #1a2230;
+  --sidebar-primary-foreground: #f7f8fa;
+  --sidebar-accent: #e2e9f1;
+  --sidebar-accent-foreground: #1a2230;
+  --sidebar-border: #e3e7ed;
+  --sidebar-ring: #cfdbe8;
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
+  /* Slate, not black: a dim room, not a void. */
+  --background: #252b34;
+  --foreground: #e8ecf1;
+  --card: #2b323c;
+  --card-foreground: #e8ecf1;
+  --popover: #2b323c;
+  --popover-foreground: #e8ecf1;
+  --primary: #e8ecf1;
+  --primary-foreground: #1a2230;
+  --secondary: #2e3640;
+  --secondary-foreground: #e8ecf1;
+  --muted: #2e3640;
+  --muted-foreground: #a1abb8;
+  --accent: #2e3640;
+  --accent-foreground: #e8ecf1;
+  --destructive: #f07a80;
+  --border: #353d48;
+  --input: #3a4450;
+  --ring: #4a5563;
+  --cool: #2e3640;
+  --cool-2: #3a4450;
+  --heat: #f5b44c;
+  --pen: #f5b44c;
+  --pen-soft: #8a6a35;
+  --pen-bg: #3b3426;
+  --hi: #5a4520;
+  --glass: rgba(46, 54, 64, 0.55);
+  --glass-edge: rgba(255, 255, 255, 0.12);
+  --shade: rgba(0, 0, 0, 0.25);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --sidebar: #252b34;
+  --sidebar-foreground: #e8ecf1;
+  --sidebar-primary: #e8ecf1;
+  --sidebar-primary-foreground: #1a2230;
+  --sidebar-accent: #2e3640;
+  --sidebar-accent-foreground: #e8ecf1;
+  --sidebar-border: #353d48;
+  --sidebar-ring: #4a5563;
+  color-scheme: dark;
 }
 
 @layer base {
@@ -144,37 +167,39 @@
   }
   html {
     @apply font-sans;
+    font-feature-settings: "tnum" 1;
+    -webkit-font-smoothing: antialiased;
   }
-  /* Headings are the serif by default, so every page moves at once and a
-     heading that wants the body face has to say so. Optical size tracks the
-     rendered size automatically (font-optical-sizing: auto), which is the
-     point of Fraunces: a 40px masthead and a 14px italic label are the same
-     family behaving differently. */
-  h1, h2, h3 {
+  /* Big headings are light with tight tracking; smaller ones are medium.
+     No italics for emphasis anywhere. */
+  h1 {
     font-family: var(--font-display);
-    font-weight: 600;
-    letter-spacing: -0.01em;
+    font-weight: 300;
+    letter-spacing: -0.035em;
+    line-height: 1.06;
     text-wrap: balance;
   }
+  h2, h3 {
+    font-family: var(--font-display);
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+  }
+  em { font-style: normal; }
+}
 }
 
-/* Small mono label: dates, counts, section eyebrows. One class so the
-   tracking and size stay identical everywhere it appears.
-   Declared with @utility rather than @layer utilities so Tailwind sorts it
-   with the rest: multi-property utilities come first, so a single-property
-   override like `normal-case` or `text-pen` on the same element wins. In a
-   plain @layer block it was beating them, and the email on the profile page
-   came out shouted. */
+/* Small quiet label for section headings, dates and counts. Sentence case,
+   never all caps: the old shouted mono label read as template chrome. */
 @utility label {
-  font-family: var(--font-mono);
-  font-size: 0.7rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-size: 0.875rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
   color: var(--muted-foreground);
 }
 /* Times and dates in running text. Tabular so columns of them line up. */
 @utility num {
-  font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
 }
 
@@ -200,6 +225,15 @@
 }
 
 @layer utilities {
+  /* Frosted glass, for things that float over content: the nav, the tab bar,
+     panels over the map. Not for ordinary cards. */
+  .glass {
+    background: var(--glass);
+    -webkit-backdrop-filter: blur(22px) saturate(1.5);
+    backdrop-filter: blur(22px) saturate(1.5);
+    border: 1px solid var(--glass-edge);
+    box-shadow: 0 1px 0 var(--glass-edge) inset, 0 12px 40px var(--shade);
+  }
   .fade-rise {
     animation: fade-rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
   }
@@ -267,7 +301,7 @@
 .mapboxgl-popup-content {
   background: var(--popover);
   color: var(--popover-foreground);
-  font-family: var(--font-site), ui-monospace, monospace;
+  font-family: var(--font-sans);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   box-shadow: 0 8px 24px -10px oklch(0.26 0.012 62 / 0.3);
@@ -307,7 +341,7 @@
   align-items: center;
   justify-content: center;
   color: var(--muted-foreground);
-  font-family: var(--font-site), ui-monospace, monospace;
+  font-family: var(--font-sans);
   font-size: 0.9rem;
   line-height: 1;
   border-radius: var(--radius-sm);
@@ -354,7 +388,7 @@
 
 .mapboxgl-ctrl-attrib {
   background: oklch(from var(--popover) l c h / 0.8) !important;
-  font-family: var(--font-site), ui-monospace, monospace;
+  font-family: var(--font-sans);
   border-radius: var(--radius-sm) 0 0 0;
 }
 .mapboxgl-ctrl-attrib a {
@@ -450,3 +484,11 @@ input[aria-hidden="true"][tabindex="-1"] {
   top: 0;
   left: 0;
 }
+
+/* The logo's ring: five dashes, turning once a minute. */
+.logo-ring { transform-box: fill-box; transform-origin: center; }
+@media (prefers-reduced-motion: no-preference) {
+  .logo-ring { animation: logo-turn 60s linear infinite; }
+  .logo-busy .logo-ring { animation-duration: 2.4s; }
+}
+@keyframes logo-turn { to { transform: rotate(360deg); } }

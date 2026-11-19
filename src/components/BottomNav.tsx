@@ -88,7 +88,7 @@ export default function BottomNav({ unread, unreadDms }: { unread: number; unrea
       aria-label="Main"
       // pb from the safe area so the bar clears an iPhone's home indicator
       // instead of sitting under it.
-      className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-md border-t border-border pb-[env(safe-area-inset-bottom)]"
+      className="md:hidden fixed left-3 right-3 bottom-[calc(10px+env(safe-area-inset-bottom))] z-50 glass rounded-full"
     >
       <ul className="flex">
         {ITEMS.map((item) => {
@@ -99,14 +99,14 @@ export default function BottomNav({ unread, unreadDms }: { unread: number; unrea
               <Link
                 href={item.href}
                 aria-current={active ? 'page' : undefined}
-                className={`relative h-16 flex flex-col items-center justify-center gap-1 transition-colors ${
+                className={`relative h-14 flex flex-col items-center justify-center gap-1 transition-colors ${
                   active ? 'text-pen' : 'text-muted-foreground'
                 }`}
               >
                 <span className="relative">
                   <Icon d={item.d} />
                   {n > 0 && (
-                    <span className="absolute -top-1 -right-2 min-w-[16px] h-4 px-1 rounded-full bg-pen text-white text-[10px] font-semibold leading-4 text-center">
+                    <span className="absolute -top-1 -right-2 min-w-[16px] h-4 px-1 rounded-full bg-heat text-[#1a2230] text-[10px] font-semibold leading-4 text-center">
                       {n > 9 ? '9+' : n}
                     </span>
                   )}
