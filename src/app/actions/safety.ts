@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { emailConfigured, sendEmail } from '@/lib/email/send'
+import { reportHtml } from '@/lib/email/internal'
 import { REPORT_REASONS, reasonLabel, type ReportTarget } from '@/lib/reports'
 
 /**
@@ -94,7 +95,7 @@ export async function fileReport(formData: FormData): Promise<{ ok: true } | { e
         to: ADMIN_TO,
         subject: `Report: ${targetType}, ${label.toLowerCase()}`,
         text,
-        html: `<pre style="font-family:ui-monospace,monospace;font-size:14px;white-space:pre-wrap">${escapeHtml(text)}</pre>`,
+        html: reportHtml({ targetType, label, details: details || null, reportId: reportId ?? null }),
       })
     } catch {
       // Logged by Resend's side if anywhere; the admin page still lists it.
@@ -120,6 +121,3 @@ export async function resolveReport(formData: FormData): Promise<{ ok: true } | 
   return { ok: true }
 }
 
-function escapeHtml(s: string): string {
-  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-}

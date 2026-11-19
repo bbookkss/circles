@@ -1,5 +1,7 @@
 'use server'
 
+import { feedbackHtml } from '@/lib/email/internal'
+
 import { createClient } from '@/lib/supabase/server'
 import { emailConfigured, sendEmail } from '@/lib/email/send'
 
@@ -43,7 +45,7 @@ export async function sendFeedback(formData: FormData): Promise<{ ok: true } | {
       to: TO,
       subject: `Feedback from ${name}`,
       text,
-      html: `<pre style="font-family:ui-monospace,monospace;font-size:14px;white-space:pre-wrap">${escapeHtml(text)}</pre>`,
+      html: feedbackHtml({ name, email, page, message }),
       replyTo: email,
     })
   } catch (e) {
@@ -51,8 +53,4 @@ export async function sendFeedback(formData: FormData): Promise<{ ok: true } | {
   }
 
   return { ok: true }
-}
-
-function escapeHtml(s: string): string {
-  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 }
