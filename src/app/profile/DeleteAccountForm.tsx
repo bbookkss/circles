@@ -32,9 +32,9 @@ export default function DeleteAccountForm() {
   }
 
   return (
-    <form action={handleSubmit} className="space-y-4 border border-destructive/40 rounded-xl p-4">
+    <form action={handleSubmit} className="space-y-4 rounded-3xl bg-muted p-5">
       <div className="space-y-2">
-        <p className="text-sm font-semibold">Delete your account</p>
+        <p className="font-medium">Delete your account</p>
         <p className="text-sm text-muted-foreground">
           This cannot be undone. Here is exactly what happens:
         </p>
@@ -55,7 +55,7 @@ export default function DeleteAccountForm() {
 
       <div className="space-y-1.5">
         <Label htmlFor="confirm">
-          Type <span className="font-mono font-medium">delete</span> to confirm
+          Type <span className="font-medium">delete</span> to confirm
         </Label>
         <Input
           id="confirm"

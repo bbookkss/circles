@@ -58,10 +58,10 @@ export default function MessageThread({ meId, otherUserId, otherName, initialMes
   return (
     <div className="flex-1 flex flex-col min-h-0">
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-6 py-6">
+      <div className="flex-1 overflow-y-auto px-4 md:px-6 py-6">
         <div className="max-w-2xl mx-auto space-y-3">
           {messages.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-8">
+            <p className="text-muted-foreground text-center py-10">
               No messages yet. Say hi to {otherName}.
             </p>
           ) : (
@@ -69,9 +69,9 @@ export default function MessageThread({ meId, otherUserId, otherName, initialMes
               const mine = m.sender_id === meId
               return (
                 <div key={m.id} className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-[75%] rounded-2xl px-3.5 py-2 text-sm ${mine ? 'bg-pen text-white' : 'bg-muted text-foreground'}`}>
+                  <div className={`max-w-[78%] px-4 py-2.5 text-[0.95rem] ${mine ? 'bg-foreground text-background rounded-[20px_20px_6px_20px]' : 'bg-muted text-foreground rounded-[20px_20px_20px_6px]'}`}>
                     <p className="whitespace-pre-wrap break-words">{m.content}</p>
-                    <p className={`num text-[10px] mt-1 ${mine ? 'text-white/70' : 'text-muted-foreground'}`}>{formatTime(m.created_at)}</p>
+                    <p className={`num text-xs mt-1 ${mine ? 'text-background/65' : 'text-muted-foreground'}`}>{formatTime(m.created_at)}</p>
                   </div>
                 </div>
               )
@@ -82,32 +82,32 @@ export default function MessageThread({ meId, otherUserId, otherName, initialMes
       </div>
 
       {/* Composer */}
-      <div className="border-t bg-background px-6 py-3">
+      <div className="px-3 md:px-6 pt-2 pb-3">
         <div className="max-w-2xl mx-auto">
           {canMessage ? (
-            <form onSubmit={onSend} className="flex items-center gap-2">
+            <form onSubmit={onSend} className="glass flex items-center gap-2 rounded-full p-1.5 pl-2">
               <input
                 type="text"
                 value={text}
                 onChange={(e) => setText(e.target.value)}
-                placeholder={`Message ${otherName}...`}
+                placeholder={`Message ${otherName}`}
                 maxLength={2000}
-                className="flex-1 min-w-0 rounded-full border border-input bg-background px-4 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="flex-1 min-w-0 bg-transparent px-3 py-2 text-base placeholder:text-muted-foreground focus-visible:outline-none"
               />
               <button
                 type="submit"
                 disabled={sending || !text.trim()}
-                className="text-sm font-medium rounded-full border border-foreground px-4 py-2 hover:bg-pen hover:border-pen hover:text-white disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-foreground disabled:hover:border-foreground transition-colors"
+                className="text-sm font-medium rounded-full bg-foreground text-background px-5 py-2.5 hover:opacity-85 disabled:opacity-35 transition-opacity"
               >
                 Send
               </button>
             </form>
           ) : (
-            <p className="text-xs text-muted-foreground text-center py-2">
+            <p className="text-sm text-muted-foreground text-center py-3">
               Follow {otherName} to send a message.
             </p>
           )}
-          {error && <p className="text-xs text-destructive mt-1 text-center">{error}</p>}
+          {error && <p className="text-sm text-destructive mt-2 text-center">{error}</p>}
         </div>
       </div>
     </div>

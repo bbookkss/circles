@@ -107,7 +107,7 @@ export default function LocationSearch({ onSelect }: Props) {
           onChange={(e) => handleChange(e.target.value)}
           onFocus={() => suggestions.length > 0 && setOpen(true)}
           placeholder="Search address or place..."
-          className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring pr-8"
+          className="w-full rounded-xl border border-transparent bg-muted px-3.5 py-2.5 text-base placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring pr-8"
         />
         {loading && (
           <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">...</span>
@@ -115,7 +115,7 @@ export default function LocationSearch({ onSelect }: Props) {
       </div>
 
       {open && (
-        <ul className="absolute z-50 mt-1 w-full bg-background border rounded-md shadow-lg max-h-60 overflow-y-auto">
+        <ul className="absolute z-50 mt-1 w-full bg-popover border rounded-2xl shadow-lg max-h-60 overflow-y-auto">
           {suggestions.map((s, i) => (
             <li key={i}>
               <button

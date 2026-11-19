@@ -58,23 +58,23 @@ export default async function ProfilePage() {
   return (
     <>
       <TopNav />
-      <main className="pt-14 pb-20 md:pb-0 min-h-screen bg-background">
-        <div className="max-w-2xl mx-auto px-4 py-8 space-y-8">
+      <main className="pt-14 pb-28 md:pb-12 min-h-screen bg-background">
+        <div className="max-w-2xl mx-auto px-4 md:px-6 pt-10 space-y-10">
 
           {/* Avatar + name + bio */}
           <div className="flex items-start gap-5">
-            <div className="w-16 h-16 rounded-full bg-foreground text-background flex items-center justify-center text-2xl font-bold flex-shrink-0">
+            <div className="w-[72px] h-[72px] rounded-full bg-foreground text-background flex items-center justify-center text-2xl font-normal flex-shrink-0">
               {initials}
             </div>
             <div className="flex-1 min-w-0 space-y-1">
-              <h1 className="text-2xl leading-tight">{profile?.full_name ?? 'Unknown'}</h1>
-              <p className="label normal-case tracking-normal">{user.email}</p>
+              <h1 className="text-[2.2rem] md:text-[2.6rem]">{profile?.full_name ?? 'Unknown'}</h1>
+              <p className="text-sm text-muted-foreground pt-1">{user.email}</p>
               {profile?.instagram && (
                 <a
                   href={`https://instagram.com/${profile.instagram}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-sm text-muted-foreground hover:text-foreground underline underline-offset-2 inline-block"
+                  className="text-sm text-muted-foreground hover:text-foreground underline underline-offset-4 decoration-1 inline-block"
                 >
                   @{profile.instagram}
                 </a>
@@ -85,54 +85,52 @@ export default async function ProfilePage() {
 
           {/* Follower / following counts. Links, because a number you cannot
               open is a number you have to take on faith. */}
-          <div className="flex gap-6 text-sm">
-            <Link href={`/profile/${user.id}/followers`} className="text-center hover:underline underline-offset-4">
-              <p className="font-bold text-lg">{followerCount ?? 0}</p>
+          <div className="grid grid-cols-4 gap-2 rounded-3xl bg-muted p-2 text-sm">
+            <Link href={`/profile/${user.id}/followers`} className="text-center rounded-2xl py-3 hover:bg-background/60 transition-colors">
+              <p className="text-2xl font-light tracking-tight">{followerCount ?? 0}</p>
               <p className="text-muted-foreground">Followers</p>
             </Link>
-            <Link href={`/profile/${user.id}/following`} className="text-center hover:underline underline-offset-4">
-              <p className="font-bold text-lg">{followingCount ?? 0}</p>
+            <Link href={`/profile/${user.id}/following`} className="text-center rounded-2xl py-3 hover:bg-background/60 transition-colors">
+              <p className="text-2xl font-light tracking-tight">{followingCount ?? 0}</p>
               <p className="text-muted-foreground">Following</p>
             </Link>
-            <a href="#circles" className="text-center hover:underline underline-offset-4">
-              <p className="font-bold text-lg">{circles?.length ?? 0}</p>
+            <a href="#circles" className="text-center rounded-2xl py-3 hover:bg-background/60 transition-colors">
+              <p className="text-2xl font-light tracking-tight">{circles?.length ?? 0}</p>
               <p className="text-muted-foreground">Circles</p>
             </a>
             {/* Times you came back, which is the number this product is
                 actually about. Counts every meet you were confirmed at,
                 including ones you never said yes to and turned up anyway. */}
-            <div className="text-center" title="Meets you were confirmed at">
-              <p className="font-bold text-lg">{stats?.meets_attended ?? 0}</p>
+            <div className="text-center rounded-2xl py-3" title="Meets you were confirmed at">
+              <p className="text-2xl font-light tracking-tight">{stats?.meets_attended ?? 0}</p>
               <p className="text-muted-foreground">Meets</p>
             </div>
           </div>
 
           {showsUp && (
-            <p className="text-sm">
-              <span className="font-display font-semibold text-pen">
-                Shows up {showsUp.kept} of {showsUp.committed}
-              </span>
-              <span className="text-foreground/70"> meets you said yes to.</span>
+            <p className="text-[0.95rem]">
+              <span className="font-medium">Shows up {showsUp.kept} of {showsUp.committed}</span>
+              <span className="text-muted-foreground"> meets you said yes to.</span>
             </p>
           )}
 
           {/* Circles */}
           <div id="circles" className="space-y-3 scroll-mt-20">
-            <p className="label">Your circles</p>
+            <h2 className="label">Your circles</h2>
             {circles && circles.length > 0 ? (
-              <ul className="divide-y divide-border border-t border-b">
+              <ul className="divide-y divide-border border-y border-border">
                 {circles.map((circle) => {
                   const role = memberships?.find((m) => m.circle_id === circle.id)?.role
                   return (
                     <li key={circle.id}>
                       <Link
                         href={`/circles/${circle.id}`}
-                        className="flex items-center gap-3 py-3 hover:underline underline-offset-4 decoration-pen-soft"
+                        className="flex items-center gap-3 py-3.5 group"
                       >
                         <span className="text-lg">{circle.emoji ?? '●'}</span>
-                        <span className="flex-1 font-display font-semibold">{circle.name}</span>
-                        {circle.visibility === 'private' && <span className="font-display italic text-sm text-muted-foreground">private</span>}
-                        {role === 'admin' && <span className="font-display italic text-sm text-muted-foreground">admin</span>}
+                        <span className="flex-1 font-medium group-hover:underline underline-offset-4 decoration-1">{circle.name}</span>
+                        {circle.visibility === 'private' && <span className="text-xs rounded-full bg-muted px-2.5 py-1 text-muted-foreground">Private</span>}
+                        {role === 'admin' && <span className="text-xs rounded-full bg-muted px-2.5 py-1 text-muted-foreground">Admin</span>}
                       </Link>
                     </li>
                   )
@@ -144,15 +142,15 @@ export default async function ProfilePage() {
           </div>
 
           {blockedProfiles && blockedProfiles.length > 0 && (
-            <div className="pt-4 border-t space-y-2">
-              <p className="label">Blocked</p>
-              <ul className="divide-y divide-border border-t border-b">
+            <div className="space-y-3">
+              <h2 className="label">Blocked</h2>
+              <ul className="divide-y divide-border border-y border-border">
                 {blockedProfiles.map((b) => (
-                  <li key={b.id} className="flex items-center gap-3 py-2.5">
-                    <span className="flex-1 text-sm">{b.full_name ?? 'Someone'}</span>
+                  <li key={b.id} className="flex items-center gap-3 py-3">
+                    <span className="flex-1">{b.full_name ?? 'Someone'}</span>
                     <form action={unblockUser}>
                       <input type="hidden" name="user_id" value={b.id} />
-                      <button type="submit" className="text-sm text-muted-foreground hover:text-foreground underline underline-offset-2">
+                      <button type="submit" className="text-sm font-medium rounded-full bg-muted px-4 py-2 hover:bg-cool-2 transition-colors">
                         Unblock
                       </button>
                     </form>
@@ -163,22 +161,22 @@ export default async function ProfilePage() {
           )}
 
           {/* Business */}
-          <div className="pt-4 border-t space-y-2">
-            <p className="label">Business</p>
-            <Link href="/business" className="text-sm underline underline-offset-2">
+          <div className="space-y-2">
+            <h2 className="label">Business</h2>
+            <Link href="/business" className="underline underline-offset-4 decoration-1 decoration-cool-2 hover:decoration-foreground">
               Run a restaurant or business?
             </Link>
           </div>
 
           {/* Danger zone */}
-          <div className="pt-4 border-t space-y-2">
-            <p className="label">Account</p>
+          <div className="space-y-3 pt-6 border-t border-border">
+            <h2 className="label">Account</h2>
             {/* Sign out lived behind the phone hamburger, which is gone. The
                 account page is where people look for it anyway. */}
             <form action={logout}>
               <button
                 type="submit"
-                className="min-h-11 px-4 rounded-full border border-foreground text-sm font-medium hover:bg-muted transition-colors"
+                className="min-h-11 px-5 rounded-full bg-muted text-sm font-medium hover:bg-cool-2 transition-colors"
               >
                 Sign out
               </button>

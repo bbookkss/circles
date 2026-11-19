@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>All pages – Circles</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Host+Grotesk:wght@300;400;500;600&display=swap">
+<script>try { const t = localStorage.getItem("circles-theme"); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
+<link rel="stylesheet" href="circles.css">
+<style>
+.groups { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 40px 28px; margin-top: 40px; }
+.groups ul { list-style: none; padding: 0; margin: 12px 0 0; }
+.groups li a { display: flex; justify-content: space-between; gap: 12px; padding-block: 10px; border-bottom: 1px solid var(--rule); }
+.groups li a:hover .t { text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 1px; }
+.groups li .r { color: var(--quiet); font-size: 14px; }
+.groups li.missing a { pointer-events: none; }
+.groups li.missing .t { color: var(--quiet); }
+</style>
+</head>
+<body>
+<header class="nav" data-page="none"></header>
+<main class="page">
+  <div class="col">
+    <h1>Every page, redrawn</h1>
+    <p class="lede">Mockups of the Circles redesign. The sun and moon button in the nav switches light and dark on every page.</p>
+    <div class="groups" id="groups"></div>
+  </div>
+</main>
+<script src="circles.js"></script>
+<script>
+const groups = [
+  ["Signed out", [["index.html","Landing","/"],["login.html","Log in","/login"],["signup.html","Sign up","/signup"],["forgot-password.html","Forgot password","/forgot-password"],["reset-password.html","Reset password","/reset-password"],["check-email.html","Check your email","/check-email"],["unsubscribe.html","Unsubscribe","/unsubscribe"]]],
+  ["Your week", [["welcome.html","Welcome","/welcome"],["home.html","Home","/home"],["notifications.html","Notifications","/notifications"]]],
+  ["Circles", [["explore.html","Explore","/explore"],["circle.html","A circle","/circles/[id]"],["circle-new.html","Start a circle","/circles/new"],["circle-edit.html","Edit a circle","/circles/[id]/edit"],["circle-requests.html","Join requests","/circles/[id]/requests"]]],
+  ["People", [["messages.html","Messages","/messages"],["thread.html","A conversation","/messages/[userId]"],["profile.html","Your profile","/profile"],["person.html","Someone's profile","/profile/[id]"],["followers.html","Followers and following","/profile/[id]/[list]"]]],
+  ["Running it", [["business.html","Business","/business"],["admin.html","Admin","/admin"]]]
+];
+const el = document.getElementById("groups");
+el.innerHTML = groups.map(([g, items]) => `<section><h2>${g}</h2><ul>${items.map(([f, t, r]) =>
+  `<li data-f="${f}"><a href="${f}"><span class="t">${t}</span><span class="r">${r}</span></a></li>`).join("")}</ul></section>`).join("");
+// Grey out any page not drawn yet.
+el.querySelectorAll("li[data-f]").forEach(li => fetch(li.dataset.f, { method: "HEAD" }).then(r => { if (!r.ok) li.classList.add("missing"); }).catch(() => li.classList.add("missing")));
+</script>
+</body>
+</html>

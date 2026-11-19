@@ -8,6 +8,7 @@ import PostItem from '@/components/PostItem'
 import CheckInControl from '@/components/CheckInControl'
 import { todayISO, dayNameISO, daysBetweenISO, relativeDayLabel, formatTime, checkInWindow, meetPhase } from '@/lib/schedule'
 import MeetZone from '@/components/MeetZone'
+import HeatMap, { type HeatArea } from '@/components/HeatMap'
 import { cookies } from 'next/headers'
 import type { CirclePlace } from '@/lib/approxLocation'
 import type { ComponentProps } from 'react'
@@ -239,43 +240,74 @@ export default async function HomePage() {
           ? `One meet this week, ${firstName}.`
           : `${ahead.length} meets this week, ${firstName}.`
 
+  // The hero map: the areas your circles meet in, as heat. Hotter means
+  // sooner. Positions are your circles' real points, fitted into the frame;
+  // the map under them is drawn, not geographic, so nothing here is a pin.
+  const places = ((placesResult.data ?? []) as CirclePlace[]).filter((p) => p.latitude != null && p.longitude != null)
+  const soonest = new Map<string, number>()
+  for (const u of allNext) if (!soonest.has(u.circle.id)) soonest.set(u.circle.id, u.daysAway)
+  const heatAreas: HeatArea[] = (() => {
+    if (places.length === 0) {
+      return [
+        { x: 0.22, y: 0.3, r: 90, temp: 0.35 },
+        { x: 0.62, y: 0.2, r: 70, temp: 0.25 },
+        { x: 0.84, y: 0.42, r: 56, temp: 0.2 },
+      ]
+    }
+    const lats = places.map((p) => p.latitude!)
+    const lngs = places.map((p) => p.longitude!)
+    const [minLat, maxLat, minLng, maxLng] = [Math.min(...lats), Math.max(...lats), Math.min(...lngs), Math.max(...lngs)]
+    const fit = (v: number, lo: number, hi: number, a: number, b: number) => (hi - lo < 1e-6 ? (a + b) / 2 : a + ((v - lo) / (hi - lo)) * (b - a))
+    return places.slice(0, 8).map((p) => {
+      const d = soonest.get(p.circle_id)
+      return {
+        x: fit(p.longitude!, minLng, maxLng, 0.18, 0.82),
+        y: fit(p.latitude!, maxLat, minLat, 0.14, 0.48),
+        r: 80,
+        temp: d === undefined ? 0.3 : Math.max(0.3, 1 - d / 8),
+      }
+    })
+  })()
+
   return (
     <>
       <TopNav />
-      <main className="pt-14 pb-20 md:pb-0 min-h-screen bg-background">
-        <div className="mx-auto max-w-3xl px-5 md:px-6 py-8 md:py-12 space-y-10">
+      <main className="pb-24 md:pb-0 min-h-screen bg-background">
+        {/* The week, on a glass sheet over the map, which runs up under the nav. */}
+        <section className="relative h-[380px] md:h-[420px] overflow-hidden" aria-label="Your week">
+          <HeatMap areas={heatAreas} className="absolute inset-0" />
+          <div className="relative h-full mx-auto max-w-3xl px-4 flex items-end pb-6">
+            <div className="glass w-full rounded-[28px] px-4 md:px-7 pt-5 md:pt-6 pb-3.5 fade-rise">
+              <h1 className="text-[2rem] md:text-[3.25rem]">{greeting}</h1>
+              {circles.length > 0 && (
+                <ol className="grid grid-cols-7 mt-5">
+                  {week.map((iso, i) => {
+                    const isToday = i === 0
+                    return (
+                      <li key={iso} className={`text-center pt-2 pb-1 rounded-[14px] ${isToday ? 'bg-foreground text-background' : ''}`}>
+                        <p className={`text-[13px] ${isToday ? 'opacity-70' : 'text-muted-foreground'}`}>{shortDay(iso)}</p>
+                        <p className="text-[17px] md:text-xl tracking-tight mt-0.5">{Number(iso.slice(8, 10))}</p>
+                        <div className="h-1.5 mt-1 flex justify-center">
+                          {meetDays.has(iso) && <span className="w-1.5 h-1.5 rounded-full bg-heat" />}
+                        </div>
+                      </li>
+                    )
+                  })}
+                </ol>
+              )}
+            </div>
+          </div>
+        </section>
+
+        <div className="mx-auto max-w-3xl px-5 md:px-11 pt-2 pb-10 space-y-12">
 
           {/* ---------------------------------------------------------
               The week. The greeting has a verb because the page has a job:
               tell you where to be and who else is coming.
               --------------------------------------------------------- */}
-          <section className="space-y-5 fade-rise">
-            <h1 className="text-[2rem] md:text-[2.4rem] font-normal leading-tight">
-              {greeting.split(firstName)[0]}
-              <em className="text-pen italic font-normal">{firstName}.</em>
-            </h1>
-
-            {circles.length > 0 && (
-              <ol className="grid grid-cols-7 border-t border-foreground border-b">
-                {week.map((iso, i) => {
-                  const isToday = i === 0
-                  return (
-                    <li key={iso} className={`py-2.5 text-center ${i < 6 ? 'border-r border-border/60' : ''}`}>
-                      <p className="label">{shortDay(iso)}</p>
-                      <p className={`font-display font-semibold text-lg leading-tight mt-0.5 ${isToday ? 'inline-block px-2 rounded-sm bg-hi' : ''}`}>
-                        {Number(iso.slice(8, 10))}
-                      </p>
-                      <div className="h-1.5 mt-1.5 flex justify-center">
-                        {meetDays.has(iso) && <span className="w-1.5 h-1.5 rounded-full bg-pen" />}
-                      </div>
-                    </li>
-                  )
-                })}
-              </ol>
-            )}
-
+          <section className="space-y-5">
             {circles.length > 0 && ahead.length === 0 && (
-              <p className="text-sm text-muted-foreground">
+              <p className="text-[15px] text-muted-foreground pt-6">
                 Your circles have no {over.length > 0 ? 'further ' : ''}meets in the next seven days.
               </p>
             )}
@@ -314,26 +346,31 @@ export default async function HomePage() {
                         : `${yesNames.slice(0, 2).join(', ')} and ${yesNames.length - 2} more are in`
 
                   return (
-                    <li key={circle.id} className="grid grid-cols-1 md:grid-cols-[150px_1fr] gap-x-6 gap-y-2 py-6">
-                      <div>
-                        <p className="font-display font-semibold text-2xl leading-none">{dayWord}</p>
-                        <p className="num text-sm text-foreground/80 mt-1.5">
+                    <li key={circle.id} className="grid grid-cols-1 md:grid-cols-[168px_1fr] gap-x-7 gap-y-1 py-7 md:py-8">
+                      <div className="flex md:block items-baseline gap-x-2.5 flex-wrap">
+                        <p className="text-[26px] tracking-tight leading-none">{dayWord}</p>
+                        <p className="text-[15px] text-muted-foreground md:mt-2">
                           {formatTime(schedule.start_time)} – {formatTime(schedule.end_time)}
                           <MeetZone tz={circle.timezone} />
                         </p>
-                        <p className={`label mt-2 ${open ? 'text-pen' : 'normal-case tracking-normal'}`}>
-                          {open ? '● check-in open' : reason ?? ''}
-                        </p>
+                        {open ? (
+                          <p className="text-sm font-medium text-pen md:mt-2.5 flex items-center gap-1.5">
+                            <span className="w-[7px] h-[7px] rounded-full bg-heat" aria-hidden />
+                            Check-in open
+                          </p>
+                        ) : (
+                          <p className="text-sm text-muted-foreground md:mt-2.5">{reason ?? ''}</p>
+                        )}
                       </div>
-                      <div className="min-w-0">
-                        <Link href={`/circles/${circle.id}`} className="hover:underline underline-offset-4 decoration-pen-soft">
-                          <h2 className="text-xl md:text-2xl leading-tight">
+                      <div className="min-w-0 mt-2 md:mt-0">
+                        <Link href={`/circles/${circle.id}`} className="hover:underline underline-offset-4 decoration-1">
+                          <h2 className="text-[22px] leading-tight">
                             {circle.emoji && <span className="mr-2">{circle.emoji}</span>}
                             {circle.name}
                           </h2>
                         </Link>
-                        {where && <p className="text-sm text-foreground/75 mt-0.5 truncate">{where}</p>}
-                        <div className="flex items-center gap-3 flex-wrap mt-3.5">
+                        {where && <p className="text-[15px] text-muted-foreground mt-0.5 truncate">{where}</p>}
+                        <div className="flex items-center gap-3.5 flex-wrap mt-4">
                           <CheckInControl
                             circleId={circle.id}
                             occursOn={occursOn}
@@ -341,8 +378,8 @@ export default async function HomePage() {
                             disabled={!open}
                             disabledReason={undefined}
                           />
-                          <p className="text-sm text-foreground/75">
-                            {whoLine}{maybes.length > 0 ? ` · ${maybes.length} maybe` : ''}
+                          <p className="text-[15px] text-muted-foreground">
+                            {whoLine}{maybes.length > 0 ? `, ${maybes.length} maybe` : ''}
                           </p>
                         </div>
                       </div>
@@ -365,8 +402,7 @@ export default async function HomePage() {
                       >
                         <span className="flex-shrink-0">{circle.emoji ?? '●'}</span>
                         <span className="truncate">{circle.name}</span>
-                        <span className="num text-xs flex-shrink-0">· finished {formatTime(schedule.start_time)}</span>
-                        {went > 0 && <span className="text-xs flex-shrink-0">· {went} went</span>}
+                        <span className="text-xs flex-shrink-0">, finished {formatTime(schedule.start_time)}{went > 0 ? `, ${went} went` : ''}</span>
                       </Link>
                     </li>
                   )
@@ -375,27 +411,27 @@ export default async function HomePage() {
             )}
 
             {(later.length > 0 || unscheduled.length > 0) && (
-              <div className="pt-2">
-                <p className="label mb-2">Later</p>
-                <ul className="divide-y divide-dashed divide-border">
+              <div className="pt-6">
+                <h2 className="label">Later</h2>
+                <ul className="mt-3">
                   {later.map(({ circle, occursOn }) => (
-                    <li key={circle.id} className="grid grid-cols-[110px_1fr] md:grid-cols-[150px_1fr] gap-x-6 py-2 text-sm">
-                      <span className="num text-foreground">{shortDate(occursOn)}</span>
-                      <Link href={`/circles/${circle.id}`} className="text-foreground/80 hover:text-foreground truncate">
+                    <li key={circle.id} className="grid grid-cols-[96px_1fr] md:grid-cols-[168px_1fr] gap-x-4 md:gap-x-7 py-2 text-[15px]">
+                      <span className="text-muted-foreground">{shortDate(occursOn)}</span>
+                      <Link href={`/circles/${circle.id}`} className="hover:underline underline-offset-4 decoration-1 truncate">
                         {circle.name}
                         {scheduleMap[circle.id]?.frequency && scheduleMap[circle.id].frequency !== 'weekly' && (
-                          <span className="text-muted-foreground"> · {scheduleMap[circle.id].frequency === 'biweekly' ? 'every other week' : 'monthly'}</span>
+                          <span className="text-muted-foreground">, {scheduleMap[circle.id].frequency === 'biweekly' ? 'every other week' : 'monthly'}</span>
                         )}
                       </Link>
                     </li>
                   ))}
                   {unscheduled.map((circle) => (
-                    <li key={circle.id} className="grid grid-cols-[110px_1fr] md:grid-cols-[150px_1fr] gap-x-6 py-2 text-sm">
+                    <li key={circle.id} className="grid grid-cols-[96px_1fr] md:grid-cols-[168px_1fr] gap-x-4 md:gap-x-7 py-2 text-[15px]">
                       <span className="num text-muted-foreground">—</span>
                       <span className="text-foreground/80">
                         {circle.name} has no schedule yet.{' '}
                         {roleOf[circle.id] === 'admin' ? (
-                          <Link href={`/circles/${circle.id}/edit`} className="underline underline-offset-4 decoration-pen-soft hover:text-foreground">Set one</Link>
+                          <Link href={`/circles/${circle.id}/edit`} className="underline underline-offset-4 decoration-1 hover:text-foreground">Set one</Link>
                         ) : (
                           'Ask its admin to set one.'
                         )}
@@ -407,14 +443,14 @@ export default async function HomePage() {
             )}
 
             {circles.length === 0 && (
-              <div className="border-t border-b py-10 space-y-3">
-                <p className="font-display text-xl">You haven&apos;t joined a circle yet.</p>
-                <p className="text-sm text-foreground/75 max-w-md">
+              <div className="rounded-3xl bg-muted p-7 md:p-8 space-y-3 mt-6">
+                <p className="text-xl font-medium tracking-tight">You haven&apos;t joined a circle yet.</p>
+                <p className="text-[15px] text-muted-foreground max-w-md">
                   Circles are groups that meet at the same place on a regular schedule. Find one near you, or start the first.
                 </p>
                 <div className="flex gap-2 pt-1">
                   <Link href="/explore"><Button size="sm">Find circles near me</Button></Link>
-                  <Link href="/circles/new"><Button size="sm" variant="outline">Start one</Button></Link>
+                  <Link href="/circles/new"><Button size="sm" variant="secondary">Start one</Button></Link>
                 </div>
               </div>
             )}
@@ -425,10 +461,10 @@ export default async function HomePage() {
               treatment rather than a read-only digest.
               --------------------------------------------------------- */}
           {circles.length > 0 && (
-            <section className="space-y-5">
-              <p className="label">Notes from your circles</p>
+            <section className="space-y-4">
+              <h2 className="label">Notes from your circles</h2>
 
-              <div className="border-b pb-5 fade-rise stagger-1">
+              <div className="pb-2">
                 <HomeCompose
                   circles={circles.map((c) => ({ id: c.id, name: c.name, emoji: c.emoji }))}
                   authorName={myName}
@@ -437,11 +473,11 @@ export default async function HomePage() {
 
               {feedPosts.length === 0 ? (
                 <div className="py-8 space-y-1">
-                  <p className="font-display text-lg">Nothing posted yet.</p>
-                  <p className="text-sm text-foreground/75">When someone in your circles leaves a note, it shows up here. You could go first.</p>
+                  <p className="text-lg font-medium">Nothing posted yet.</p>
+                  <p className="text-[15px] text-muted-foreground">When someone in your circles leaves a note, it shows up here. You could go first.</p>
                 </div>
               ) : (
-                <div className="divide-y divide-border fade-rise stagger-2">
+                <div className="divide-y divide-border">
                   {feedPosts.map((p) => {
                     const c = circleMap[p.circle_id]
                     return (

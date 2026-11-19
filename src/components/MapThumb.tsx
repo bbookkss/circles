@@ -15,11 +15,11 @@ export default function MapThumb({ lat, lng, exact, label }: { lat: number; lng:
   }
   const x = lng.toFixed(5)
   const y = lat.toFixed(5)
-  const overlay = exact ? `pin-s+2b5c8a(${x},${y})/` : ''
+  const overlay = exact ? `pin-s+1a2230(${x},${y})/` : ''
   const zoom = exact ? 14 : 12.5
   const src = `https://api.mapbox.com/styles/v1/mapbox/light-v11/static/${overlay}${x},${y},${zoom},0/128x112@2x?attribution=false&logo=false&access_token=${TOKEN}`
   return (
-    <span className="relative w-16 h-14 shrink-0 rounded-md overflow-hidden bg-muted block">
+    <span className="relative w-16 h-14 shrink-0 rounded-xl overflow-hidden bg-cool-2 block">
       {/* eslint-disable-next-line @next/next/no-img-element -- a static map image, not worth the image optimiser */}
       <img
         src={src}
@@ -30,7 +30,7 @@ export default function MapThumb({ lat, lng, exact, label }: { lat: number; lng:
         className="w-full h-full object-cover"
       />
       {!exact && (
-        <span aria-hidden="true" className="absolute inset-0 m-auto w-9 h-9 rounded-full bg-pen/20 border border-pen/50" />
+        <span aria-hidden="true" className="absolute inset-0 m-auto w-10 h-10 rounded-full bg-[radial-gradient(circle,rgba(242,165,49,.7)_0%,rgba(242,165,49,.3)_45%,rgba(242,165,49,0)_100%)]" />
       )}
     </span>
   )

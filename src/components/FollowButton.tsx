@@ -34,10 +34,10 @@ export default function FollowButton({ targetId, circleId, initialIsFollowing }:
     <button
       onClick={handleToggle}
       disabled={loading}
-      className={`text-xs px-2 py-0.5 rounded-full border transition-colors ${
+      className={`text-sm font-medium px-4 py-1.5 rounded-full transition-colors disabled:opacity-60 ${
         isFollowing
-          ? 'bg-foreground text-background border-foreground hover:bg-foreground/80'
-          : 'border-input hover:bg-muted'
+          ? 'bg-muted text-foreground hover:bg-cool-2'
+          : 'bg-foreground text-background hover:opacity-85'
       }`}
     >
       {isFollowing ? 'Following' : 'Follow'}

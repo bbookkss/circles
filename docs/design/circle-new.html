@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>New circle – Circles</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Host+Grotesk:wght@300;400;500;600&display=swap">
+<script>try { const t = localStorage.getItem("circles-theme"); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
+<link rel="stylesheet" href="circles.css">
+<style>
+/* Circle form: the form scrolls on the left; the pin picker stays put on the right.
+   On a phone the map sits inside the Where section instead. */
+.shell {
+  max-width: 1120px; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 24px 120px;
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 48px; align-items: start;
+}
+.formcol { max-width: 520px; }
+.back { font-size: 15px; color: var(--quiet); display: inline-block; margin-bottom: 18px; }
+.back:hover { color: var(--ink); }
+.part { margin-top: 40px; display: grid; gap: 18px; }
+.part > h2 { font-size: 20px; font-weight: 500; color: var(--ink); letter-spacing: -0.015em; }
+.part > h2 .quiet { font-weight: 400; font-size: 15px; margin-left: 6px; }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.opt { color: var(--quiet); font-weight: 400; }
+
+.emojis { display: flex; flex-wrap: wrap; gap: 6px; }
+.emojis button { width: 42px; height: 42px; border: 0; border-radius: 12px; background: var(--cool); cursor: pointer; font-size: 20px; }
+.emojis button[aria-pressed="true"] { background: var(--ink); }
+.emojis .more { width: auto; padding: 0 12px; font-size: 14px; color: var(--quiet); }
+
+.days { display: flex; gap: 6px; flex-wrap: wrap; }
+.days button { min-width: 50px; border: 0; cursor: pointer; border-radius: 999px; padding: 9px 12px; font-size: 14px; font-weight: 500; background: var(--cool); color: var(--ink); }
+.days button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+
+.choices { display: grid; gap: 8px; }
+.choice { display: flex; gap: 12px; align-items: flex-start; padding: 14px 16px; border-radius: 16px; background: var(--cool); cursor: pointer; }
+.choice input { margin-top: 3px; accent-color: var(--ink); width: 18px; height: 18px; flex: none; }
+.choice b { font-weight: 500; display: block; }
+.choice span.quiet { font-size: 14px; }
+.choice:has(input:checked) { background: var(--paper); box-shadow: inset 0 0 0 2px var(--ink); }
+
+.mapcol { position: sticky; top: calc(84px + env(safe-area-inset-top, 0px)); }
+.picker { height: min(640px, calc(100vh - 120px)); border-radius: 28px; cursor: crosshair; }
+.picker .hint { position: absolute; left: 16px; right: 16px; bottom: 16px; border-radius: 18px; padding: 12px 16px; font-size: 14px; display: flex; justify-content: space-between; gap: 12px; align-items: center; pointer-events: none; }
+.picker .hint b { font-weight: 500; }
+.searchbox { position: relative; }
+.suggest { position: absolute; z-index: 4; left: 0; right: 0; top: calc(100% + 6px); list-style: none; margin: 0; padding: 6px; background: var(--paper); border: 1px solid var(--rule); border-radius: 16px; box-shadow: 0 12px 30px var(--shade); }
+.suggest[hidden] { display: none; }
+.suggest button { width: 100%; text-align: left; border: 0; background: none; cursor: pointer; padding: 10px 12px; border-radius: 10px; font-size: 15px; }
+.suggest button:hover { background: var(--cool); }
+.suggest .quiet { font-size: 13px; display: block; }
+.pinline { font-size: 14px; color: var(--quiet); display: flex; gap: 8px; align-items: center; }
+.pinline.set { color: var(--ink); }
+.pinline.set::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--ink); }
+.inline-map { display: none; }
+
+.submit { margin-top: 40px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+
+@media (max-width: 860px) {
+  .shell { grid-template-columns: 1fr; gap: 0; }
+  .mapcol { display: none; }
+  .inline-map { display: block; height: 280px; border-radius: 22px; cursor: crosshair; }
+  .row2 { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<header class="nav" data-page="none"></header>
+
+<div class="shell">
+  <div class="formcol">
+    <a class="back" href="explore.html" id="backLink">Back</a>
+    <h1 class="h-md" id="formTitle">New circle</h1>
+    <p class="lede" id="formLede">A group that meets at the same place on a regular schedule. Every circle has a schedule.</p>
+
+    <form id="form" novalidate>
+      <section class="part" aria-labelledby="what-h">
+        <h2 id="what-h">What</h2>
+        <div class="field">
+          <label for="name">Name</label>
+          <input id="name" name="name" placeholder="Thursday chess" autocomplete="off">
+          <span class="err" id="nameErr" hidden>Give it a name.</span>
+        </div>
+        <div class="field">
+          <label>Icon <span class="opt">(shows on the map)</span></label>
+          <div class="emojis" id="emojis" role="group" aria-label="Icon"></div>
+        </div>
+        <div class="field">
+          <label for="category">Category</label>
+          <select id="category" name="category">
+            <option value="">Select a category</option>
+            <option>Music</option><option>Sports</option><option>Food &amp; Drink</option><option>Arts &amp; Culture</option>
+            <option>Outdoors</option><option>Tech</option><option>Social</option><option>Other</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="desc">Description <span class="opt">(optional)</span></label>
+          <textarea id="desc" name="description" placeholder="What's this circle about?"></textarea>
+        </div>
+        <div class="field" id="kindField">
+          <label>Circle type</label>
+          <div class="choices">
+            <label class="choice"><input type="radio" name="kind" value="social" checked><span><b>Social</b><span class="quiet">A regular circle, same as anyone else's.</span></span></label>
+            <label class="choice"><input type="radio" name="kind" value="commercial"><span><b>Business</b><span class="quiet">Promotes your venue. Shown differently on the map, and people can filter for it.</span></span></label>
+          </div>
+          <span class="hint">You see this because your account is a business account.</span>
+        </div>
+      </section>
+
+      <section class="part" aria-labelledby="when-h">
+        <h2 id="when-h">When</h2>
+        <div class="field">
+          <label for="freq">Frequency</label>
+          <select id="freq" name="frequency"><option value="weekly">Weekly</option><option value="biweekly">Every other week</option><option value="monthly">Monthly</option></select>
+        </div>
+        <div class="field">
+          <label>Days</label>
+          <div class="days" id="days" role="group" aria-label="Days it meets"></div>
+          <span class="err" id="daysErr" hidden>Pick at least one day it meets.</span>
+        </div>
+        <div class="row2">
+          <div class="field"><label for="start">Start time</label><input id="start" type="time" value="19:00"></div>
+          <div class="field"><label for="end">End time</label><input id="end" type="time" value="21:00"></div>
+        </div>
+        <div class="field">
+          <label for="first">First meet</label>
+          <input id="first" type="date" value="2026-11-19">
+        </div>
+        <div class="field">
+          <label for="snote">Note <span class="opt">(optional)</span></label>
+          <input id="snote" placeholder="Weather permitting, bring your own ball">
+        </div>
+      </section>
+
+      <section class="part" aria-labelledby="where-h">
+        <h2 id="where-h">Where <span class="quiet">Only members see the exact spot.</span></h2>
+        <div class="field searchbox">
+          <label for="search">Search for the spot</label>
+          <input id="search" placeholder="Search a place or address" autocomplete="off">
+          <ul class="suggest" id="suggest" hidden></ul>
+          <span class="hint">Or tap the map to drop a pin yourself.</span>
+        </div>
+        <div class="map inline-map" id="inlineMap"><canvas aria-label="Tap to drop a pin" role="img"></canvas></div>
+        <p class="pinline" id="pinline">No pin yet. Tap the map.</p>
+        <div class="field">
+          <label for="loc">Location name</label>
+          <input id="loc" placeholder="Dolores Park" autocomplete="off">
+          <span class="hint">Shown to members only. Everyone else sees the neighbourhood.</span>
+        </div>
+        <div class="field">
+          <label for="hood">Neighbourhood</label>
+          <input id="hood" placeholder="Filled in from the pin" autocomplete="off">
+        </div>
+      </section>
+
+      <section class="part" aria-labelledby="vis-h">
+        <h2 id="vis-h">Who can join</h2>
+        <div class="choices">
+          <label class="choice"><input type="radio" name="vis" value="public" checked><span><b>Public</b><span class="quiet">Anyone can find and join this circle.</span></span></label>
+          <label class="choice"><input type="radio" name="vis" value="private"><span><b>Private</b><span class="quiet">People ask to join, and you approve them.</span></span></label>
+        </div>
+      </section>
+
+      <p class="err" id="formErr" hidden style="margin-top:24px"></p>
+      <div class="submit">
+        <button class="btn" type="submit" id="submitBtn">Create circle</button>
+        <a class="btn ghost" href="explore.html" id="cancelLink">Cancel</a>
+      </div>
+    </form>
+  </div>
+
+  <div class="mapcol">
+    <div class="map picker glass" id="sideMap">
+      <canvas aria-label="Click to drop a pin" role="img"></canvas>
+      <div class="hint glass" id="sideHint"><span id="sideHintText">Click anywhere on the map to drop a pin.</span></div>
+    </div>
+  </div>
+</div>
+
+<nav class="tabs" data-page="none"></nav>
+
+<script src="circles.js"></script>
+<script>
+/* PREFILL is null for a new circle; circle-edit.html sets it. */
+const PREFILL = window.PREFILL || null;
+
+const EMOJI = ["♟️", "🏃", "📚", "🎨", "🎵", "☕", "🧺", "🏀", "🌳", "🍞", "💻", "🧘"];
+let emoji = PREFILL?.emoji ?? null, showAll = false;
+function renderEmoji() {
+  const list = showAll ? EMOJI : EMOJI.slice(0, 8);
+  document.getElementById("emojis").innerHTML = list.map(e => `<button type="button" data-e="${e}" aria-pressed="${emoji === e}" aria-label="${e}">${e}</button>`).join("") +
+    `<button type="button" class="more" id="moreE">${showAll ? "Show fewer" : "Show all icons"}</button>`;
+}
+document.getElementById("emojis").addEventListener("click", e => {
+  if (e.target.closest("#moreE")) { showAll = !showAll; renderEmoji(); return; }
+  const b = e.target.closest("[data-e]"); if (b) { emoji = emoji === b.dataset.e ? null : b.dataset.e; renderEmoji(); }
+});
+renderEmoji();
+
+const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const days = new Set(PREFILL?.days ?? []);
+function renderDays() { document.getElementById("days").innerHTML = DAYS.map((d, i) => `<button type="button" data-d="${i}" aria-pressed="${days.has(i)}">${d}</button>`).join(""); }
+document.getElementById("days").addEventListener("click", e => { const b = e.target.closest("[data-d]"); if (!b) return; const d = +b.dataset.d; days.has(d) ? days.delete(d) : days.add(d); renderDays(); });
+renderDays();
+
+/* ---------- pin ---------- */
+const HOODS = [[.5, .4, "Mission Dolores"], [.25, .3, "Castro"], [.7, .25, "Duboce Triangle"], [.6, .7, "Bernal Heights"], [.3, .7, "Noe Valley"], [.85, .5, "SoMa"]];
+let pin = PREFILL?.pin ?? null;
+const pins = [];
+const ctls = [];
+function nearestHood(p) { return HOODS.reduce((a, h) => Math.hypot(h[0] - p.x, h[1] - p.y) < Math.hypot(a[0] - p.x, a[1] - p.y) ? h : a)[2]; }
+function setPin(p, venue) {
+  pin = p; pins.length = 0; pins.push(p);
+  const hood = nearestHood(p);
+  document.getElementById("hood").value = hood;
+  if (venue) document.getElementById("loc").value = venue;
+  const line = document.getElementById("pinline");
+  line.className = "pinline set"; line.textContent = `Pin dropped in ${hood}.`;
+  document.getElementById("sideHintText").innerHTML = `<b>Pin dropped</b>, ${hood}`;
+  ctls.forEach(c => c.redraw());
+}
+[document.querySelector("#sideMap canvas"), document.querySelector("#inlineMap canvas")].forEach(cv => {
+  ctls.push(Circles.drawMap(cv, [], { exact: pins, seed: 3 }));
+  cv.addEventListener("click", e => { const r = cv.getBoundingClientRect(); setPin({ x: (e.clientX - r.left) / r.width, y: (e.clientY - r.top) / r.height }); });
+});
+
+const PLACES = [["Ritual Coffee", "1026 Valencia St", .52, .36], ["Dolores Park", "Dolores St and 19th St", .44, .46], ["Duboce Park", "Duboce Ave", .7, .24], ["Dog Eared Books", "900 Valencia St", .55, .44], ["Main Library", "100 Larkin St", .8, .16]];
+const search = document.getElementById("search"), sug = document.getElementById("suggest");
+search.addEventListener("input", () => {
+  const q = search.value.trim().toLowerCase();
+  const m = q ? PLACES.filter(p => (p[0] + " " + p[1]).toLowerCase().includes(q)) : [];
+  sug.hidden = !m.length;
+  sug.innerHTML = m.map((p, i) => `<li><button type="button" data-p="${PLACES.indexOf(p)}">${p[0]}<span class="quiet">${p[1]}</span></button></li>`).join("");
+});
+sug.addEventListener("click", e => { const b = e.target.closest("[data-p]"); if (!b) return; const p = PLACES[+b.dataset.p]; setPin({ x: p[2], y: p[3] }, p[0]); search.value = ""; sug.hidden = true; });
+
+/* ---------- submit ---------- */
+document.getElementById("form").addEventListener("submit", e => {
+  e.preventDefault();
+  const name = document.getElementById("name").value.trim();
+  document.getElementById("nameErr").hidden = !!name;
+  document.getElementById("daysErr").hidden = days.size > 0;
+  const err = document.getElementById("formErr");
+  if (!name || !days.size) { err.hidden = true; return; }
+  if (!pin) { err.textContent = "Drop a pin on the map."; err.hidden = false; return; }
+  err.hidden = true;
+  const b = document.getElementById("submitBtn");
+  b.disabled = true; b.textContent = PREFILL ? "Saving…" : "Creating…";
+  setTimeout(() => location.href = "circle.html", 700);
+});
+
+/* ---------- prefill for edit ---------- */
+if (PREFILL) {
+  document.getElementById("name").value = PREFILL.name;
+  document.getElementById("category").value = PREFILL.category;
+  document.getElementById("desc").value = PREFILL.description;
+  document.getElementById("freq").value = PREFILL.frequency;
+  document.getElementById("start").value = PREFILL.start;
+  document.getElementById("end").value = PREFILL.end;
+  document.getElementById("first").value = PREFILL.first;
+  document.getElementById("snote").value = PREFILL.note;
+  document.querySelector(`input[name="vis"][value="${PREFILL.visibility}"]`).checked = true;
+  setPin(PREFILL.pin, PREFILL.venue);
+  document.getElementById("hood").value = PREFILL.hood;
+}
+if (window.HIDE_KIND) document.getElementById("kindField").remove();
+</script>
+</body>
+</html>

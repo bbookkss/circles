@@ -40,16 +40,16 @@ export default function SignupPage() {
   }
 
   return (
-    <AuthShell altHref="/login" altLabel="Sign in">
+    <AuthShell altHref="/login" altLabel="Log in">
       <div className="space-y-6">
           <div>
-            <h2 className="text-3xl">Create your account</h2>
-            <p className="text-muted-foreground text-sm mt-1">Takes a minute. Free.</p>
+            <h1 className="text-[1.75rem] sm:text-[2.2rem]">Create your account</h1>
+            <p className="text-muted-foreground mt-2">Takes a minute, and it&apos;s free.</p>
           </div>
 
           <form action={handleSubmit} className="space-y-4">
             {error && (
-              <p className="text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-md">{error}</p>
+              <p className="text-sm text-destructive bg-destructive/10 px-3.5 py-2.5 rounded-xl">{error}</p>
             )}
             <div className="space-y-2">
               <Label htmlFor="full_name">Your name</Label>
@@ -63,15 +63,15 @@ export default function SignupPage() {
               <Label htmlFor="password">Password</Label>
               <Input id="password" name="password" type="password" placeholder="8+ characters" autoComplete="new-password" minLength={8} required />
             </div>
-            <Button type="submit" className="w-full rounded-full" disabled={loading}>
-              {loading ? 'Creating account...' : 'Join Circles'}
+            <Button type="submit" size="lg" className="w-full" disabled={loading}>
+              {loading ? 'Creating your account…' : 'Create account'}
             </Button>
           </form>
 
-          <p className="text-sm text-muted-foreground text-center">
+          <p className="text-[15px] text-muted-foreground text-center">
             Already have an account?{' '}
-            <Link href="/login" className="underline underline-offset-4 decoration-pen-soft hover:text-foreground">
-              Sign in
+            <Link href="/login" className="underline underline-offset-4 decoration-cool-2 hover:text-foreground">
+              Log in
             </Link>
           </p>
       </div>

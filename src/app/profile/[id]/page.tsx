@@ -90,51 +90,51 @@ export default async function UserProfilePage({ params }: { params: Promise<{ id
   return (
     <>
       <TopNav />
-      <main className="pt-14 pb-20 md:pb-0 min-h-screen bg-background">
-        <div className="max-w-2xl mx-auto px-4 py-8 space-y-8">
+      <main className="pt-14 pb-28 md:pb-12 min-h-screen bg-background">
+        <div className="max-w-2xl mx-auto px-4 md:px-6 pt-10 space-y-10">
 
           {/* Avatar + name + bio */}
           <div className="flex items-start gap-5">
-            <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center text-2xl font-bold flex-shrink-0">
+            <div className="w-[72px] h-[72px] rounded-full bg-cool-2 flex items-center justify-center text-2xl font-normal flex-shrink-0">
               {initials}
             </div>
             <div className="flex-1 min-w-0 space-y-2">
-              <h1 className="text-2xl leading-tight">{profile.full_name}</h1>
+              <h1 className="text-[2.2rem] md:text-[2.6rem]">{profile.full_name}</h1>
               {profile.instagram && (
                 <a
                   href={`https://instagram.com/${profile.instagram}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-sm text-muted-foreground hover:text-foreground underline underline-offset-2 inline-block"
+                  className="text-sm text-muted-foreground hover:text-foreground underline underline-offset-4 decoration-1 inline-block"
                 >
                   @{profile.instagram}
                 </a>
               )}
-              {profile.bio && <p className="text-sm text-muted-foreground">{profile.bio}</p>}
+              {profile.bio && <p className="text-[0.95rem] text-muted-foreground max-w-prose">{profile.bio}</p>}
               {iBlocked ? (
                 <div className="flex items-center gap-3 pt-1">
-                  <p className="text-sm text-foreground/75">You blocked {profile.full_name ?? 'them'}.</p>
+                  <p className="text-sm text-muted-foreground">You blocked {profile.full_name ?? 'them'}.</p>
                   <form action={unblockUser}>
                     <input type="hidden" name="user_id" value={id} />
-                    <Button type="submit" size="sm" variant="outline">Unblock</Button>
+                    <Button type="submit" size="sm" variant="secondary">Unblock</Button>
                   </form>
                 </div>
               ) : (
-                <div className="flex items-center gap-2 pt-1">
+                <div className="flex items-center gap-2 pt-2">
                   <form action={isFollowing ? unfollowUser : followUser}>
                     <input type="hidden" name="following_id" value={id} />
-                    <Button type="submit" size="sm" variant={isFollowing ? 'outline' : 'default'}>
+                    <Button type="submit" size="sm" variant={isFollowing ? 'secondary' : 'default'}>
                       {isFollowing ? 'Following' : 'Follow'}
                     </Button>
                   </form>
                   {canMessage && (
                     <Link href={`/messages/${id}`}>
-                      <Button size="sm" variant="outline">Message</Button>
+                      <Button size="sm" variant="secondary">Message</Button>
                     </Link>
                   )}
                 </div>
               )}
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 pt-1 text-xs">
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 pt-1 text-sm text-muted-foreground">
                 <ReportButton targetType="user" targetId={id} />
                 {!iBlocked && <BlockButton userId={id} name={profile.full_name ?? 'them'} />}
               </div>
@@ -142,31 +142,29 @@ export default async function UserProfilePage({ params }: { params: Promise<{ id
           </div>
 
           {/* Stats */}
-          <div className="flex gap-6 text-sm">
-            <Link href={`/profile/${id}/followers`} className="text-center hover:underline underline-offset-4">
-              <p className="font-bold text-lg">{followerCount ?? 0}</p>
+          <div className="grid grid-cols-4 gap-2 rounded-3xl bg-muted p-2 text-sm">
+            <Link href={`/profile/${id}/followers`} className="text-center rounded-2xl py-3 hover:bg-background/60 transition-colors">
+              <p className="text-2xl font-light tracking-tight">{followerCount ?? 0}</p>
               <p className="text-muted-foreground">Followers</p>
             </Link>
-            <Link href={`/profile/${id}/following`} className="text-center hover:underline underline-offset-4">
-              <p className="font-bold text-lg">{followingCount ?? 0}</p>
+            <Link href={`/profile/${id}/following`} className="text-center rounded-2xl py-3 hover:bg-background/60 transition-colors">
+              <p className="text-2xl font-light tracking-tight">{followingCount ?? 0}</p>
               <p className="text-muted-foreground">Following</p>
             </Link>
-            <a href="#circles" className="text-center hover:underline underline-offset-4">
-              <p className="font-bold text-lg">{circles?.length ?? 0}</p>
+            <a href="#circles" className="text-center rounded-2xl py-3 hover:bg-background/60 transition-colors">
+              <p className="text-2xl font-light tracking-tight">{circles?.length ?? 0}</p>
               <p className="text-muted-foreground">Circles</p>
             </a>
-            <div className="text-center" title="Meets they were confirmed at">
-              <p className="font-bold text-lg">{stats?.meets_attended ?? 0}</p>
+            <div className="text-center rounded-2xl py-3" title="Meets they were confirmed at">
+              <p className="text-2xl font-light tracking-tight">{stats?.meets_attended ?? 0}</p>
               <p className="text-muted-foreground">Meets</p>
             </div>
           </div>
 
           {showsUp && (
-            <p className="text-sm">
-              <span className="font-display font-semibold text-pen">
-                Shows up {showsUp.kept} of {showsUp.committed}
-              </span>
-              <span className="text-foreground/70"> meets they said yes to.</span>
+            <p className="text-[0.95rem]">
+              <span className="font-medium">Shows up {showsUp.kept} of {showsUp.committed}</span>
+              <span className="text-muted-foreground"> meets they said yes to.</span>
             </p>
           )}
 
@@ -174,15 +172,15 @@ export default async function UserProfilePage({ params }: { params: Promise<{ id
               meeting is rarely the stranger; it is the person you both
               already know. */}
           {(sharedCircles?.length || mutuals?.length) ? (
-            <div className="space-y-1.5">
-              <p className="label">In common</p>
+            <div className="rounded-3xl bg-muted px-5 py-4 space-y-1.5">
+              <h2 className="label">In common</h2>
               {sharedCircles && sharedCircles.length > 0 && (
-                <p className="text-sm text-foreground/80">
+                <p className="text-[0.95rem]">
                   You are both in{' '}
                   {sharedCircles.map((c, i) => (
                     <span key={c.id}>
                       {i > 0 && (i === sharedCircles.length - 1 ? ' and ' : ', ')}
-                      <Link href={`/circles/${c.id}`} className="font-display font-semibold hover:underline underline-offset-4 decoration-pen-soft">
+                      <Link href={`/circles/${c.id}`} className="font-medium underline underline-offset-4 decoration-1 decoration-cool-2 hover:decoration-foreground">
                         {c.emoji ? `${c.emoji} ` : ''}{c.name}
                       </Link>
                     </span>
@@ -191,12 +189,12 @@ export default async function UserProfilePage({ params }: { params: Promise<{ id
                 </p>
               )}
               {mutuals && mutuals.length > 0 && (
-                <p className="text-sm text-foreground/80">
+                <p className="text-[0.95rem]">
                   You both know{' '}
                   {mutuals.slice(0, 3).map((m, i, shown) => (
                     <span key={m.id}>
                       {i > 0 && (i === shown.length - 1 && mutuals.length <= 3 ? ' and ' : ', ')}
-                      <Link href={`/profile/${m.id}`} className="font-semibold hover:underline underline-offset-4 decoration-pen-soft">
+                      <Link href={`/profile/${m.id}`} className="font-medium underline underline-offset-4 decoration-1 decoration-cool-2 hover:decoration-foreground">
                         {m.full_name}
                       </Link>
                     </span>
@@ -210,24 +208,24 @@ export default async function UserProfilePage({ params }: { params: Promise<{ id
 
           {/* Public circles */}
           <div id="circles" className="space-y-3 scroll-mt-20">
-            <p className="label">Circles</p>
+            <h2 className="label">Circles</h2>
             {circles && circles.length > 0 ? (
-              <ul className="divide-y divide-border border-t border-b">
+              <ul className="divide-y divide-border border-y border-border">
                 {circles.map((circle) => (
                   <li key={circle.id}>
                     <Link
                       href={`/circles/${circle.id}`}
-                      className="flex items-center gap-3 py-3 hover:underline underline-offset-4 decoration-pen-soft"
+                      className="flex items-center gap-3 py-3.5 group"
                     >
                       <span className="text-lg">{circle.emoji ?? '●'}</span>
                       <div className="flex-1 min-w-0">
-                        <p className="font-display font-semibold truncate">{circle.name}</p>
+                        <p className="font-medium truncate group-hover:underline underline-offset-4 decoration-1">{circle.name}</p>
                         {(circle.neighborhood || circle.city) && (
-                          <p className="text-xs text-foreground/75 truncate">{circle.neighborhood ?? circle.city}</p>
+                          <p className="text-sm text-muted-foreground truncate">{circle.neighborhood ?? circle.city}</p>
                         )}
                       </div>
                       {circle.category && (
-                        <span className="font-display italic text-sm text-pen">{circle.category}</span>
+                        <span className="text-xs rounded-full bg-muted px-2.5 py-1 text-muted-foreground">{circle.category}</span>
                       )}
                     </Link>
                   </li>

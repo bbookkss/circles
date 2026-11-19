@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Circles</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Host+Grotesk:wght@300;400;500;600&display=swap">
+<script>try { const t = localStorage.getItem("circles-theme"); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
+<link rel="stylesheet" href="circles.css">
+<style>
+
+.hero { margin-top: -66px; min-height: 620px; }
+.hero-in { position: relative; max-width: 1080px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 150px 56px; display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr); gap: 40px; align-items: end; }
+.hero .sheet { padding: 36px 36px 32px; }
+.hero h1 { font-size: clamp(2.3rem, 5.6vw, 4rem); }
+.hero .lede { margin-top: 16px; }
+.find { display: flex; gap: 8px; margin-top: 28px; padding: 6px; border-radius: 999px; background: var(--paper); box-shadow: 0 1px 2px var(--shade); }
+.find input { flex: 1; min-width: 0; border: 0; background: transparent; font: inherit; font-size: 17px; color: var(--ink); padding: 8px 14px; }
+.find input::placeholder { color: var(--quiet); }
+.find input:focus { outline: none; }
+.find:focus-within { box-shadow: 0 0 0 3px var(--cool-2); }
+.tries { margin-top: 12px; font-size: 14px; color: var(--quiet); display: flex; flex-wrap: wrap; gap: 4px 6px; align-items: center; }
+.tries button { border: 0; background: none; padding: 0; cursor: pointer; font: inherit; color: var(--ink); text-decoration: underline; text-decoration-color: var(--cool-2); text-underline-offset: 3px; text-decoration-thickness: 1px; }
+.tries button:hover { text-decoration-color: currentColor; }
+.answer { margin-top: 22px; display: grid; gap: 12px; }
+.answer .step { font-size: 14px; color: var(--quiet); display: flex; align-items: center; gap: 8px; }
+.answer .step::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--quiet); opacity: .6; }
+.answer .step.live::before { animation: blink 1s ease-in-out infinite; }
+@keyframes blink { 50% { opacity: .15; } }
+.answer .said { font-size: 16px; }
+.hits { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
+.hits li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 14px; align-items: baseline; padding: 12px 16px; border-radius: 16px; background: var(--paper); }
+.hits b { font-weight: 500; }
+.hits .m { grid-column: 1 / -1; font-size: 14px; color: var(--quiet); }
+.hits .d { font-size: 14px; color: var(--quiet); }
+.gate { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; padding-top: 4px; }
+.gate p { flex: 1 1 220px; font-size: 15px; color: var(--quiet); }
+.cta { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 28px; }
+.peek { justify-self: end; width: min(100%, 340px); display: grid; gap: 12px; }
+.peek .card { border-radius: 22px; padding: 18px 20px; }
+.peek .when { font-size: 14px; color: var(--quiet); }
+.peek .name { font-size: 18px; font-weight: 500; letter-spacing: -0.015em; margin-top: 2px; }
+.peek .who { font-size: 14px; color: var(--quiet); margin-top: 10px; display: flex; align-items: center; gap: 10px; }
+.faces { display: flex; }
+.faces span { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-size: 11px; font-weight: 500; background: var(--cool-2); border: 2px solid var(--paper); margin-left: -6px; }
+.faces span:first-child { margin-left: 0; }
+.peek .open { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--heat-ink); font-weight: 500; margin-top: 10px; }
+.peek .open::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--heat); }
+
+.wrap { max-width: 1080px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.how { padding-block: 96px 80px; }
+.how .h-md { max-width: 20ch; }
+.steps { list-style: none; margin: 44px 0 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 40px; counter-reset: s; }
+.steps li { border-top: 1px solid var(--ink); padding-top: 18px; counter-increment: s; }
+.steps li::before { content: counter(s); display: block; font-size: 15px; color: var(--quiet); margin-bottom: 18px; }
+.steps b { display: block; font-size: 22px; font-weight: 400; letter-spacing: -0.02em; }
+.steps p { color: var(--quiet); margin-top: 8px; max-width: 34ch; }
+
+.privacy { padding-block: 0 96px; }
+.privacy .panel { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 36px; align-items: center; padding: 40px; }
+.privacy p { color: var(--quiet); margin-top: 12px; max-width: 44ch; }
+.privacy .demo { height: 220px; border-radius: 18px; }
+
+.close { padding-block: 40px 110px; text-align: left; }
+.close .h-md { font-size: clamp(1.9rem, 4.4vw, 3rem); max-width: 18ch; }
+.close .cta { margin-top: 26px; }
+footer { border-top: 1px solid var(--rule); }
+footer .wrap { display: flex; justify-content: space-between; align-items: center; padding-block: 28px; font-size: 14px; color: var(--quiet); }
+footer .mark { color: var(--ink); }
+
+@media (max-width: 860px) {
+  .hero-in { grid-template-columns: 1fr; padding-top: 120px; }
+  .peek { justify-self: stretch; width: 100%; grid-template-columns: 1fr 1fr; }
+  .steps { grid-template-columns: 1fr; gap: 28px; }
+  .privacy .panel { grid-template-columns: 1fr; padding: 24px; }
+}
+@media (max-width: 640px) {
+  .hero .sheet { padding: 24px 20px; }
+  .peek { grid-template-columns: 1fr; }
+  .peek .card + .card { display: none; }
+  .how { padding-block: 64px 56px; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .hero .sheet { animation: lift .7s cubic-bezier(.2,.7,.2,1) both .15s; }
+  .peek { animation: lift .7s cubic-bezier(.2,.7,.2,1) both .35s; }
+  @keyframes lift { from { transform: translateY(14px); } to { transform: none; } }
+}
+
+</style>
+</head>
+<body>
+<header class="nav" data-page="out"></header>
+
+<section class="hero map">
+  <canvas id="map" aria-hidden="true"></canvas>
+  <div class="hero-in">
+    <div class="sheet glass">
+      <h1>Nobody makes a friend at a one-off. Circles meet every week.</h1>
+      <p class="lede">Same place, same time, the same people. Close enough to walk to, and you see who's coming before you go.</p>
+      <form class="find" id="find" role="search">
+        <label for="findIn" class="sr">What do you want to find?</label>
+        <input id="findIn" placeholder="What do you want to find?" autocomplete="off" maxlength="120">
+        <button class="btn" type="submit">Search</button>
+      </form>
+      <div class="tries" id="tries">Try <button type="button">pickup basketball</button> <button type="button">a choir</button> <button type="button">weekend hikes</button></div>
+      <div class="answer" id="answer" aria-live="polite" hidden></div>
+    </div>
+    <div class="peek" aria-label="Example circles">
+      <div class="card glass">
+        <div class="when">Tomorrow, 7:00 pm</div>
+        <div class="name">Thursday chess</div>
+        <div class="who"><span class="faces" aria-hidden="true"><span>MO</span><span>SL</span><span>AK</span></span>Maya, Sam and 4 more are in</div>
+        <div class="open">Check-in open</div>
+      </div>
+      <div class="card glass">
+        <div class="when">Saturday, 8:30 am</div>
+        <div class="name">Saturday morning run</div>
+        <div class="who"><span class="faces" aria-hidden="true"><span>PR</span><span>JP</span></span>Priya, Jon and 2 more are in</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="how wrap" aria-labelledby="how-h">
+  <h2 class="h-md" id="how-h" style="color:var(--ink)">The fourth time is the point.</h2>
+  <ol class="steps">
+    <li><b>Find one near you.</b><p>Every circle has an area on the map and a day it meets. Pick one close enough to walk to.</p></li>
+    <li><b>Say if you're coming.</b><p>The day before, yes or no. You see who else is in before you decide, so you're never the only one who showed.</p></li>
+    <li><b>Come back.</b><p>The second week someone knows your name. By the fourth, they save you a seat.</p></li>
+  </ol>
+</section>
+
+<section class="privacy wrap" aria-labelledby="priv-h">
+  <div class="panel">
+    <div>
+      <h2 class="h3" id="priv-h" style="color:var(--ink)">The glow is the neighbourhood. The pin is for members.</h2>
+      <p>Before you join, you see roughly where a circle meets. The exact spot and the venue name only show once you're in, so nobody can map where people will be.</p>
+    </div>
+    <div class="demo map" aria-hidden="true"><canvas id="demo"></canvas></div>
+  </div>
+</section>
+
+<section class="close wrap">
+  <h2 class="h-md" style="color:var(--ink)">One-offs are easy to find. Somewhere to come back to isn't.</h2>
+  <p class="lede">Join a circle that already meets near you, or start one and pick the day.</p>
+  <div class="cta">
+    <a class="btn" href="signup.html">Find a circle near me</a>
+    <a class="btn ghost" href="signup.html">Start a circle</a>
+  </div>
+</section>
+
+<footer><div class="wrap">
+  <span class="mark">Circles</span>
+  <span>hicircles.com</span>
+</div></footer>
+
+<script src="circles.js"></script>
+<script>
+// Signed out: areas only, never pins.
+const heroAreas = [
+  { x: .12, y: .30, r: 110, temp: .7 }, { x: .44, y: .16, r: 80, temp: .45 }, { x: .70, y: .34, r: 120, temp: 1 },
+  { x: .90, y: .14, r: 70, temp: .4 }, { x: .30, y: .72, r: 90, temp: .55 }, { x: .86, y: .78, r: 84, temp: .6 }
+];
+const baseTemps = heroAreas.map(a => a.temp);
+const heroMap = Circles.drawMap(document.getElementById("map"), heroAreas, { seed: 5 });
+
+/* Public search, mocked. Real version: POST /api/find, Claude Haiku 5.5 with one
+   tool, search_public_circles, run on the anon Supabase client so RLS limits it
+   to public circles and area-level location. Limited per IP. Every answer ends
+   by asking the visitor to make an account. */
+const PUBLIC = [
+  { n: "Mission pickup basketball", hood: "Mission", days: "Tuesdays and Thursdays, evenings", members: 56, k: "basketball hoops pickup sports ball game", a: 2 },
+  { n: "Bernal Hill sunset walk", hood: "Bernal Heights", days: "Sundays and Wednesdays", members: 31, k: "walk walking hike hikes hiking outdoors sunset weekend", a: 4 },
+  { n: "Glen Canyon trail crew", hood: "Glen Park", days: "Sunday mornings", members: 15, k: "trail hike hikes hiking outdoors volunteer nature weekend", a: 5 },
+  { n: "Castro choir", hood: "Castro", days: "Monday evenings", members: 18, k: "sing singing choir music song", a: 0 },
+  { n: "Front-end meetup", hood: "SoMa", days: "Wednesday evenings", members: 43, k: "code coding tech programming javascript developer developers", a: 3 },
+  { n: "Tartine bread class", hood: "Mission", days: "Saturday mornings", members: 12, k: "bread baking bake food cooking cook class", a: 2 },
+  { n: "Lake Merced run club", hood: "Lakeshore", days: "Saturday mornings", members: 29, k: "run running runners jog jogging weekend", a: 1 },
+  { n: "Thursday chess", hood: "Mission Dolores", days: "Thursday evenings", members: 14, k: "chess board games game strategy", a: 2 }
+];
+const STOP = /^(a|an|the|i|im|want|to|find|some|for|near|me|in|on|with|and|or|people|group|groups|club|looking|any|where|can|do|weekly|local)$/;
+const find = document.getElementById("find"), findIn = document.getElementById("findIn"), answer = document.getElementById("answer");
+let searches = 0;
+const LIMIT = 5; // the mockup trips the per-IP limit after five, so you can see it
+const wait = ms => new Promise(r => setTimeout(r, ms));
+const esc = s => s.replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+async function search(q) {
+  q = q.trim(); if (!q) return;
+  answer.hidden = false;
+  document.getElementById("tries").hidden = true;
+  if (++searches > LIMIT) {
+    answer.innerHTML = `<p class="said">That's a lot of searching for one hour. Make a free account to keep going, and to see where circles meet.</p>
+      <div class="gate"><a class="btn" href="signup.html">Create an account</a><a class="link small" href="login.html">I have one</a></div>`;
+    return;
+  }
+  const words = q.toLowerCase().replace(/[^a-z ]/g, " ").split(/\s+/).filter(w => w.length > 2 && !STOP.test(w));
+  answer.innerHTML = `<div class="step live">Searching public circles near San Francisco for "${esc(words.join(" ") || q)}"</div>`;
+  heroAreas.forEach((a, i) => a.temp = baseTemps[i] * .5);
+  await wait(900);
+  const hits = PUBLIC.map(c => ({ c, score: words.filter(w => c.k.includes(w) || c.n.toLowerCase().includes(w)).length }))
+    .filter(h => h.score).sort((a, b) => b.score - a.score).slice(0, 3).map(h => h.c);
+  // Matches heat up on the map; everything else cools.
+  heroAreas.forEach((a, i) => a.temp = hits.some(h => h.a === i) ? 1 : baseTemps[i] * .35);
+  heroMap.redraw();
+  if (!hits.length) {
+    answer.innerHTML = `<p class="said">Nobody's started a circle for "${esc(q)}" near you yet. Make an account and you can start the first one. People who search for it will find yours.</p>
+      <div class="gate"><a class="btn" href="signup.html">Create an account</a><button class="btn ghost" type="button" id="again">Search again</button></div>`;
+    return;
+  }
+  answer.innerHTML = `<p class="said">${hits.length === 1 ? "One circle meets" : hits.length + " circles meet"} near you for that:</p>
+    <ul class="hits">${hits.map(c => `<li><b>${c.n}</b><span class="d">${c.members} members</span><span class="m">${c.hood}, ${c.days}</span></li>`).join("")}</ul>
+    <div class="gate"><p>Make a free account to see exactly where they meet and who's going this week.</p><a class="btn" href="signup.html">Create an account</a></div>`;
+}
+find.addEventListener("submit", e => { e.preventDefault(); search(findIn.value); });
+document.getElementById("tries").addEventListener("click", e => { const b = e.target.closest("button"); if (b) { findIn.value = b.textContent; search(b.textContent); } });
+answer.addEventListener("click", e => { if (e.target.id === "again") { findIn.value = ""; findIn.focus(); } });
+Circles.drawMap(document.getElementById("demo"), [{ x: .5, y: .5, r: 90, temp: .9 }], { seed: 29 });
+</script>
+</body>
+</html>

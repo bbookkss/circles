@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>For businesses – Circles</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Host+Grotesk:wght@300;400;500;600&display=swap">
+<script>try { const t = localStorage.getItem("circles-theme"); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
+<link rel="stylesheet" href="circles.css">
+<style>
+
+.states { position: fixed; z-index: 6; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  display: flex; align-items: center; gap: 4px; padding: 5px 5px 5px 14px; border-radius: 999px; font-size: 13px; color: var(--quiet); max-width: calc(100vw - 32px); overflow-x: auto; }
+.states button { border: 0; background: transparent; cursor: pointer; padding: 6px 11px; border-radius: 999px; font-size: 13px; color: var(--quiet); white-space: nowrap; }
+.states button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+@media (max-width: 640px) { .states.above-tabs { bottom: calc(84px + env(safe-area-inset-bottom, 0px)); } }
+
+.biz { max-width: 640px; }
+.biz .lede { margin-top: 14px; }
+.why { margin-top: 32px; }
+.why p { color: var(--quiet); margin-top: 6px; max-width: 58ch; }
+.biz .form { margin-top: 32px; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.status { margin-top: 32px; }
+.status p { color: var(--quiet); margin-top: 6px; }
+.status .btn { margin-top: 18px; }
+.status .chip { margin-bottom: 14px; }
+@media (max-width: 640px) { .two { grid-template-columns: 1fr; } }
+
+</style>
+</head>
+<body>
+<header class="nav" data-page="none"></header>
+<main class="page"><div class="col biz">
+  <h1 class="h-md">Run a circle for your venue</h1>
+  <p class="lede">Taco Tuesdays, live music, trivia nights. Your circle shows up on the map alongside everything else that meets nearby.</p>
+
+  <div data-state="new rejected">
+    <div class="why panel">
+      <h2 class="h2" style="color:var(--ink)">Why we check first</h2>
+      <p>Anyone can say they're a restaurant. We talk to every business before switching the account over, so the business circles on the map are places that really exist and really asked to be there. Tell us how to reach you and we'll call.</p>
+    </div>
+    <p class="quiet small" data-state="rejected" style="margin-top:20px">An earlier request wasn't approved. You can send another.</p>
+    <form class="form" id="f">
+      <div class="field"><label for="business_name">Business name</label><input id="business_name" required placeholder="Rosa's Cantina"></div>
+      <div class="field"><label for="contact_name">Your name</label><input id="contact_name" placeholder="Who are we talking to?"></div>
+      <div class="two">
+        <div class="field"><label for="phone">Phone</label><input id="phone" type="tel" placeholder="(415) 555-0134"></div>
+        <div class="field"><label for="email">Email</label><input id="email" type="email" placeholder="rosa@cantina.com"></div>
+      </div>
+      <div class="field"><label for="message">What would you run?</label><textarea id="message" placeholder="Taco Tuesdays, live music on Fridays…"></textarea></div>
+      <div><button class="btn" id="go" type="submit">Request business access</button></div>
+    </form>
+  </div>
+
+  <div class="status panel" data-state="pending" hidden>
+    <span class="chip">Waiting for a call</span>
+    <h2 class="h3">We have your request for Rosa's Cantina</h2>
+    <p>We'll be in touch to confirm who you are before switching your account over. Nothing changes until then.</p>
+  </div>
+
+  <div class="status panel" data-state="verified" hidden>
+    <span class="chip">Verified business</span>
+    <h2 class="h3">Your account is verified</h2>
+    <p>When you start a circle you can mark it as a business. It shows differently on the map, and people can filter for it.</p>
+    <a class="btn" href="circle-new.html">Start a circle</a>
+  </div>
+</div></main>
+<nav class="tabs" data-page="profile"></nav>
+<div class="states glass above-tabs" role="group" aria-label="Mockup state"></div>
+<script src="circles.js"></script>
+<script>
+
+// Mockup-only: switch between the page's states. [data-state] blocks show for the chosen one.
+function states(list, start) {
+  const bar = document.querySelector(".states");
+  bar.innerHTML = '<span>Mockup state</span>' + list.map(([k, l]) => `<button type="button" data-s="${k}">${l}</button>`).join("");
+  function show(k) {
+    document.querySelectorAll("[data-state]").forEach(el => el.hidden = !el.dataset.state.split(" ").includes(k));
+    bar.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", b.dataset.s === k));
+  }
+  bar.addEventListener("click", e => { const b = e.target.closest("button"); if (b) show(b.dataset.s); });
+  show(start || list[0][0]);
+  return show;
+}
+
+document.querySelectorAll("form").forEach(f => f.addEventListener("submit", e => e.preventDefault()));
+const show = states([["new", "Request"], ["pending", "Pending"], ["verified", "Verified"], ["rejected", "After a rejection"]]);
+document.getElementById("f").addEventListener("submit", () => {
+  const b = document.getElementById("go"); b.disabled = true; b.textContent = "Sending…";
+  setTimeout(() => { b.disabled = false; b.textContent = "Request business access"; show("pending"); }, 600);
+});
+</script>
+</body>
+</html>

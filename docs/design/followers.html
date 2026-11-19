@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Maya Ortiz's people – Circles</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Host+Grotesk:wght@300;400;500;600&display=swap">
+<script>try { const t = localStorage.getItem("circles-theme"); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
+<link rel="stylesheet" href="circles.css">
+<style>
+/* Followers / following / circles for one person, switched in place. */
+.head { display: flex; align-items: center; gap: 12px; padding-block: 24px 22px; }
+.back { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; color: var(--quiet); flex: none; }
+.back:hover { background: var(--cool); color: var(--ink); }
+.switch { margin-bottom: 18px; }
+.person { display: flex; align-items: center; gap: 14px; padding-block: 12px; }
+.person .who { flex: 1; min-width: 0; }
+.person .nm { font-size: 16px; font-weight: 500; }
+.person .nm:hover { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; }
+.person .sub { font-size: 14px; color: var(--quiet); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.follow[aria-pressed="true"] { background: var(--cool); color: var(--ink); }
+.empty { padding-block: 40px; text-align: center; color: var(--quiet); }
+</style>
+</head>
+<body>
+<header class="nav" data-page="none"></header>
+
+<main class="page">
+  <div class="col">
+    <div class="head">
+      <a class="back" href="person.html" aria-label="Back to Maya Ortiz">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+      </a>
+      <h1 class="h-md">Maya Ortiz</h1>
+    </div>
+
+    <div class="seg switch" role="tablist" aria-label="Show">
+      <button role="tab" data-tab="followers" aria-pressed="true">63 followers</button>
+      <button role="tab" data-tab="following" aria-pressed="false">40 following</button>
+      <button role="tab" data-tab="circles" aria-pressed="false">2 circles</button>
+    </div>
+
+    <ul class="rows" id="list"></ul>
+  </div>
+</main>
+
+<nav class="tabs" data-page="none"></nav>
+<script src="circles.js"></script>
+<script>
+const data = {
+  followers: [
+    ["Ben Bookstaver", "@benbookstaver", "me"],
+    ["Ade Okafor", "@adeok", false],
+    ["Jon Park", "@jonruns", true],
+    ["Lena Voss", "", false],
+    ["Priya Shah", "@priyashah", true],
+    ["Sam Kim", "@samkim", true]
+  ],
+  following: [
+    ["Ben Bookstaver", "@benbookstaver", "me"],
+    ["Jon Park", "@jonruns", true],
+    ["Sam Kim", "@samkim", true],
+    ["Tess Moreau", "@tessclimbs", false]
+  ],
+  circles: [
+    ["Thursday chess", "Mission Dolores"],
+    ["Bouldering after work", "Dogpatch"]
+  ]
+};
+const ini = n => n.split(" ").map(w => w[0]).join("").slice(0, 2);
+const list = document.getElementById("list");
+function show(tab) {
+  document.querySelectorAll("[data-tab]").forEach(b => b.setAttribute("aria-pressed", b.dataset.tab === tab));
+  if (tab === "circles") {
+    list.innerHTML = data.circles.map(([n, w]) => `<li class="person"><div class="who"><a class="nm" href="circle.html">${n}</a><div class="sub">${w}</div></div></li>`).join("");
+  } else {
+    list.innerHTML = data[tab].map(([n, ig, f]) => `
+      <li class="person">
+        <span class="av" aria-hidden="true">${ini(n)}</span>
+        <div class="who"><a class="nm" href="${f === "me" ? "profile.html" : "person.html"}">${f === "me" ? "You" : n}</a>${ig ? `<div class="sub">${ig}</div>` : ""}</div>
+        ${f === "me" ? "" : `<button class="btn sm follow" type="button" aria-pressed="${f}">${f ? "Following" : "Follow"}</button>`}
+      </li>`).join("");
+  }
+  if (location.hash.slice(1) !== tab) history.replaceState(null, "", "#" + tab);
+}
+document.querySelector(".switch").addEventListener("click", e => { const b = e.target.closest("[data-tab]"); if (b) show(b.dataset.tab); });
+list.addEventListener("click", e => {
+  const b = e.target.closest(".follow"); if (!b) return;
+  const on = b.getAttribute("aria-pressed") !== "true";
+  b.setAttribute("aria-pressed", on); b.textContent = on ? "Following" : "Follow";
+});
+show(["followers", "following", "circles"].includes(location.hash.slice(1)) ? location.hash.slice(1) : "followers");
+</script>
+</body>
+</html>

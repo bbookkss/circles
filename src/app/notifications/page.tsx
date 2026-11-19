@@ -50,16 +50,17 @@ export default async function NotificationsPage() {
     <>
       <TopNav />
       <ReadMarker />
-      <main className="pt-14 pb-20 md:pb-0 min-h-screen bg-background">
-        <div className="max-w-2xl mx-auto px-6 py-10">
-          <h1 className="text-3xl mb-6">Notifications</h1>
+      <main className="pt-14 pb-28 md:pb-12 min-h-screen bg-background">
+        <div className="max-w-2xl mx-auto px-4 md:px-6 pt-10">
+          <h1 className="text-[2.4rem] md:text-5xl mb-8">Notifications</h1>
 
           {!notifs || notifs.length === 0 ? (
-            <div className="border-t border-b py-12 text-center">
-              <p className="text-sm text-muted-foreground">No notifications yet.</p>
+            <div className="rounded-3xl bg-muted px-6 py-10 space-y-2">
+              <p className="text-lg">Nothing yet.</p>
+              <p className="text-sm text-muted-foreground">When someone joins your circle, likes your note or follows you, it shows up here.</p>
             </div>
           ) : (
-            <div className="divide-y divide-border border-t border-b">
+            <ul className="divide-y divide-border border-y border-border">
               {notifs.map((n) => {
                 const actor = actorMap[n.actor_id] ?? 'Someone'
                 const text = TYPE_TEXT[n.type] ?? 'interacted with you'
@@ -67,19 +68,21 @@ export default async function NotificationsPage() {
                   ? `/circles/${n.circle_id}/requests`
                   : n.circle_id ? `/circles/${n.circle_id}` : '/home'
                 return (
-                  <Link key={n.id} href={href} className={`flex items-center gap-3 py-3.5 ${!n.read ? '' : 'opacity-70'}`}>
-                    <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-semibold flex-shrink-0">
-                      {initialsOf(actor)}
-                    </div>
-                    <p className="flex-1 min-w-0 text-sm">
-                      <span className="font-medium">{actor}</span> {text}
-                    </p>
-                    <span className="text-xs text-muted-foreground flex-shrink-0">{timeAgo(n.created_at)}</span>
-                    {!n.read && <span className="w-2 h-2 rounded-full bg-pen flex-shrink-0" />}
-                  </Link>
+                  <li key={n.id}>
+                    <Link href={href} className="flex items-center gap-4 py-4 group">
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium flex-shrink-0 ${!n.read ? 'bg-cool-2' : 'bg-muted text-muted-foreground'}`}>
+                        {initialsOf(actor)}
+                      </div>
+                      <p className={`flex-1 min-w-0 text-[0.95rem] ${!n.read ? '' : 'text-muted-foreground'}`}>
+                        <span className={`font-medium ${!n.read ? '' : 'text-foreground/80'} group-hover:underline underline-offset-4 decoration-1`}>{actor}</span> {text}
+                      </p>
+                      <span className="text-sm text-muted-foreground flex-shrink-0">{timeAgo(n.created_at)}</span>
+                      {!n.read && <span className="w-2.5 h-2.5 rounded-full bg-heat flex-shrink-0" aria-label="New" />}
+                    </Link>
+                  </li>
                 )
               })}
-            </div>
+            </ul>
           )}
         </div>
       </main>

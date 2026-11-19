@@ -8,14 +8,14 @@ type Status = 'yes' | 'no' | 'maybe'
 const OPTIONS: { value: Status; label: string }[] = [
   { value: 'yes', label: 'Going' },
   { value: 'maybe', label: 'Maybe' },
-  { value: 'no', label: "Can't" },
+  { value: 'no', label: "Can't go" },
 ]
 
 /**
- * Three pills. Only one colour on the page means anything, and this is where
- * it lives: a chosen answer fills in pen-blue. "Can't", once chosen, is
- * struck through rather than filled, because it is the one answer that is
- * not a commitment to be somewhere.
+ * One segmented control. Heat is the only colour on the page that means
+ * anything, and this is where it lives: Going, once chosen, fills gold.
+ * Maybe and Can't go, once chosen, go to plain paper: an answer, but not a
+ * commitment to be somewhere.
  */
 export default function CheckInControl({
   circleId,
@@ -58,16 +58,14 @@ export default function CheckInControl({
 
   return (
     <div className="space-y-1.5">
-      <div className="flex gap-2 flex-wrap">
+      <div className="inline-flex gap-0.5 p-[3px] rounded-full bg-muted" role="group" aria-label="Are you going?">
         {OPTIONS.map((o) => {
           const on = status === o.value
-          const cls = disabled
-            ? 'border-border text-muted-foreground'
-            : on
-              ? o.value === 'no'
-                ? 'border-border text-muted-foreground line-through'
-                : 'bg-pen border-pen text-white'
-              : 'border-foreground text-foreground hover:bg-muted'
+          const cls = on
+            ? o.value === 'yes'
+              ? 'bg-heat text-[#1a2230]'
+              : 'bg-background text-foreground shadow-sm'
+            : 'text-muted-foreground hover:text-foreground'
           return (
             <button
               key={o.value}
@@ -76,7 +74,7 @@ export default function CheckInControl({
               disabled={pending || disabled}
               aria-pressed={on}
               title={disabled ? disabledReason : undefined}
-              className={`px-3.5 py-1.5 rounded-full text-sm font-medium border transition-colors ${cls} ${disabled ? 'cursor-default' : ''}`}
+              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${cls} ${disabled ? 'cursor-not-allowed opacity-55' : ''}`}
             >
               {o.label}
             </button>
@@ -85,7 +83,7 @@ export default function CheckInControl({
       </div>
       {error && <p className="text-xs text-destructive">{error}</p>}
       {disabled && disabledReason && (
-        <p className="label normal-case tracking-normal">{disabledReason}</p>
+        <p className="text-sm text-muted-foreground">{disabledReason}</p>
       )}
     </div>
   )

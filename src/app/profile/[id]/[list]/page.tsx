@@ -65,37 +65,50 @@ export default async function FollowListPage({
   return (
     <>
       <TopNav />
-      <main className="pt-14 pb-20 md:pb-0 min-h-screen bg-background">
-        <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
-          <div className="flex items-center gap-3">
+      <main className="pt-14 pb-28 md:pb-12 min-h-screen bg-background">
+        <div className="max-w-2xl mx-auto px-4 md:px-6 pt-8 space-y-8">
+          <div className="space-y-5">
             <BackButton fallback={backTo} />
             <div>
-              <h1 className="text-xl font-bold">{spec.title}</h1>
-              <p className="text-sm text-muted-foreground">
-                {isMe ? 'You' : subject.full_name} · {ids.length}
+              <h1 className="text-[2.2rem] md:text-[2.6rem]">{spec.title}</h1>
+              <p className="text-muted-foreground mt-1">
+                {isMe ? 'You' : subject.full_name}, {ids.length} {ids.length === 1 ? 'person' : 'people'}
               </p>
             </div>
+            {/* Switch between the two lists without going back. */}
+            <nav aria-label="Lists" className="inline-flex p-1 rounded-full bg-muted gap-0.5">
+              {(['followers', 'following'] as const).map((l) => (
+                <Link
+                  key={l}
+                  href={`/profile/${subject.id}/${l}`}
+                  aria-current={list === l ? 'page' : undefined}
+                  className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${list === l ? 'bg-background text-foreground shadow-[0_1px_3px_var(--shade)]' : 'text-muted-foreground hover:text-foreground'}`}
+                >
+                  {l === 'followers' ? 'Followers' : 'Following'}
+                </Link>
+              ))}
+            </nav>
           </div>
 
           {!people || people.length === 0 ? (
-            <div className="border-t border-b py-10 text-center text-sm text-muted-foreground">
+            <div className="rounded-3xl bg-muted px-6 py-10 text-muted-foreground">
               {list === 'followers'
                 ? (isMe ? 'Nobody follows you yet.' : 'No followers yet.')
                 : (isMe ? 'You are not following anyone yet.' : 'Not following anyone yet.')}
             </div>
           ) : (
-            <ul className="divide-y divide-border border-t border-b">
+            <ul className="divide-y divide-border border-y border-border">
               {people.map((p) => {
                 const name = p.full_name ?? 'Someone'
                 const mine = p.id === user.id
                 return (
-                  <li key={p.id} className="flex items-center gap-3 py-3">
-                    <div className="w-9 h-9 rounded-full bg-muted flex items-center justify-center text-xs font-semibold flex-shrink-0">
+                  <li key={p.id} className="flex items-center gap-4 py-3.5">
+                    <div className="w-11 h-11 rounded-full bg-cool-2 flex items-center justify-center text-sm font-medium flex-shrink-0">
                       {initialsOf(name)}
                     </div>
-                    <Link href={mine ? '/profile' : `/profile/${p.id}`} className="flex-1 min-w-0 hover:underline underline-offset-2">
-                      <p className="text-sm font-medium truncate">{name}</p>
-                      {p.instagram && <p className="text-xs text-muted-foreground truncate">@{p.instagram}</p>}
+                    <Link href={mine ? '/profile' : `/profile/${p.id}`} className="flex-1 min-w-0 group">
+                      <p className="font-medium truncate group-hover:underline underline-offset-4 decoration-1">{name}</p>
+                      {p.instagram && <p className="text-sm text-muted-foreground truncate">@{p.instagram}</p>}
                     </Link>
                     {!mine && <FollowButton targetId={p.id} initialIsFollowing={iFollow.has(p.id)} />}
                   </li>

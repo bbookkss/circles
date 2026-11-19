@@ -2,16 +2,13 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Button } from '@/components/ui/button'
-import AsciiField from '@/components/AsciiField'
+import HeatMap from '@/components/HeatMap'
+import Logo from '@/components/Logo'
 
 /**
- * Shown once, straight after signing up.
- *
- * Dark with the ripple field behind it, like the landing and auth pages. The
- * split is by moment rather than by route: everything outside the app proper
- * is dark and has the field, the app itself is bone and has none. Arriving
- * here from signup therefore looks like staying in the same place, and
- * leaving for /home looks like walking into the product.
+ * Shown once, straight after signing up: the whole idea in three lines, on a
+ * glass sheet over a strip of the map, then out to Explore. The three lines
+ * aren't a sequence, so they carry no numbers.
  */
 
 export default async function WelcomePage() {
@@ -30,66 +27,52 @@ export default async function WelcomePage() {
   const cards = [
     {
       title: 'What a circle is',
-      body: 'A group that meets at the same place on a regular schedule. Beach volleyball every Thursday. Morning pages at 7am. A run club that leaves from the same corner.',
+      body: 'A group that meets at the same place on a regular schedule. Volleyball every Thursday, morning pages at 7am, a run club that leaves from the same corner.',
     },
     {
-      title: 'Find one',
-      body: 'Explore puts circles near you on a map. Filter by category, day, or neighborhood. Public ones you just join.',
+      title: 'Finding one',
+      body: 'Explore shows circles near you on a map. Filter by category, day or neighbourhood. Public ones you just join.',
     },
     {
-      title: 'Start one',
-      body: 'Drop a pin, set a schedule, done. Public so anyone can find it, or private so you approve who gets in.',
+      title: 'Starting one',
+      body: 'Drop a pin and set a schedule. Public so anyone can find it, or private so you approve who joins.',
     },
   ]
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-background text-foreground flex flex-col items-center justify-center px-6 py-16">
-      <AsciiField />
-
-      <div className="relative max-w-lg w-full text-center space-y-10">
-
-        <div className="space-y-3 fade-rise">
-          <div className="w-12 h-12 rounded-full border-2 border-pen mx-auto" />
-          <h1 className="text-3xl md:text-4xl font-medium">Hey {firstName}, <em className="italic font-normal text-pen">welcome to circles.</em></h1>
+    <main className="relative min-h-screen bg-background text-foreground">
+      <nav className="fixed top-0 left-0 right-0 z-50 px-3 pt-2 pointer-events-none">
+        <div className="glass pointer-events-auto mx-auto max-w-3xl h-12 rounded-full flex items-center pl-4 pr-1.5">
+          <span className="flex items-center gap-2 font-semibold text-[1.05rem] tracking-tight"><Logo />Circles</span>
         </div>
+      </nav>
 
-        <div className="grid gap-4 text-left">
-          {cards.map((card, i) => (
-            <div
-              key={card.title}
-              className={`border border-foreground p-5 space-y-1 bg-card fade-rise stagger-${i + 1}`}
-            >
-              <p className="font-display font-semibold flex items-baseline gap-3 text-lg">
-                <span className="num text-pen text-xs">0{i + 1}</span>
-                {card.title}
-              </p>
-              <p className="text-sm text-foreground/75 pl-8">{card.body}</p>
-            </div>
-          ))}
+      <section aria-hidden className="h-[220px] sm:h-[300px] overflow-hidden [mask-image:linear-gradient(to_bottom,black_55%,transparent)]">
+        <HeatMap areas={[{ x: 0.24, y: 0.4, r: 100, temp: 0.7 }, { x: 0.7, y: 0.28, r: 80, temp: 0.5 }]} seed={21} />
+      </section>
+
+      <div className="relative z-[1] -mt-[120px] sm:-mt-[150px] px-4 pb-24">
+        <div className="glass mx-auto max-w-[560px] rounded-[28px] p-6 sm:p-9 fade-rise">
+          <h1 className="text-[1.75rem] sm:text-[2.2rem]">Welcome to Circles, {firstName}.</h1>
+          <p className="text-lg text-muted-foreground mt-2">Here&apos;s the whole idea in three lines.</p>
+
+          <ul className="mt-7 divide-y divide-border border-t border-border">
+            {cards.map((card) => (
+              <li key={card.title} className="py-4">
+                <p className="font-medium">{card.title}</p>
+                <p className="text-muted-foreground mt-1">{card.body}</p>
+              </li>
+            ))}
+          </ul>
+
+          <div className="flex flex-wrap items-center gap-2.5 mt-6">
+            <Link href="/explore"><Button size="lg">Find circles near me</Button></Link>
+            <Link href="/circles/new"><Button size="lg" variant="outline">Start one</Button></Link>
+            <Link href="/home" className="ml-auto text-[15px] text-muted-foreground underline underline-offset-4 decoration-cool-2 hover:text-foreground">
+              Skip for now
+            </Link>
+          </div>
         </div>
-
-        <div className="flex flex-wrap gap-3 justify-center fade-rise stagger-4">
-          <Link href="/explore">
-            <Button size="lg" className="rounded-full">
-              Explore
-            </Button>
-          </Link>
-          <Link href="/circles/new">
-            <Button
-              size="lg"
-              className="rounded-full bg-transparent border border-pen text-pen hover:bg-pen hover:text-white"
-            >
-              Start one
-            </Button>
-          </Link>
-        </div>
-
-        <Link
-          href="/home"
-          className="label normal-case tracking-normal underline underline-offset-4 hover:text-foreground block"
-        >
-          Skip for now
-        </Link>
       </div>
     </main>
   )

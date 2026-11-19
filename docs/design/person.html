@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Maya Ortiz – Circles</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Host+Grotesk:wght@300;400;500;600&display=swap">
+<script>try { const t = localStorage.getItem("circles-theme"); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
+<link rel="stylesheet" href="circles.css">
+<style>
+/* Someone else's profile: who they are, what you share, where they show up. */
+[hidden] { display: none !important; }
+.me-head { display: grid; grid-template-columns: 72px minmax(0, 1fr); gap: 22px; align-items: start; padding-block: 24px 8px; }
+.contact { font-size: 15px; color: var(--quiet); margin-top: 8px; }
+.bio { margin-top: 12px; max-width: 56ch; }
+.head-acts { margin-top: 18px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.safety { margin-top: 10px; display: flex; gap: 14px; }
+
+.common { margin-top: 32px; padding: 22px 24px; border-radius: 24px; background: var(--cool); display: grid; gap: 8px; }
+.common p { font-size: 15px; }
+.common a { font-weight: 500; }
+.common a:hover { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; }
+
+.counts { display: flex; flex-wrap: wrap; gap: 8px 28px; margin-top: 28px; padding-block: 18px; border-block: 1px solid var(--rule); }
+.counts a, .counts span { font-size: 15px; color: var(--quiet); }
+.counts b { display: block; font-size: 26px; font-weight: 300; letter-spacing: -0.02em; color: var(--ink); line-height: 1.1; }
+.counts a:hover b { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; }
+.reliable { margin-top: 16px; font-size: 15px; color: var(--quiet); }
+.reliable b { color: var(--ink); font-weight: 500; }
+
+.sec { margin-top: 52px; }
+.sec h2 { margin-bottom: 12px; }
+.circ { display: flex; align-items: center; gap: 14px; padding-block: 14px; }
+.circ .nm { flex: 1; min-width: 0; font-size: 17px; font-weight: 500; letter-spacing: -0.01em; }
+.circ .sub { display: block; font-size: 14px; color: var(--quiet); font-weight: 400; letter-spacing: 0; }
+.circ:hover .nm > span:first-child { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; }
+.cat { font-size: 14px; color: var(--quiet); }
+.btn[aria-pressed="true"] { background: var(--cool); color: var(--ink); }
+@media (max-width: 640px) {
+  .me-head { grid-template-columns: 56px minmax(0, 1fr); gap: 16px; }
+  .av.lg { width: 56px; height: 56px; font-size: 20px; }
+}
+</style>
+</head>
+<body>
+<header class="nav" data-page="none"></header>
+
+<main class="page">
+  <div class="col">
+    <section class="me-head">
+      <div class="av lg" aria-hidden="true">MO</div>
+      <div style="min-width:0">
+        <h1 class="h-md">Maya Ortiz</h1>
+        <p class="contact"><a class="link" href="#">@mayaplays</a></p>
+        <p class="bio">Chess most Thursdays, climbing when my fingers allow. New to the Mission and trying to know more than three people here.</p>
+        <div id="live">
+          <div class="head-acts">
+            <button class="btn sm" type="button" id="follow" aria-pressed="true">Following</button>
+            <a class="btn ghost sm" href="thread.html" id="msgBtn">Message</a>
+          </div>
+          <div class="safety">
+            <button class="text-btn warn" type="button" data-report="person">Report</button>
+            <button class="text-btn warn" type="button" data-block="Maya Ortiz">Block</button>
+          </div>
+        </div>
+        <div class="head-acts" id="blockedState" hidden>
+          <p class="quiet">You blocked Maya Ortiz.</p>
+          <button class="btn ghost sm" type="button" id="unblock">Unblock</button>
+        </div>
+      </div>
+    </section>
+
+    <div class="counts">
+      <a href="followers.html#followers"><b>63</b>Followers</a>
+      <a href="followers.html#following"><b>40</b>Following</a>
+      <a href="#circles"><b>2</b>Circles</a>
+      <span title="Meets they were confirmed at"><b>17</b>Meets</span>
+    </div>
+    <p class="reliable"><b>Shows up 11 of 12</b> meets they said yes to.</p>
+
+    <section class="common" aria-label="In common">
+      <p>You're both in <a href="circle.html">Thursday chess</a>.</p>
+      <p>You both know <a href="person.html">Sam Kim</a>, <a href="person.html">Jon Park</a> and 2 others.</p>
+    </section>
+
+    <section class="sec" id="circles" aria-labelledby="c-h">
+      <h2 id="c-h">Circles</h2>
+      <ul class="rows">
+        <li><a class="circ" href="circle.html"><span class="nm"><span>Thursday chess</span><span class="sub">Mission Dolores</span></span><span class="cat">Games</span></a></li>
+        <li><a class="circ" href="circle.html"><span class="nm"><span>Bouldering after work</span><span class="sub">Dogpatch</span></span><span class="cat">Sport</span></a></li>
+      </ul>
+    </section>
+  </div>
+</main>
+
+<nav class="tabs" data-page="none"></nav>
+<script src="circles.js"></script>
+<script src="safety.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+$("follow").onclick = e => {
+  const on = e.currentTarget.getAttribute("aria-pressed") !== "true";
+  e.currentTarget.setAttribute("aria-pressed", on);
+  e.currentTarget.textContent = on ? "Following" : "Follow";
+  $("msgBtn").hidden = !on; // you can message people you follow
+};
+document.addEventListener("circles:blocked", () => { $("live").hidden = true; $("blockedState").hidden = false; });
+$("unblock").onclick = () => {
+  $("live").hidden = false; $("blockedState").hidden = true;
+  const f = $("follow"); f.setAttribute("aria-pressed", "false"); f.textContent = "Follow"; $("msgBtn").hidden = true;
+};
+</script>
+</body>
+</html>

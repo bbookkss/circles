@@ -22,8 +22,8 @@ export default function BusinessRequestForm() {
 
   if (sent) {
     return (
-      <div className="border rounded-xl p-4 space-y-1">
-        <p className="text-sm font-semibold">Request received</p>
+      <div className="rounded-3xl bg-muted p-6 space-y-1.5">
+        <p className="font-medium">Request received</p>
         <p className="text-sm text-muted-foreground">
           We&apos;ll be in touch to confirm who you are before switching your
           account over. Nothing changes until then.
@@ -44,7 +44,7 @@ export default function BusinessRequestForm() {
         <Input id="contact_name" name="contact_name" placeholder="Who are we speaking to?" />
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid sm:grid-cols-2 gap-3">
         <div className="space-y-1.5">
           <Label htmlFor="phone">Phone</Label>
           <Input id="phone" name="phone" type="tel" placeholder="(415) 555-0134" />
@@ -62,7 +62,7 @@ export default function BusinessRequestForm() {
           name="message"
           rows={3}
           placeholder="Taco Tuesdays, live music Fridays…"
-          className="w-full rounded-md border bg-transparent px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+          className="w-full rounded-xl border border-transparent bg-muted px-3.5 py-2.5 text-base placeholder:text-muted-foreground focus-visible:outline-none focus-visible:border-ring focus-visible:bg-background focus-visible:ring-3 focus-visible:ring-muted"
         />
       </div>
 

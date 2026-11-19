@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Welcome – Circles</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Host+Grotesk:wght@300;400;500;600&display=swap">
+<script>try { const t = localStorage.getItem("circles-theme"); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
+<link rel="stylesheet" href="circles.css">
+<style>
+
+.band { height: 300px; margin-top: -66px; }
+.band::after { content: ""; position: absolute; inset: auto 0 0 0; height: 140px; background: linear-gradient(to bottom, transparent, var(--paper)); }
+.wel { position: relative; z-index: 1; margin-top: -170px; max-width: 600px; margin-left: auto; margin-right: auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 0 96px; }
+.wel .sheet { padding: 34px 32px 28px; }
+.wel .lede { margin-top: 10px; }
+.facts { list-style: none; margin: 30px 0 0; padding: 0; display: grid; gap: 0; }
+.facts li { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 4px 24px; padding-block: 16px; border-top: 1px solid var(--rule); }
+.facts b { font-weight: 500; }
+.facts p { color: var(--quiet); font-size: 15px; }
+.acts { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin-top: 26px; }
+.acts .skip { margin-left: auto; font-size: 15px; color: var(--quiet); }
+@media (max-width: 640px) { .facts li { grid-template-columns: 1fr; } .wel .sheet { padding: 24px 20px; } .acts .skip { margin-left: 0; width: 100%; } }
+@media (prefers-reduced-motion: no-preference) { .wel .sheet { animation: lift .7s cubic-bezier(.2,.7,.2,1) both .15s; } @keyframes lift { from { transform: translateY(14px); } to { transform: none; } } }
+
+</style>
+</head>
+<body>
+<header class="nav" data-page="none"></header>
+<section class="band map" aria-hidden="true"><canvas id="map"></canvas></section>
+<main class="wel">
+  <div class="sheet glass">
+    <h1 class="h-md">Welcome to Circles, Ben.</h1>
+    <p class="lede">Here's the whole idea in three lines.</p>
+    <ul class="facts">
+      <li><b>What a circle is</b><p>A group that meets at the same place on a regular schedule. Volleyball every Thursday, morning pages at 7am, a run club that leaves from the same corner.</p></li>
+      <li><b>Finding one</b><p>Explore shows circles near you on a map. Filter by category, day or neighbourhood. Public ones you just join.</p></li>
+      <li><b>Starting one</b><p>Drop a pin and set a schedule. Public so anyone can find it, or private so you approve who joins.</p></li>
+    </ul>
+    <div class="acts">
+      <a class="btn" href="explore.html">Find circles near me</a>
+      <a class="btn ghost" href="circle-new.html">Start one</a>
+      <a class="skip link" href="home.html">Skip for now</a>
+    </div>
+  </div>
+</main>
+<script src="circles.js"></script>
+<script>
+Circles.drawMap(document.getElementById("map"), [
+  { x: .22, y: .42, r: 90, temp: .8 }, { x: .58, y: .28, r: 70, temp: .5 }, { x: .86, y: .5, r: 76, temp: .65 }
+], { seed: 17 });
+</script>
+</body>
+</html>

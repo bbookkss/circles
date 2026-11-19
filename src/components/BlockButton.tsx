@@ -38,7 +38,7 @@ export default function BlockButton({ userId, name }: { userId: string; name: st
           otherwise become the containing block for position: fixed. */}
       {confirming && createPortal(
         <div
-          className="fixed inset-0 z-[60] flex items-end md:items-center justify-center bg-foreground/30 p-4"
+          className="fixed inset-0 z-[60] flex items-end md:items-center justify-center bg-[#1a2230]/35 backdrop-blur-[2px] p-4"
           onClick={() => setConfirming(false)}
           role="dialog"
           aria-modal="true"
@@ -46,20 +46,20 @@ export default function BlockButton({ userId, name }: { userId: string; name: st
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-sm bg-background border border-foreground shadow-[0_10px_30px_-12px_rgba(34,31,27,0.45)] p-5 space-y-4 text-left text-sm fade-rise"
+            className="w-full max-w-sm glass rounded-3xl p-6 space-y-4 text-left text-[0.95rem] fade-rise"
           >
-            <p className="font-display font-semibold text-lg leading-tight">Block {name}?</p>
+            <p className="text-xl font-medium tracking-tight leading-tight">Block {name}?</p>
             <p>
               Neither of you will be able to message or follow the other, and you will stop seeing
               each other&apos;s posts and comments. They are not told. You both stay in any circle
               you share.
             </p>
-            {error && <p className="text-xs text-destructive">{error}</p>}
+            {error && <p className="text-sm text-destructive">{error}</p>}
             <div className="flex justify-end gap-2">
               <button
                 type="button"
                 onClick={() => setConfirming(false)}
-                className="rounded-full border border-border px-4 py-1.5 hover:bg-muted transition-colors"
+                className="rounded-full bg-muted px-4 py-2 font-medium hover:bg-cool-2 transition-colors"
               >
                 Cancel
               </button>
@@ -67,7 +67,7 @@ export default function BlockButton({ userId, name }: { userId: string; name: st
                 type="button"
                 onClick={block}
                 disabled={pending}
-                className="font-medium rounded-full border border-destructive text-destructive px-4 py-1.5 hover:bg-destructive hover:text-white disabled:opacity-40 transition-colors"
+                className="font-medium rounded-full bg-destructive text-white px-4 py-2 hover:opacity-90 disabled:opacity-40 transition-opacity"
               >
                 {pending ? 'Blocking…' : 'Block'}
               </button>

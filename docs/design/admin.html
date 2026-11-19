@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Admin – Circles</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Host+Grotesk:wght@300;400;500;600&display=swap">
+<script>try { const t = localStorage.getItem("circles-theme"); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
+<link rel="stylesheet" href="circles.css">
+<style>
+
+.adm { max-width: 720px; }
+.adm section + section { margin-top: 64px; }
+.adm .lede { font-size: 16px; margin-top: 8px; }
+.count { color: var(--quiet); font-weight: 300; }
+.items { list-style: none; margin: 24px 0 0; padding: 0; }
+.item { padding-block: 22px; border-top: 1px solid var(--rule); }
+.item:last-child { border-bottom: 1px solid var(--rule); }
+.item-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
+.item-head b { font-weight: 500; font-size: 17px; }
+.item-head .t { margin-left: auto; font-size: 14px; color: var(--quiet); }
+.item .by { font-size: 15px; color: var(--quiet); margin-top: 4px; }
+.snap { margin-top: 14px; padding: 14px 16px; border-radius: 14px; background: var(--cool); font-size: 15px; white-space: pre-wrap; }
+.snap small { display: block; font-size: 13px; color: var(--quiet); margin-bottom: 6px; }
+.note { margin-top: 12px; font-size: 15px; padding-left: 14px; border-left: 2px solid var(--cool-2); }
+.acts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; align-items: center; }
+.done { margin-top: 12px; font-size: 14px; color: var(--quiet); }
+.contact { display: grid; grid-template-columns: 70px minmax(0, 1fr); gap: 2px 12px; margin-top: 10px; font-size: 15px; }
+.contact dt { color: var(--quiet); }
+.contact dd { margin: 0; user-select: all; }
+.reviewed { list-style: none; margin: 16px 0 0; padding: 0; }
+.reviewed li { display: flex; justify-content: space-between; padding-block: 12px; border-top: 1px solid var(--rule); font-size: 15px; }
+.reviewed li span:last-child { color: var(--quiet); }
+.empty { margin-top: 18px; color: var(--quiet); }
+
+</style>
+</head>
+<body>
+<header class="nav" data-page="none"></header>
+<main class="page"><div class="col adm">
+  <h1 class="h-md">Admin</h1>
+
+  <section aria-labelledby="rep-h" style="margin-top:36px">
+    <h2 class="h3" id="rep-h">Reports <span class="count" id="rep-count">3 open</span></h2>
+    <p class="lede quiet">Oldest first. The quoted text is what the reporter saw when they filed it, even if it's since been edited or deleted. Removing a post or comment deletes it and closes every report on it.</p>
+    <ul class="items" id="reports"></ul>
+    <p class="empty" id="rep-empty" hidden>Nothing reported.</p>
+  </section>
+
+  <section aria-labelledby="biz-h">
+    <h2 class="h3" id="biz-h">Business requests <span class="count" id="biz-count">1 waiting</span></h2>
+    <p class="lede quiet">Call or email them before approving. Approving verifies the account, which lets them mark their own circles as businesses.</p>
+    <ul class="items" id="biz"></ul>
+    <p class="empty" id="biz-empty" hidden>Nothing waiting.</p>
+    <h3 class="h2" style="margin-top:36px">Reviewed</h3>
+    <ul class="reviewed" id="reviewed">
+      <li><span>Ritual Coffee Roasters</span><span>Approved</span></li>
+      <li><span>Best Deals Marketing LLC</span><span>Rejected</span></li>
+    </ul>
+  </section>
+</div></main>
+<nav class="tabs" data-page="profile"></nav>
+<script src="circles.js"></script>
+<script>
+const reports = [
+  { kind: "Post", reason: "Harassment or bullying", when: "Nov 16, 9:12 pm", by: "Maya Ortiz", who: "Derek Hale", where: "Thursday chess",
+    snap: "Some of you clearly don't belong at this table. Maya especially, don't bother coming back.", details: "Second time this month. He did it in person last week too.", removable: true },
+  { kind: "Person", reason: "Spam or scam", when: "Nov 17, 11:40 am", by: "Jon Park", who: "Crypto Kate", where: null,
+    snap: null, details: "Messaged six of us in the run club about an investment group.", removable: false },
+  { kind: "Comment", reason: "Something else", when: "Nov 18, 8:05 am", by: "Priya Shah", who: "Sam Lee", where: "Saturday morning run",
+    snap: "Meet at my place after, 1450 Church St, door code 4417.", details: "Posted his door code and address publicly. Probably a mistake but it should come down.", removable: true }
+];
+const outcome = { remove: "Removed. Every report on it is closed.", actioned: "Marked handled.", dismissed: "Dismissed." };
+function renderReports() {
+  const open = reports.filter(r => !r.closed).length;
+  document.getElementById("rep-count").textContent = open ? `${open} open` : "";
+  document.getElementById("rep-empty").hidden = open > 0;
+  document.getElementById("reports").innerHTML = reports.map((r, i) => `
+    <li class="item">
+      <div class="item-head"><b>${r.kind}</b><span class="quiet">${r.reason}</span><span class="t">${r.when}</span></div>
+      <p class="by">${r.by} reported <a class="link" href="person.html">${r.who}</a>${r.where ? ` in <a class="link" href="circle.html">${r.where}</a>` : ""}</p>
+      ${r.snap ? `<div class="snap"><small>What they saw</small>${r.snap}</div>` : ""}
+      ${r.details ? `<p class="note">${r.details}</p>` : ""}
+      ${r.closed ? `<p class="done">${outcome[r.closed]}</p>` : `
+      <div class="acts">
+        ${r.removable ? `<button class="btn sm" data-r="${i}" data-a="remove" type="button">Remove ${r.kind.toLowerCase()}</button>` : ""}
+        <button class="btn sm ${r.removable ? "ghost" : ""}" data-r="${i}" data-a="actioned" type="button">Mark handled</button>
+        <button class="btn sm ghost" data-r="${i}" data-a="dismissed" type="button">Dismiss</button>
+      </div>`}
+    </li>`).join("");
+}
+document.getElementById("reports").addEventListener("click", e => {
+  const b = e.target.closest("[data-a]"); if (!b) return;
+  reports[+b.dataset.r].closed = b.dataset.a; renderReports();
+});
+renderReports();
+
+const biz = [{ name: "Rosa's Cantina", contact: "Rosa Delgado", phone: "(415) 555-0134", email: "rosa@cantina.com", msg: "Taco Tuesdays on the patio, and a live music night on Fridays." }];
+function renderBiz() {
+  const open = biz.filter(r => !r.closed).length;
+  document.getElementById("biz-count").textContent = open ? `${open} waiting` : "";
+  document.getElementById("biz-empty").hidden = open > 0;
+  document.getElementById("biz").innerHTML = biz.filter(r => !r.closed).map((r, i) => `
+    <li class="item">
+      <div class="item-head"><b>${r.name}</b></div>
+      <dl class="contact"><dt>Contact</dt><dd>${r.contact}</dd><dt>Phone</dt><dd>${r.phone}</dd><dt>Email</dt><dd>${r.email}</dd></dl>
+      <p class="note">${r.msg}</p>
+      <div class="acts">
+        <button class="btn sm" data-b="${i}" data-a="Approved" type="button">Approve</button>
+        <button class="btn sm ghost" data-b="${i}" data-a="Rejected" type="button">Reject</button>
+      </div>
+    </li>`).join("");
+}
+document.getElementById("biz").addEventListener("click", e => {
+  const b = e.target.closest("[data-b]"); if (!b) return;
+  const r = biz[+b.dataset.b]; r.closed = true;
+  document.getElementById("reviewed").insertAdjacentHTML("afterbegin", `<li><span>${r.name}</span><span>${b.dataset.a}</span></li>`);
+  renderBiz();
+});
+renderBiz();
+</script>
+</body>
+</html>

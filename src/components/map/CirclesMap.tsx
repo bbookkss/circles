@@ -6,7 +6,7 @@ import Link from 'next/link'
 import Map, { Marker, NavigationControl, GeolocateControl } from 'react-map-gl/mapbox'
 import type { Map as MapboxMap, LngLatBounds } from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
-import { installCoffeeTheme, COFFEE } from '@/lib/mapTheme'
+import { installMapTheme, MAP_BG } from '@/lib/mapTheme'
 import { SF_VIEW, type MapView } from '@/lib/mapView'
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN!
@@ -190,11 +190,11 @@ export default function CirclesMap({
       initialViewState={initialView}
       // The canvas is this colour before any tile arrives, so the first
       // frame is paper, not the stock white that used to flash.
-      style={{ width: '100%', height: '100%', background: COFFEE }}
+      style={{ width: '100%', height: '100%', background: MAP_BG }}
       mapStyle="mapbox://styles/mapbox/light-v11"
       mapboxAccessToken={MAPBOX_TOKEN}
       onLoad={(e) => {
-        installCoffeeTheme(e.target)
+        installMapTheme(e.target)
         setMap(e.target)
         setBounds(e.target.getBounds())
       }}
@@ -240,7 +240,7 @@ export default function CirclesMap({
         }}
       />
       {locateError && (
-        <div className="absolute top-3 left-3 right-16 md:left-auto md:right-14 md:max-w-xs z-10 bg-background/95 backdrop-blur border rounded-lg px-3 py-2 text-xs shadow-lg flex items-start gap-2">
+        <div className="absolute top-3 left-3 right-16 md:left-auto md:right-14 md:max-w-xs z-10 glass rounded-2xl px-3 py-2 text-xs shadow-lg flex items-start gap-2">
           <span className="flex-1">{locateError}</span>
           <button type="button" onClick={() => setLocateError(null)} className="text-muted-foreground hover:text-foreground" aria-label="Dismiss">×</button>
         </div>
@@ -265,11 +265,11 @@ export default function CirclesMap({
               information; an emoji at 18px was not readable as anything. */}
           {/* A sharp pin on displaced coordinates would be a confident lie:
               it looks precise, and it is not. Approximate circles get the
-              pen-blue treatment and a soft halo that says roughly here. */}
+              quiet treatment and a soft heat halo that says roughly here. */}
           {circle.approximate && (
             <span
               aria-hidden
-              className="pointer-events-none absolute left-1/2 bottom-0 -translate-x-1/2 translate-y-1/2 w-20 h-20 rounded-full bg-pen/10 ring-1 ring-pen/30"
+              className="pointer-events-none absolute left-1/2 bottom-0 -translate-x-1/2 translate-y-1/2 w-24 h-24 rounded-full bg-[radial-gradient(circle,color-mix(in_srgb,var(--heat)_55%,transparent)_0%,color-mix(in_srgb,var(--heat)_22%,transparent)_45%,transparent_72%)]"
             />
           )}
           {/* The tag is the card. Tapping it does not swap it for a different
@@ -280,7 +280,7 @@ export default function CirclesMap({
           {(() => {
             const open = popupCircle?.id === circle.id
             const edge = circle.approximate
-              ? 'border-pen text-pen'
+              ? 'border-transparent text-foreground'
               : circle.kind === 'commercial'
                 ? 'border-foreground ring-1 ring-foreground/30 text-foreground'
                 : 'border-foreground text-foreground'
@@ -304,7 +304,7 @@ export default function CirclesMap({
                     this, and expanding here put two copies of the same
                     circle on one screen. */}
                 <div
-                  className={`bg-background border shadow-[0_1px_3px_rgba(34,31,27,0.25)] rounded-full ${edge} ${
+                  className={`bg-background border shadow-[0_2px_8px_rgba(26,34,48,0.14)] rounded-full ${edge} ${
                     open
                       ? 'md:rounded-2xl md:min-w-[240px] md:transition-[border-radius,min-width] md:duration-300 md:ease-out'
                       : 'md:min-w-0 group-hover:-translate-y-0.5 transition-transform duration-150'
@@ -314,9 +314,9 @@ export default function CirclesMap({
                     type="button"
                     title={
                       circle.approximate
-                        ? `${circle.name} · approximate area`
+                        ? `${circle.name}, approximate area`
                         : circle.kind === 'commercial'
-                          ? `${circle.name} · business`
+                          ? `${circle.name}, business`
                           : circle.name
                     }
                     // Not w-full. The title stretching to fill the box was
@@ -324,7 +324,7 @@ export default function CirclesMap({
                     // width:100% resolved against a container the collapsed
                     // body had already made too wide, then clamped at 240.
                     // Shrink-wrapped, it is exactly as wide as the name.
-                    className={`block text-left font-display font-semibold leading-none whitespace-nowrap truncate text-[13px] px-2.5 py-1.5 max-w-[70vw] md:max-w-[260px] ${
+                    className={`block text-left font-medium leading-none whitespace-nowrap truncate text-[13px] px-2.5 py-1.5 max-w-[70vw] md:max-w-[260px] ${
                       open ? 'md:text-[15px] md:px-3.5 md:pt-3 md:pb-1 md:max-w-none md:transition-[font-size] md:duration-300' : ''
                     }`}
                   >
@@ -349,8 +349,8 @@ export default function CirclesMap({
                     <div className="overflow-hidden">
                       <div className="px-3.5 pb-3 space-y-1.5 text-foreground">
                         {(circle.category || circle.kind === 'commercial') && (
-                          <p className="font-display italic text-sm text-pen leading-tight">
-                            {[circle.category, circle.kind === 'commercial' ? 'business' : null].filter(Boolean).join(' · ')}
+                          <p className="font-medium text-sm text-muted-foreground leading-tight">
+                            {[circle.category, circle.kind === 'commercial' ? 'business' : null].filter(Boolean).join(', ')}
                           </p>
                         )}
                         {circle.description && (
@@ -359,12 +359,12 @@ export default function CirclesMap({
                         <div className="flex items-center justify-between gap-2 pt-1">
                           <span className="label">
                             {circle.memberCount !== undefined ? `${circle.memberCount} member${circle.memberCount !== 1 ? 's' : ''}` : ''}
-                            {circle.approximate ? (circle.memberCount !== undefined ? ' · ' : '') + 'approx. area' : ''}
+                            {circle.approximate ? (circle.memberCount !== undefined ? ', ' : '') + 'approx. area' : ''}
                           </span>
                           <Link
                             href={`/circles/${circle.id}`}
                             onClick={(e) => e.stopPropagation()}
-                            className="font-sans font-medium text-xs rounded-full border border-foreground px-3 py-1 hover:bg-pen hover:border-pen hover:text-white transition-colors"
+                            className="font-medium text-xs rounded-full bg-foreground text-background px-3 py-1 hover:opacity-85 transition-opacity"
                           >
                             Open
                           </Link>
@@ -373,7 +373,7 @@ export default function CirclesMap({
                     </div>
                   </div>
                 </div>
-                <span aria-hidden className={`w-px h-2 ${circle.approximate ? 'bg-pen' : 'bg-foreground'}`} />
+                <span aria-hidden className={`w-px h-2 ${circle.approximate ? 'bg-muted-foreground' : 'bg-foreground'}`} />
               </span>
             )
           })()}

@@ -1,23 +1,21 @@
 import Link from 'next/link'
+import AuthShell from '@/components/AuthShell'
 
 export default function CheckEmailPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-6">
-      <div className="max-w-sm w-full text-center space-y-6 fade-rise">
-        <div className="w-12 h-12 rounded-full border-2 border-foreground mx-auto" />
-        <div className="space-y-2">
-          <h1 className="text-3xl">Check your email</h1>
-          <p className="text-muted-foreground text-sm">
-            We sent you a confirmation link. Click it to activate your account, then come back here to sign in.
-          </p>
-        </div>
+    <AuthShell altHref="/login" altLabel="Log in">
+      <div className="space-y-4">
+        <h1 className="text-[1.75rem] sm:text-[2.2rem]">Check your email</h1>
+        <p className="text-muted-foreground">
+          We sent you a link to confirm your account. Open it on this device, then come back here to log in.
+        </p>
         <Link
           href="/login"
-          className="inline-block text-sm underline underline-offset-4 text-muted-foreground hover:text-foreground"
+          className="inline-block text-[15px] underline underline-offset-4 decoration-cool-2 hover:decoration-current"
         >
-          Back to sign in
+          Back to log in
         </Link>
       </div>
-    </div>
+    </AuthShell>
   )
 }

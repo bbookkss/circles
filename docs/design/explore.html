@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Explore – Circles</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Host+Grotesk:wght@300;400;500;600&display=swap">
+<script>try { const t = localStorage.getItem("circles-theme"); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
+<link rel="stylesheet" href="circles.css">
+<style>
+/* Explore: the map fills the screen under the glass nav. The list is a glass
+   sheet floating on its left edge; on a phone, Map and List are two views. */
+body { overflow: hidden; }
+.stage { position: fixed; inset: 0; }
+.stage .map { position: absolute; inset: 0; cursor: pointer; }
+
+.list {
+  position: absolute; z-index: 3;
+  top: calc(84px + env(safe-area-inset-top, 0px)); bottom: 20px;
+  left: max(20px, env(safe-area-inset-left, 0px));
+  width: 380px; border-radius: 28px;
+  display: flex; flex-direction: column; overflow: hidden;
+}
+.list-head { padding: 22px 22px 14px; display: grid; gap: 14px; }
+.search { display: flex; gap: 8px; }
+.search .input { background: var(--glass-edge); border-radius: 999px; padding: 11px 18px; font-size: 15px; }
+.filter-btn { flex: none; border: 0; cursor: pointer; border-radius: 999px; padding: 0 16px; font-size: 14px; font-weight: 500; background: var(--glass-edge); color: var(--ink); }
+.filter-btn[aria-expanded="true"] { background: var(--ink); color: var(--paper); }
+.filters { display: grid; gap: 14px; padding: 4px 22px 16px; border-bottom: 1px solid var(--rule); }
+.filters[hidden] { display: none; }
+.fgroup p { font-size: 13px; color: var(--quiet); margin-bottom: 6px; }
+.pills { display: flex; flex-wrap: wrap; gap: 6px; }
+.pill { border: 0; cursor: pointer; border-radius: 999px; padding: 6px 12px; font-size: 13px; background: var(--glass-edge); color: var(--ink); }
+.pill[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+.away { display: flex; justify-content: space-between; align-items: center; gap: 10px; font-size: 14px; color: var(--quiet); margin-top: -6px; }
+.away button { border: 0; background: none; cursor: pointer; color: var(--ink); font: inherit; font-size: 14px; padding: 0; text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px; }
+.count { font-size: 14px; color: var(--quiet); padding: 0 22px 8px; display: flex; justify-content: space-between; }
+.count button { border: 0; background: none; cursor: pointer; color: var(--ink); font-size: 14px; padding: 0; }
+.results { list-style: none; margin: 0; padding: 0 10px 12px; overflow-y: auto; flex: 1; }
+.results li button {
+  width: 100%; text-align: left; border: 0; background: transparent; cursor: pointer;
+  padding: 14px 12px; border-radius: 18px; display: grid; gap: 2px;
+}
+.results li button:hover { background: var(--glass-edge); }
+.results li button[aria-current="true"] { background: var(--paper); box-shadow: 0 1px 3px var(--shade); }
+.r-top { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; }
+.r-name { font-size: 17px; font-weight: 500; letter-spacing: -0.015em; }
+.r-dist { font-size: 14px; color: var(--quiet); flex: none; }
+.r-meta { font-size: 14px; color: var(--quiet); }
+.r-yours { font-size: 13px; color: var(--ink); display: inline-flex; align-items: center; gap: 6px; margin-top: 4px; }
+.r-yours::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--ink); }
+.people { padding: 0 10px 6px; }
+.people p { font-size: 13px; color: var(--quiet); padding: 0 12px 4px; }
+.people a { display: flex; align-items: center; gap: 12px; padding: 8px 12px; border-radius: 16px; font-size: 15px; }
+.people a:hover { background: var(--glass-edge); }
+.people span.q { color: var(--quiet); font-size: 14px; }
+.empty { padding: 20px 22px; color: var(--quiet); font-size: 15px; }
+
+.card {
+  position: absolute; z-index: 3; bottom: 24px;
+  left: calc(max(20px, env(safe-area-inset-left, 0px)) + 380px + 24px);
+  right: max(20px, env(safe-area-inset-right, 0px)); margin-inline: auto; max-width: 420px;
+  border-radius: 24px; padding: 18px 18px 18px 22px;
+  display: flex; align-items: center; gap: 16px;
+}
+.card[hidden] { display: none; }
+.card .c-body { flex: 1; min-width: 0; }
+.card .c-name { font-size: 19px; font-weight: 500; letter-spacing: -0.02em; }
+.card .c-meta { font-size: 14px; color: var(--quiet); }
+.card .c-note { font-size: 13px; color: var(--quiet); margin-top: 4px; }
+.card .x { border: 0; background: none; cursor: pointer; color: var(--quiet); padding: 6px; border-radius: 50%; }
+
+.legend {
+  position: absolute; z-index: 2; top: calc(84px + env(safe-area-inset-top, 0px));
+  right: max(20px, env(safe-area-inset-right, 0px));
+  border-radius: 18px; padding: 12px 16px; font-size: 13px; color: var(--quiet); display: grid; gap: 6px; max-width: 230px;
+}
+.legend .row { display: flex; align-items: center; gap: 8px; }
+.legend .sw { width: 22px; height: 10px; border-radius: 999px; background: linear-gradient(90deg, transparent, var(--heat)); border: 1px solid var(--rule); }
+.legend .pin { width: 10px; height: 10px; border-radius: 50%; background: var(--ink); box-shadow: 0 0 0 3px var(--paper); margin-inline: 6px; }
+
+.viewtoggle { display: none; }
+
+@media (max-width: 760px) {
+  .list { left: max(12px, env(safe-area-inset-left, 0px)); right: max(12px, env(safe-area-inset-right, 0px)); width: auto; bottom: calc(150px + env(safe-area-inset-bottom, 0px)); border-radius: 24px; }
+  body[data-view="map"] .list { display: none; }
+  body[data-view="list"] .card, body[data-view="list"] .legend { display: none; }
+  .legend { display: none; }
+  .card { left: max(12px, env(safe-area-inset-left, 0px)); right: max(12px, env(safe-area-inset-right, 0px)); bottom: calc(150px + env(safe-area-inset-bottom, 0px)); max-width: none; }
+  .viewtoggle {
+    display: flex; position: fixed; z-index: 4; left: 50%; transform: translateX(-50%);
+    bottom: calc(86px + env(safe-area-inset-bottom, 0px)); border-radius: 999px; padding: 4px; gap: 2px;
+  }
+  .viewtoggle button { border: 0; cursor: pointer; background: transparent; padding: 9px 22px; border-radius: 999px; font-size: 14px; font-weight: 500; color: var(--quiet); }
+  .viewtoggle button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+}
+</style>
+</head>
+<body data-view="map">
+
+<header class="nav" data-page="explore"></header>
+
+<div class="stage">
+  <div class="map" id="mapwrap"><canvas id="map" aria-label="Map of circles near you" role="img"></canvas></div>
+
+  <aside class="list glass" aria-label="Circles near you">
+    <div class="list-head">
+      <h1 class="h-md" id="listTitle">Circles near you</h1>
+      <div class="away" id="away" hidden><span id="awayText"></span><button type="button" id="awayBack">Back to near you</button></div>
+      <form class="search" id="searchForm" role="search">
+        <label for="q" class="sr">Search circles and people</label>
+        <input class="input" id="q" placeholder="Search circles and people" autocomplete="off">
+        <button class="filter-btn" type="button" id="filterBtn" aria-expanded="false" aria-controls="filters">Filters</button>
+      </form>
+    </div>
+    <div class="filters" id="filters" hidden>
+      <div class="fgroup"><p>Type</p><div class="pills" data-f="kind"><button class="pill" type="button" data-v="social" aria-pressed="false">Social</button><button class="pill" type="button" data-v="commercial" aria-pressed="false">Businesses</button></div></div>
+      <div class="fgroup"><p>Category</p><div class="pills" data-f="cat"></div></div>
+      <div class="fgroup"><p>Meets on</p><div class="pills" data-f="day"></div></div>
+      <div class="fgroup"><p>Circle size</p><div class="pills" data-f="size"><button class="pill" type="button" data-v="small" aria-pressed="false">Under 10</button><button class="pill" type="button" data-v="medium" aria-pressed="false">10 to 50</button><button class="pill" type="button" data-v="large" aria-pressed="false">Over 50</button></div></div>
+    </div>
+    <div class="people" id="people" hidden></div>
+    <div class="count"><span id="count"></span><button type="button" id="clear" hidden>Clear filters</button></div>
+    <ul class="results" id="results"></ul>
+  </aside>
+
+  <aside class="legend glass" aria-label="Map key">
+    <div class="row"><span class="sw"></span>A circle's area. Warmer means more people meet there.</div>
+    <div class="row"><span class="pin"></span>Your circles, at the exact spot.</div>
+  </aside>
+
+  <div class="card glass" id="card" hidden aria-live="polite">
+    <div class="c-body">
+      <div class="c-name" id="cName"></div>
+      <div class="c-meta" id="cMeta"></div>
+      <div class="c-note" id="cNote"></div>
+    </div>
+    <a class="btn sm" href="circle.html">Open</a>
+    <button class="x" type="button" id="cClose" aria-label="Close">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+  </div>
+
+  <div class="viewtoggle glass" role="group" aria-label="Show">
+    <button type="button" data-view="map" aria-pressed="true">Map</button>
+    <button type="button" data-view="list" aria-pressed="false">List</button>
+  </div>
+</div>
+
+<nav class="tabs" data-page="explore"></nav>
+
+<script src="circles.js"></script>
+<script>
+const CATS = ["Music", "Sports", "Food & Drink", "Arts & Culture", "Outdoors", "Tech", "Social", "Other"];
+const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const circles = [
+  { name: "Thursday chess", hood: "Mission Dolores", venue: "Ritual Coffee, Valencia St", cat: "Social", days: [4], members: 14, mi: "0.4 mi", mine: true, kind: "social", x: .50, y: .42, r: 70, temp: .9 },
+  { name: "Saturday morning run", hood: "Duboce Triangle", venue: "Duboce Park steps", cat: "Sports", days: [6], members: 22, mi: "0.9 mi", mine: true, kind: "social", x: .62, y: .30, r: 80, temp: 1 },
+  { name: "Book club at Dog Eared", hood: "Mission", venue: "Dog Eared Books", cat: "Arts & Culture", days: [1], members: 9, mi: "0.6 mi", mine: true, kind: "commercial", x: .55, y: .62, r: 52, temp: .45 },
+  { name: "Sketching at the Main Library", hood: "Civic Center", venue: "Main Library, 5th floor", cat: "Arts & Culture", days: [3], members: 11, mi: "1.8 mi", mine: true, kind: "social", x: .74, y: .18, r: 56, temp: .5 },
+  { name: "Bernal Hill sunset walk", hood: "Bernal Heights", cat: "Outdoors", days: [0, 3], members: 31, mi: "1.5 mi", mine: false, kind: "social", x: .66, y: .80, r: 90, temp: .85 },
+  { name: "Noe Valley parents' coffee", hood: "Noe Valley", cat: "Social", days: [2], members: 7, mi: "1.1 mi", mine: false, kind: "social", x: .36, y: .66, r: 50, temp: .3 },
+  { name: "Mission pickup basketball", hood: "Mission", cat: "Sports", days: [2, 4], members: 56, mi: "0.7 mi", mine: false, kind: "social", x: .44, y: .52, r: 74, temp: .75 },
+  { name: "Castro choir", hood: "Castro", cat: "Music", days: [1], members: 18, mi: "1.0 mi", mine: false, kind: "social", x: .30, y: .38, r: 64, temp: .6 },
+  { name: "Front-end meetup", hood: "SoMa", cat: "Tech", days: [3], members: 43, mi: "2.2 mi", mine: false, kind: "commercial", x: .86, y: .36, r: 70, temp: .55 },
+  { name: "Tartine bread class", hood: "Mission", cat: "Food & Drink", days: [6], members: 12, mi: "0.8 mi", mine: false, kind: "commercial", x: .58, y: .50, r: 46, temp: .35 },
+  { name: "Glen Canyon trail crew", hood: "Glen Park", cat: "Outdoors", days: [0], members: 15, mi: "2.6 mi", mine: false, kind: "social", x: .20, y: .78, r: 66, temp: .4 }
+];
+const people = [{ n: "Maya Ortiz", i: "MO", ig: "mayaplays" }, { n: "Jon Park", i: "JP", ig: "jonruns" }, { n: "Priya Shah", i: "PS", ig: null }, { n: "Sam Lee", i: "SL", ig: null }];
+
+const f = { kind: null, cat: null, day: null, size: null, q: "" };
+let selected = null;
+
+document.querySelector('[data-f="cat"]').innerHTML = CATS.map(c => `<button class="pill" type="button" data-v="${c}" aria-pressed="false">${c}</button>`).join("");
+document.querySelector('[data-f="day"]').innerHTML = DAYS.map((d, i) => `<button class="pill" type="button" data-v="${i}" aria-pressed="false">${d}</button>`).join("");
+
+const sizeOf = n => n < 10 ? "small" : n <= 50 ? "medium" : "large";
+function filtered() {
+  const q = f.q.toLowerCase();
+  return circles.filter(c =>
+    (!f.kind || c.kind === f.kind) && (!f.cat || c.cat === f.cat) &&
+    (f.day === null || c.days.includes(+f.day)) && (!f.size || sizeOf(c.members) === f.size) &&
+    (!q || (c.name + " " + c.hood + " " + c.cat).toLowerCase().includes(q)));
+}
+
+function render() {
+  const list = filtered().sort((a, b) => parseFloat(a.mi) - parseFloat(b.mi));
+  const active = [f.kind, f.cat, f.day, f.size].filter(v => v !== null).length;
+  document.getElementById("filterBtn").textContent = active ? `Filters, ${active}` : "Filters";
+  document.getElementById("clear").hidden = !(active || f.q);
+  document.getElementById("count").textContent = `${list.length} circle${list.length === 1 ? "" : "s"}`;
+
+  const pm = f.q ? people.filter(p => (p.n + " " + (p.ig || "")).toLowerCase().includes(f.q.toLowerCase())) : [];
+  const pe = document.getElementById("people");
+  pe.hidden = !pm.length;
+  pe.innerHTML = `<p>People</p>` + pm.map(p => `<a href="person.html"><span class="av" aria-hidden="true">${p.i}</span><span>${p.n}${p.ig ? ` <span class="q">@${p.ig}</span>` : ""}</span></a>`).join("");
+
+  document.getElementById("results").innerHTML = list.length ? list.map(c => `
+    <li><button type="button" data-n="${c.name}" aria-current="${selected === c}">
+      <span class="r-top"><span class="r-name">${c.name}</span><span class="r-dist">${c.mi}</span></span>
+      <span class="r-meta">${c.hood}, ${c.members} members</span>
+      <span class="r-meta">${c.cat}, ${c.days.map(d => DAYS[d]).join(" and ")}</span>
+      ${c.mine ? `<span class="r-yours">You're a member</span>` : ""}
+    </button></li>`).join("")
+    : `<li class="empty">No circles match your filters.</li>`;
+
+  const card = document.getElementById("card");
+  if (selected && list.includes(selected)) {
+    card.hidden = false;
+    document.getElementById("cName").textContent = selected.name;
+    document.getElementById("cMeta").textContent = `${selected.cat}, ${selected.mine ? selected.venue : selected.hood}`;
+    document.getElementById("cNote").textContent = selected.mine ? "You're a member, so you see the exact spot." : "Exact spot shown to members.";
+  } else card.hidden = true;
+
+  map.setAreas(list);
+}
+
+/* map: areas for every circle; exact pins only for yours.
+   drawMap reads these arrays every frame, so they are updated in place. */
+const canvas = document.getElementById("map");
+const areas = [], exact = [];
+let shown = [];
+const mapOpts = { exact, seed: 11 };
+const mapCtl = Circles.drawMap(canvas, areas, mapOpts);
+const map = {
+  setAreas(list) {
+    shown = list;
+    areas.length = 0; exact.length = 0;
+    list.forEach(c => areas.push({ x: c.x, y: c.y, r: c.r * (selected === c ? 1.15 : 1), temp: selected && selected !== c ? c.temp * .55 : c.temp }));
+    list.filter(c => c.mine).forEach(c => exact.push({ x: c.x + .012, y: c.y - .018 }));
+    mapCtl.redraw(); // needed when reduced motion stops the loop
+  }
+};
+canvas.addEventListener("click", e => {
+  const r = canvas.getBoundingClientRect(), x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height;
+  let best = null, bd = Infinity;
+  shown.forEach(c => { const d = Math.hypot((c.x - x) * r.width, (c.y - y) * r.height); if (d < c.r && d < bd) { best = c; bd = d; } });
+  selected = best; render();
+});
+
+document.getElementById("results").addEventListener("click", e => {
+  const b = e.target.closest("button[data-n]"); if (!b) return;
+  selected = circles.find(c => c.name === b.dataset.n); setView("map"); render();
+});
+document.getElementById("filters").addEventListener("click", e => {
+  const b = e.target.closest(".pill"); if (!b) return;
+  const key = b.parentElement.dataset.f;
+  f[key] = f[key] === b.dataset.v ? null : b.dataset.v;
+  b.parentElement.querySelectorAll(".pill").forEach(p => p.setAttribute("aria-pressed", p.dataset.v === f[key]));
+  render();
+});
+document.getElementById("filterBtn").addEventListener("click", e => {
+  const el = document.getElementById("filters"); el.hidden = !el.hidden; e.currentTarget.setAttribute("aria-expanded", !el.hidden);
+});
+document.getElementById("clear").addEventListener("click", () => {
+  Object.assign(f, { kind: null, cat: null, day: null, size: null, q: "" });
+  document.getElementById("q").value = "";
+  document.querySelectorAll(".pill").forEach(p => p.setAttribute("aria-pressed", "false"));
+  render();
+});
+document.getElementById("q").addEventListener("input", e => { f.q = e.target.value; render(); });
+document.getElementById("searchForm").addEventListener("submit", e => e.preventDefault());
+document.getElementById("cClose").addEventListener("click", () => { selected = null; render(); });
+
+function setView(v) {
+  document.body.dataset.view = v;
+  document.querySelectorAll(".viewtoggle button").forEach(b => b.setAttribute("aria-pressed", b.dataset.view === v));
+}
+document.querySelector(".viewtoggle").addEventListener("click", e => { const b = e.target.closest("button"); if (b) setView(b.dataset.view); });
+
+/* Moving the map to another city: from the assistant (an event on this page,
+   or #place=… when it navigates here from elsewhere). Mock data per city. */
+const HOME = circles.slice();
+const ELSEWHERE = Circles.places;
+function goTo(place) {
+  const list = ELSEWHERE[place];
+  const home = !list || place === "San Francisco";
+  circles.length = 0;
+  if (home) HOME.forEach(c => circles.push(c));
+  else list.forEach(([name, hood, cat, days, members], i) => circles.push({
+    name, hood, cat, days, members, mi: `${(3 + i * 1.7).toFixed(1)} mi`, mine: false, kind: "social",
+    x: .2 + (i * .23) % .7, y: .25 + ((i * .37) % .55), r: 60 + (members % 40), temp: Math.min(1, .3 + members / 70)
+  }));
+  mapOpts.seed = home ? 11 : [...place].reduce((a, ch) => a * 31 + ch.charCodeAt(0), 7) % 9973 + 1;
+  selected = null;
+  document.getElementById("listTitle").textContent = home ? "Circles near you" : `Circles in ${place}`;
+  document.getElementById("away").hidden = home;
+  document.getElementById("awayText").textContent = home ? "" : (list ? `${list.length} circles, shown as areas` : "");
+  if (!home && !list) { document.getElementById("awayText").textContent = "No circles here yet"; }
+  render();
+}
+window.addEventListener("circles:goto", e => goTo(e.detail.place));
+document.getElementById("awayBack").addEventListener("click", () => { history.replaceState(null, "", location.pathname); goTo("San Francisco"); });
+const fromHash = new URLSearchParams(location.hash.slice(1)).get("place");
+
+render();
+if (fromHash) goTo(fromHash);
+</script>
+</body>
+</html>

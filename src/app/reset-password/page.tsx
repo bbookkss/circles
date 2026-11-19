@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import AuthShell from '@/components/AuthShell'
 import { updatePassword } from '@/app/actions/auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -23,15 +24,12 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 bg-background">
-      <div className="w-full max-w-sm space-y-6">
-        <Link href="/login" className="font-display font-semibold text-[1.35rem] tracking-tight block">
-          circles
-        </Link>
+    <AuthShell altHref="/login" altLabel="Log in">
+      <div className="space-y-6">
 
-        <div className="space-y-2">
-          <h1 className="text-xl font-semibold">Choose a new password</h1>
-          <p className="text-sm text-muted-foreground">
+        <div>
+          <h1 className="text-[1.75rem] sm:text-[2.2rem]">Choose a new password</h1>
+          <p className="text-muted-foreground mt-2">
             You&apos;ll be signed in once it&apos;s saved.
           </p>
         </div>
@@ -63,17 +61,17 @@ export default function ResetPasswordPage() {
 
           {error && <p className="text-sm text-destructive">{error}</p>}
 
-          <Button type="submit" className="w-full" disabled={loading}>
+          <Button type="submit" size="lg" className="w-full" disabled={loading}>
             {loading ? 'Saving…' : 'Save password'}
           </Button>
         </form>
 
         <p className="text-sm text-muted-foreground text-center">
-          <Link href="/login" className="underline underline-offset-4 hover:text-foreground">
-            Back to sign in
+          <Link href="/login" className="underline underline-offset-4 decoration-cool-2 hover:text-foreground">
+            Back to log in
           </Link>
         </p>
       </div>
-    </div>
+    </AuthShell>
   )
 }

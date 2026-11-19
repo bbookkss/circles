@@ -55,7 +55,7 @@ export default async function EditCirclePage({ params }: { params: Promise<{ id:
           scrolls by the difference, and the form's own scroller ends up
           nested inside a container that is already the wrong height. That
           combination is what produced the dead space below Create Circle. */}
-      <div className="pt-14 md:h-screen">
+      <div className="pt-16 md:h-screen">
         <EditCircleClient circle={circle} schedule={schedules?.[0] ?? null} />
       </div>
     </>

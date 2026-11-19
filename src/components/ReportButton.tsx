@@ -71,7 +71,7 @@ export default function ReportButton({
           otherwise become the containing block for position: fixed. */}
       {open && createPortal(
         <div
-          className="fixed inset-0 z-[60] flex items-end md:items-center justify-center bg-foreground/30 p-4"
+          className="fixed inset-0 z-[60] flex items-end md:items-center justify-center bg-[#1a2230]/35 backdrop-blur-[2px] p-4"
           onClick={close}
           role="dialog"
           aria-modal="true"
@@ -80,10 +80,10 @@ export default function ReportButton({
           <form
             onSubmit={submit}
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-sm bg-background border border-foreground shadow-[0_10px_30px_-12px_rgba(34,31,27,0.45)] p-5 space-y-4 text-left fade-rise"
+            className="w-full max-w-sm glass rounded-3xl p-6 space-y-4 text-left fade-rise"
           >
             <div className="flex items-baseline justify-between gap-3">
-              <p className="font-display font-semibold text-lg leading-tight">Report {NOUN[targetType]}</p>
+              <p className="text-xl font-medium tracking-tight leading-tight">Report {NOUN[targetType]}</p>
               <button
                 type="button"
                 onClick={close}
@@ -99,14 +99,14 @@ export default function ReportButton({
                   Thanks. It has been sent for review, and nobody is told who reported it.
                 </p>
                 {targetType !== 'circle' && (
-                  <p className="text-xs text-foreground/75">
+                  <p className="text-sm text-muted-foreground">
                     If you do not want to hear from them at all, you can also block them from their profile.
                   </p>
                 )}
                 <button
                   type="button"
                   onClick={close}
-                  className="text-sm font-medium rounded-full border border-foreground px-4 py-1.5 hover:bg-muted transition-colors"
+                  className="text-sm font-medium rounded-full bg-muted px-4 py-2 hover:bg-cool-2 transition-colors"
                 >
                   Done
                 </button>
@@ -114,7 +114,7 @@ export default function ReportButton({
             ) : (
               <>
                 <fieldset className="space-y-1.5">
-                  <legend className="text-xs text-foreground/75 mb-2">What is wrong with it?</legend>
+                  <legend className="text-sm text-muted-foreground mb-2">What is wrong with it?</legend>
                   {REPORT_REASONS.map((r) => (
                     <label key={r.value} className="flex items-center gap-2.5 text-sm min-h-9 cursor-pointer">
                       <input
@@ -123,7 +123,7 @@ export default function ReportButton({
                         value={r.value}
                         checked={reason === r.value}
                         onChange={() => setReason(r.value)}
-                        className="accent-pen"
+                        className="accent-[var(--foreground)]"
                       />
                       {r.label}
                     </label>
@@ -135,14 +135,14 @@ export default function ReportButton({
                   rows={3}
                   maxLength={2000}
                   placeholder="Anything that would help (optional)"
-                  className="w-full border border-border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:border-pen resize-none"
+                  className="w-full rounded-2xl border border-transparent bg-background/70 px-3.5 py-2.5 text-[0.95rem] placeholder:text-muted-foreground focus-visible:outline-none focus-visible:border-ring resize-none"
                 />
-                {error && <p className="text-xs text-destructive">{error}</p>}
+                {error && <p className="text-sm text-destructive">{error}</p>}
                 <div className="flex justify-end">
                   <button
                     type="submit"
                     disabled={!reason || state === 'sending'}
-                    className="text-sm font-medium rounded-full border border-foreground px-4 py-1.5 hover:bg-destructive hover:border-destructive hover:text-white disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-foreground disabled:hover:border-foreground transition-colors"
+                    className="text-sm font-medium rounded-full bg-foreground text-background px-5 py-2 hover:opacity-85 disabled:opacity-35 transition-opacity"
                   >
                     {state === 'sending' ? 'Sending…' : 'Send report'}
                   </button>

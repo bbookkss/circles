@@ -12,6 +12,7 @@ import CopyLinkButton from '@/components/CopyLinkButton'
 import FollowButton from '@/components/FollowButton'
 import BackButton from '@/components/BackButton'
 import CircleLocationMap from '@/components/map/CircleLocationMap'
+import Logo from '@/components/Logo'
 import { BLUR_RADIUS_M, type CirclePlace } from '@/lib/approxLocation'
 import CheckInControl from '@/components/CheckInControl'
 import { relativeDayLabel, dayNameISO, checkInWindow } from '@/lib/schedule'
@@ -83,7 +84,7 @@ function meetsPhrase(s: { days_of_week: number[]; start_time: string; end_time: 
 function Initials({ name, size = 'md' }: { name: string; size?: 'sm' | 'md' }) {
   const initials = name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)
   return (
-    <div className={`rounded-full border border-foreground/70 flex items-center justify-center font-medium flex-shrink-0 ${size === 'sm' ? 'w-7 h-7 text-[11px]' : 'w-9 h-9 text-sm'}`}>
+    <div className={`rounded-full bg-cool-2 flex items-center justify-center font-medium flex-shrink-0 ${size === 'sm' ? 'w-7 h-7 text-[11px]' : 'w-9 h-9 text-sm'}`}>
       {initials}
     </div>
   )
@@ -193,45 +194,51 @@ export default async function CirclePage({
     return (
       <>
         {user ? <TopNav /> : (
-          <nav className="fixed top-0 left-0 right-0 z-50 h-14 bg-background/80 backdrop-blur-md border-b flex items-center px-4">
-            <Link href="/login" className="font-display font-semibold text-[1.35rem] tracking-tight">circles</Link>
+          <nav className="fixed top-0 left-0 right-0 z-50 h-14 px-3 pt-2 pointer-events-none">
+            <div className="glass pointer-events-auto mx-auto max-w-3xl h-12 rounded-full flex items-center gap-2 pl-4 pr-1.5">
+              <Link href="/" className="flex items-center gap-2 font-semibold text-[1.05rem] tracking-tight"><Logo />Circles</Link>
+              <div className="ml-auto flex items-center gap-1">
+                <Link href="/login" className="text-sm px-3 py-2 rounded-full hover:bg-muted">Log in</Link>
+                <Link href="/signup" className="text-sm font-medium px-4 py-2 rounded-full bg-foreground text-background">Sign up</Link>
+              </div>
+            </div>
           </nav>
         )}
         <div className="pt-14 pb-20 md:pb-0 min-h-screen bg-background">
           <div className="max-w-2xl mx-auto px-5 py-10 space-y-8">
 
             {actionError && (
-              <p className="text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-md">
+              <p className="text-sm text-destructive bg-destructive/10 px-3.5 py-2.5 rounded-xl">
                 {actionError}
               </p>
             )}
 
             {/* Masthead */}
-            <header className="space-y-3 fade-rise border-b border-foreground pb-6">
-              <p className="font-display italic text-pen">
+            <header className="space-y-3 fade-rise pb-2">
+              <p className="text-[15px] text-muted-foreground">
                 {[circle.category, isPrivate ? 'private' : 'public', circle.kind === 'commercial' ? 'business' : null]
-                  .filter(Boolean).join(' · ')}
+                  .filter(Boolean).join(', ')}
               </p>
-              <h1 className="text-[2.4rem] md:text-5xl leading-[0.98]">
+              <h1 className="text-[2.4rem] md:text-[3.25rem]">
                 {circle.emoji && <span className="mr-3">{circle.emoji}</span>}{circle.name}
               </h1>
-              <p className="text-base text-foreground/80 mt-2 max-w-prose">
+              <p className="text-base text-muted-foreground mt-2 max-w-prose">
                 {schedule ? (
-                  <>Meets <b className="num font-bold text-foreground text-sm">{meetsPhrase(schedule)}</b>{place ? ` at ${place}` : ''}. </>
+                  <>Meets <b className="font-medium text-foreground">{meetsPhrase(schedule)}</b>{place ? ` at ${place}` : ''}. </>
                 ) : (
                   <>No schedule yet. </>
                 )}
                 {creatorFirst && <>Started by {creatorFirst}. </>}
                 {count} member{count !== 1 ? 's' : ''}.
               </p>
-              {circle.description && <p className="text-foreground/80 max-w-prose">{circle.description}</p>}
+              {circle.description && <p className="text-muted-foreground max-w-prose">{circle.description}</p>}
             </header>
 
             {/* Location map */}
             {previewArea && (
               <div className="fade-rise stagger-1">
                 <p className="label mb-2">Where</p>
-                <div className="h-52 border border-foreground overflow-hidden">
+                <div className="h-52 rounded-2xl overflow-hidden">
                   <CircleLocationMap
                     longitude={previewArea.longitude}
                     latitude={previewArea.latitude}
@@ -239,25 +246,25 @@ export default async function CirclePage({
                     emoji={circle.emoji}
                   />
                 </div>
-                <p className="label mt-2 normal-case tracking-normal">
-                  {circle.neighborhood && <span>{circle.neighborhood} · </span>}
+                <p className="text-sm text-muted-foreground mt-2">
+                  {circle.neighborhood && <span>{circle.neighborhood}, </span>}
                   <DistanceFromYou
                     latitude={previewArea.latitude}
                     longitude={previewArea.longitude}
                     initial={fromYou(previewArea.latitude, previewArea.longitude)}
                   />
-                  {geo && ' · '}exact spot shown to members
+                  {geo && ', '}exact spot shown to members
                 </p>
               </div>
             )}
 
             {/* Join CTA */}
-            <div className="border border-foreground p-6 space-y-4 fade-rise stagger-2">
+            <div className="rounded-3xl bg-muted p-6 space-y-4 fade-rise stagger-2">
               <div>
-                <p className="font-display text-xl">
+                <p className="text-xl font-medium tracking-tight">
                   {isPrivate ? 'Want to join this circle?' : 'Join this circle'}
                 </p>
-                <p className="text-sm text-foreground/75 mt-1">
+                <p className="text-sm text-muted-foreground mt-1">
                   {user
                     ? 'Ask the admin for access to see members and notes.'
                     : isPrivate
@@ -487,7 +494,7 @@ export default async function CirclePage({
         <div className="max-w-3xl mx-auto px-5 md:px-6 py-8 md:py-10 space-y-8">
 
           {actionError && (
-            <p className="text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-md">
+            <p className="text-sm text-destructive bg-destructive/10 px-3.5 py-2.5 rounded-xl">
               {actionError}
             </p>
           )}
@@ -504,25 +511,25 @@ export default async function CirclePage({
           </div>
 
           {/* Masthead */}
-          <header className="fade-rise border-b border-foreground pb-6 grid grid-cols-1 md:grid-cols-[1fr_auto] gap-x-6 gap-y-4 items-end">
+          <header className="fade-rise pb-2 grid grid-cols-1 md:grid-cols-[1fr_auto] gap-x-6 gap-y-4 items-end">
             <div className="space-y-3 min-w-0">
-              <p className="font-display italic text-pen">
+              <p className="text-[15px] text-muted-foreground">
                 {[circle.category, isPrivate ? 'private' : 'public', circle.kind === 'commercial' ? 'business' : null]
-                  .filter(Boolean).join(' · ')}
+                  .filter(Boolean).join(', ')}
               </p>
-              <h1 className="text-[2.4rem] md:text-5xl leading-[0.98]">
+              <h1 className="text-[2.4rem] md:text-[3.25rem]">
                 {circle.emoji && <span className="mr-3">{circle.emoji}</span>}{circle.name}
               </h1>
-              <p className="text-base text-foreground/80 max-w-prose">
+              <p className="text-base text-muted-foreground max-w-prose">
                 {schedule ? (
-                  <>Meets <b className="num font-bold text-foreground text-sm">{meetsPhrase(schedule)}</b>{place ? ` at ${place}` : ''}. </>
+                  <>Meets <b className="font-medium text-foreground">{meetsPhrase(schedule)}</b>{place ? ` at ${place}` : ''}. </>
                 ) : (
-                  <>No schedule yet{isAdmin ? <>. <Link href={`/circles/${id}/edit`} className="underline underline-offset-4 decoration-pen-soft">Set one</Link></> : null}. </>
+                  <>No schedule yet{isAdmin ? <>. <Link href={`/circles/${id}/edit`} className="underline underline-offset-4 decoration-1">Set one</Link></> : null}. </>
                 )}
                 {creatorFirst && <>Started by {creatorFirst}. </>}
                 {totalMembers} member{totalMembers !== 1 ? 's' : ''}.
               </p>
-              {circle.description && <p className="text-foreground/80 max-w-prose">{circle.description}</p>}
+              {circle.description && <p className="text-muted-foreground max-w-prose">{circle.description}</p>}
             </div>
             <div className="flex items-center gap-2 flex-wrap">
               {!isAdmin && (
@@ -560,21 +567,21 @@ export default async function CirclePage({
             <div className="space-y-8 min-w-0">
               {/* The one boxed thing on the page. */}
               {nextMeet && schedule && (
-                <div className="border border-foreground p-5 space-y-3 fade-rise">
+                <div className="rounded-3xl bg-muted p-5 space-y-3 fade-rise">
                   <div className="flex items-baseline justify-between gap-3 flex-wrap">
-                    <p className="font-display text-2xl">
+                    <p className="text-[26px] tracking-tight">
                       {(() => {
                         const rel = relativeDayLabel(nextMeet, circleToday ?? nextMeet)
                         return rel === 'Today' || rel === 'Tomorrow' ? rel : dayNameISO(nextMeet)
                       })()}
                     </p>
-                    <p className="num text-sm text-foreground/80">
+                    <p className="num text-sm text-muted-foreground">
                       {formatTime(schedule.start_time)} – {formatTime(schedule.end_time)}
                       {circle.timezone && <MeetZone tz={circle.timezone} />}
                     </p>
                   </div>
-                  <p className={`label ${window.open ? 'text-pen' : 'normal-case tracking-normal'}`}>
-                    {window.open ? '● check-in open' : window.reason ?? ''}
+                  <p className={`text-sm font-medium ${window.open ? 'text-pen' : 'text-muted-foreground'}`}>
+                    {window.open ? 'Check-in open' : window.reason ?? ''}
                   </p>
                   {isMember ? (
                     <CheckInControl
@@ -585,12 +592,12 @@ export default async function CirclePage({
                       disabledReason={undefined}
                     />
                   ) : (
-                    <p className="text-sm text-foreground/75">Join this circle to check in.</p>
+                    <p className="text-sm text-muted-foreground">Join this circle to check in.</p>
                   )}
-                  <p className="text-sm text-foreground/75">
+                  <p className="text-sm text-muted-foreground">
                     {going.length === 0
                       ? 'Nobody has said yes yet.'
-                      : `${going.length} going${maybes.length > 0 ? ` · ${maybes.length} maybe` : ''}`}
+                      : `${going.length} going${maybes.length > 0 ? `, ${maybes.length} maybe` : ''}`}
                   </p>
                 </div>
               )}
@@ -622,10 +629,10 @@ export default async function CirclePage({
                           <span className="flex-1 min-w-0">
                             <Link
                               href={m.isMe ? '/profile' : `/profile/${m.user_id}`}
-                              className="text-sm block truncate hover:underline underline-offset-4 decoration-pen-soft"
+                              className="text-sm block truncate hover:underline underline-offset-4 decoration-1"
                             >
                               {m.full_name}
-                              {m.role === 'admin' && <span className="font-display italic text-muted-foreground ml-2">admin</span>}
+                              {m.role === 'admin' && <span className="font-medium text-muted-foreground ml-2">admin</span>}
                             </Link>
                             {/* The point of the whole register: a yes from
                                 somebody who turns up 11 times out of 12 is
@@ -666,8 +673,8 @@ export default async function CirclePage({
               {/* Notes / gated */}
               {isPrivate && !isMember ? (
                 <div className="border border-border p-8 text-center fade-rise">
-                  <p className="font-display text-lg mb-1">This circle is private</p>
-                  <p className="text-sm text-foreground/75">
+                  <p className="text-lg font-medium tracking-tight mb-1">This circle is private</p>
+                  <p className="text-sm text-muted-foreground">
                     {hasPendingRequest
                       ? 'Your request is pending. The admin will review it soon.'
                       : 'Request to join to see notes and updates.'}
@@ -679,8 +686,8 @@ export default async function CirclePage({
                   {isMember && <PostCompose circleId={id} authorName={myName} />}
                   {posts.length === 0 ? (
                     <div className="py-6">
-                      <p className="font-display text-lg">No notes yet.</p>
-                      <p className="text-sm text-foreground/75">{isMember ? 'Leave the first one for the next meet.' : 'Nothing posted here yet.'}</p>
+                      <p className="text-lg font-medium tracking-tight">No notes yet.</p>
+                      <p className="text-sm text-muted-foreground">{isMember ? 'Leave the first one for the next meet.' : 'Nothing posted here yet.'}</p>
                     </div>
                   ) : (
                     <div className="divide-y divide-border border-t border-b">
@@ -717,7 +724,7 @@ export default async function CirclePage({
                   {/* Members get the place; everyone else gets an area. The
                       database decides: circle_places() returns nothing to a
                       non-member, so there is no point here to leak. */}
-                  <div className="h-56 border border-foreground overflow-hidden">
+                  <div className="h-56 rounded-2xl overflow-hidden">
                     {exactPoint ? (
                       <CircleLocationMap
                         longitude={exactPoint.longitude}
@@ -733,26 +740,26 @@ export default async function CirclePage({
                       />
                     )}
                   </div>
-                  <p className="label mt-2 normal-case tracking-normal">
-                    {(circle.neighborhood || exact?.location) && <span>{circle.neighborhood ?? exact?.location} · </span>}
+                  <p className="text-sm text-muted-foreground mt-2">
+                    {(circle.neighborhood || exact?.location) && <span>{circle.neighborhood ?? exact?.location}, </span>}
                     <DistanceFromYou
                       latitude={(exactPoint ?? area)!.latitude}
                       longitude={(exactPoint ?? area)!.longitude}
                       initial={fromYou((exactPoint ?? area)!.latitude, (exactPoint ?? area)!.longitude)}
                     />
-                    {!exactPoint && <span>{geo ? ' · ' : ''}exact spot shown to members</span>}
+                    {!exactPoint && <span>{geo ? ', ' : ''}exact spot shown to members</span>}
                   </p>
                 </div>
               )}
               {schedule && (
                 <div className="fade-rise stagger-2">
                   <p className="label mb-2">When</p>
-                  <p className="text-sm text-foreground/80">
+                  <p className="text-sm text-muted-foreground">
                     {meetsPhrase(schedule)}
-                    {schedule.note && <span className="block font-display italic text-muted-foreground mt-1">{schedule.note}</span>}
+                    {schedule.note && <span className="block font-medium text-muted-foreground mt-1">{schedule.note}</span>}
                   </p>
                   {schedules && schedules.length > 1 && (
-                    <p className="label mt-2 normal-case tracking-normal">+{schedules.length - 1} more schedule{schedules.length > 2 ? 's' : ''}</p>
+                    <p className="text-sm text-muted-foreground mt-2">+{schedules.length - 1} more schedule{schedules.length > 2 ? 's' : ''}</p>
                   )}
                 </div>
               )}

@@ -163,20 +163,25 @@ export default function ExploreClient({ circles, people, initialView, origin: or
   }
 
   return (
-    <div className="flex flex-col md:flex-row h-screen w-full overflow-hidden pt-14 pb-16 md:pb-0">
+    // The map fills the screen and runs under the glass nav. On wider screens
+    // the list floats over it on a glass panel; on a phone, list and map are
+    // two views switched at the bottom.
+    <div className="relative h-screen w-full overflow-hidden">
 
       {/* Sidebar */}
       <aside
-        className={`${mobileView === 'list' ? 'flex' : 'hidden'} md:flex w-full md:w-72 flex-1 md:flex-none flex-shrink-0 min-h-0 bg-background md:border-r flex-col`}
+        className={`${mobileView === 'list' ? 'flex' : 'hidden'} md:flex flex-col min-h-0 absolute z-10 inset-0 pt-16 pb-36 bg-background md:inset-auto md:top-20 md:left-4 md:bottom-4 md:w-[360px] md:p-0 md:glass md:rounded-[24px] md:overflow-hidden`}
       >
         {/* Search + filter toggle */}
-        <div className="p-3 border-b space-y-2">
+        <div className="px-5 pt-5 pb-3 space-y-3">
+          <h1 className="text-[1.75rem] md:text-[2rem]">Circles near you</h1>
           <input
             type="text"
             placeholder="Search circles and people"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full border-0 border-b border-foreground bg-transparent px-0 py-1.5 text-base font-display placeholder:text-muted-foreground placeholder:font-sans placeholder:text-sm focus-visible:outline-none focus-visible:border-pen"
+            aria-label="Search circles and people"
+            className="w-full h-11 rounded-xl bg-muted border border-transparent px-3.5 text-base placeholder:text-muted-foreground focus-visible:outline-none focus-visible:border-ring focus-visible:bg-background"
           />
           {/* A bordered pill with a chevron and a count, because the old
               version was tracked grey uppercase text with no affordance at
@@ -189,13 +194,13 @@ export default function ExploreClient({ circles, people, initialView, origin: or
               aria-expanded={showFilters}
               className={`inline-flex items-center gap-1.5 min-h-9 px-3 rounded-full border text-sm font-medium transition-colors ${
                 activeFilterCount > 0
-                  ? 'border-pen text-pen bg-pen-bg'
-                  : 'border-foreground text-foreground hover:bg-muted'
+                  ? 'border-transparent bg-foreground text-background'
+                  : 'border-transparent bg-muted text-foreground hover:bg-cool-2'
               }`}
             >
               Filters
               {activeFilterCount > 0 && (
-                <span className="min-w-5 h-5 px-1.5 rounded-full bg-pen text-white text-[11px] font-semibold leading-5 text-center">
+                <span className="min-w-5 h-5 px-1.5 rounded-full bg-background text-foreground text-[11px] font-semibold leading-5 text-center">
                   {activeFilterCount}
                 </span>
               )}
@@ -217,11 +222,11 @@ export default function ExploreClient({ circles, people, initialView, origin: or
 
         {/* Filter panel */}
         {showFilters && (
-          <div className="border-b p-3 space-y-4 bg-muted/30">
+          <div className="px-5 pb-4 space-y-4">
             {/* Social vs commercial */}
             <div>
-              <p className="text-xs font-medium mb-1.5">Type</p>
-              <div className="flex flex-wrap gap-1">
+              <p className="text-sm font-medium mb-2">Type</p>
+              <div className="flex flex-wrap gap-1.5">
                 {([
                   { value: 'social', label: 'Social' },
                   { value: 'commercial', label: 'Businesses' },
@@ -229,10 +234,10 @@ export default function ExploreClient({ circles, people, initialView, origin: or
                   <button
                     key={k.value}
                     onClick={() => setKindFilter(kindFilter === k.value ? null : k.value)}
-                    className={`text-xs px-2 py-0.5 rounded-full border transition-colors ${
+                    className={`text-sm px-3 py-1 rounded-full transition-colors ${
                       kindFilter === k.value
                         ? 'bg-foreground text-background border-foreground'
-                        : 'border-input hover:bg-muted'
+                        : 'bg-muted hover:bg-cool-2'
                     }`}
                   >
                     {k.label}
@@ -243,16 +248,16 @@ export default function ExploreClient({ circles, people, initialView, origin: or
 
             {/* Category */}
             <div>
-              <p className="text-xs font-medium mb-1.5">Category</p>
-              <div className="flex flex-wrap gap-1">
+              <p className="text-sm font-medium mb-2">Category</p>
+              <div className="flex flex-wrap gap-1.5">
                 {CATEGORIES.map((cat) => (
                   <button
                     key={cat}
                     onClick={() => setCategoryFilter(categoryFilter === cat ? null : cat)}
-                    className={`text-xs px-2 py-0.5 rounded-full border transition-colors ${
+                    className={`text-sm px-3 py-1 rounded-full transition-colors ${
                       categoryFilter === cat
                         ? 'bg-foreground text-background border-foreground'
-                        : 'border-input hover:bg-muted'
+                        : 'bg-muted hover:bg-cool-2'
                     }`}
                   >
                     {cat}
@@ -263,16 +268,16 @@ export default function ExploreClient({ circles, people, initialView, origin: or
 
             {/* Meets on */}
             <div>
-              <p className="text-xs font-medium mb-1.5">Meets on</p>
-              <div className="flex gap-1">
+              <p className="text-sm font-medium mb-2">Meets on</p>
+              <div className="flex flex-wrap gap-1.5">
                 {DAYS.map((day, i) => (
                   <button
                     key={day}
                     onClick={() => setDayFilter(dayFilter === i ? null : i)}
-                    className={`text-xs px-2 py-0.5 rounded-md border transition-colors ${
+                    className={`text-sm px-2.5 py-1 rounded-full transition-colors ${
                       dayFilter === i
                         ? 'bg-foreground text-background border-foreground'
-                        : 'border-input hover:bg-muted'
+                        : 'bg-muted hover:bg-cool-2'
                     }`}
                   >
                     {day}
@@ -283,9 +288,9 @@ export default function ExploreClient({ circles, people, initialView, origin: or
 
             {/* City */}
             <div>
-              <p className="text-xs font-medium mb-1.5">City</p>
+              <p className="text-sm font-medium mb-2">City</p>
               {cities.length === 0 ? (
-                <p className="text-xs text-muted-foreground italic">No cities detected yet</p>
+                <p className="text-xs text-muted-foreground">No cities detected yet</p>
               ) : (
                 <Select
                   value={cityFilter ?? ''}
@@ -310,9 +315,9 @@ export default function ExploreClient({ circles, people, initialView, origin: or
 
             {/* Neighborhood */}
             <div>
-              <p className="text-xs font-medium mb-1.5">Neighborhood</p>
+              <p className="text-sm font-medium mb-2">Neighborhood</p>
               {neighborhoods.length === 0 ? (
-                <p className="text-xs text-muted-foreground italic">{cityFilter ? 'No neighborhoods in this city yet' : 'No neighborhoods detected yet'}</p>
+                <p className="text-xs text-muted-foreground">{cityFilter ? 'No neighborhoods in this city yet' : 'No neighborhoods detected yet'}</p>
               ) : (
                 <Select
                   value={neighborhoodFilter ?? ''}
@@ -334,16 +339,16 @@ export default function ExploreClient({ circles, people, initialView, origin: or
 
             {/* Size */}
             <div>
-              <p className="text-xs font-medium mb-1.5">Circle size</p>
-              <div className="flex gap-1">
+              <p className="text-sm font-medium mb-2">Circle size</p>
+              <div className="flex flex-wrap gap-1.5">
                 {[['small', 'Small (<10)'], ['medium', 'Medium (10–50)'], ['large', 'Large (50+)']].map(([val, label]) => (
                   <button
                     key={val}
                     onClick={() => setSizeFilter(sizeFilter === val ? null : val)}
-                    className={`text-xs px-2 py-0.5 rounded-full border transition-colors ${
+                    className={`text-sm px-3 py-1 rounded-full transition-colors ${
                       sizeFilter === val
                         ? 'bg-foreground text-background border-foreground'
-                        : 'border-input hover:bg-muted'
+                        : 'bg-muted hover:bg-cool-2'
                     }`}
                   >
                     {label}
@@ -359,7 +364,7 @@ export default function ExploreClient({ circles, people, initialView, origin: or
           {/* People matches (only while searching) */}
           {peopleResults.length > 0 && (
             <div className="border-b">
-              <p className="px-4 pt-2.5 pb-1 text-[11px] font-semibold text-muted-foreground uppercase tracking-widest">People</p>
+              <p className="px-4 pt-2.5 pb-1 text-sm font-medium text-muted-foreground">People</p>
               <ul>
                 {peopleResults.map((p) => (
                   <li key={p.id}>
@@ -378,8 +383,8 @@ export default function ExploreClient({ circles, people, initialView, origin: or
             </div>
           )}
 
-          <p className="label px-4 py-2.5 border-b">
-            {peopleResults.length > 0 ? 'circles · ' : ''}{filtered.length} circle{filtered.length !== 1 ? 's' : ''}
+          <p className="label px-5 py-2">
+            {peopleResults.length > 0 ? 'circles, ' : ''}{filtered.length} circle{filtered.length !== 1 ? 's' : ''}
           </p>
           {filtered.length === 0 ? (
             <div className="p-4 text-sm text-muted-foreground">
@@ -397,25 +402,25 @@ export default function ExploreClient({ circles, people, initialView, origin: or
                       // the same as doing nothing. Show it.
                       setMobileView('map')
                     }}
-                    className={`w-full text-left px-4 py-3 border-b hover:bg-muted transition-colors ${
+                    className={`w-full text-left px-5 py-3.5 border-t border-border/70 hover:bg-muted/70 transition-colors ${
                       selected?.id === circle.id ? 'bg-muted' : ''
                     }`}
                   >
                     <div className="flex items-baseline justify-between gap-3">
-                      <p className="font-display font-semibold text-[1.05rem] leading-tight truncate">
+                      <p className="font-medium text-base tracking-tight leading-tight truncate">
                         {circle.emoji && <span className="mr-1.5">{circle.emoji}</span>}{circle.name}
                       </p>
-                      {miles && <span className="num text-xs text-foreground/80 flex-shrink-0">{miles}</span>}
+                      {miles && <span className="text-sm text-muted-foreground flex-shrink-0">{miles}</span>}
                     </div>
-                    <p className="text-xs text-foreground/75 truncate mt-0.5">
+                    <p className="text-sm text-muted-foreground truncate mt-0.5">
                       {[circle.neighborhood ?? circle.location, circle.member_count !== undefined ? `${circle.member_count} member${circle.member_count !== 1 ? 's' : ''}` : null]
-                        .filter(Boolean).join(' · ')}
+                        .filter(Boolean).join(', ')}
                     </p>
                     {(circle.category || (circle.days_of_week && circle.days_of_week.length > 0)) && (
-                      <p className="label mt-1">
+                      <p className="text-sm text-muted-foreground mt-0.5">
                         {[circle.category, circle.days_of_week && circle.days_of_week.length > 0
                           ? [...circle.days_of_week].sort().map((d) => DAYS[d]).join(' ')
-                          : null].filter(Boolean).join(' · ')}
+                          : null].filter(Boolean).join(', ')}
                       </p>
                     )}
                   </button>
@@ -428,7 +433,7 @@ export default function ExploreClient({ circles, people, initialView, origin: or
       </aside>
 
       {/* Map */}
-      <main className={`${mobileView === 'map' ? 'block' : 'hidden'} md:block flex-1 relative min-h-0`}>
+      <main className={`${mobileView === 'map' ? 'block' : 'hidden'} md:block absolute inset-0`}>
         <CirclesMap
           circles={filtered}
           onCircleClick={setSelected}
@@ -439,7 +444,7 @@ export default function ExploreClient({ circles, people, initialView, origin: or
           // Suppressed while filtering: an empty view is then the filters
           // doing their job, not an area with nothing in it.
           emptyOverlay={hasFilters ? undefined : ({ showAll, canShowAll, areaName }) => (
-            <div className="bg-background/95 backdrop-blur border rounded-xl px-5 py-4 text-center shadow-lg max-w-xs">
+            <div className="glass rounded-[22px] px-5 py-4 text-center max-w-xs">
               {/* Two different situations, and naming a city in the second one
                   would be a lie by implication: it suggests circles exist
                   somewhere else, which is what the button then fails to show.
@@ -449,7 +454,7 @@ export default function ExploreClient({ circles, people, initialView, origin: or
                   ? `No circles ${areaName ? `in ${areaName}` : 'here'} yet`
                   : 'No circles anywhere yet'}
               </p>
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="text-sm text-muted-foreground mt-1">
                 Someone has to be first. It may as well be you.
               </p>
               <div className="flex gap-2 justify-center mt-3">
@@ -460,7 +465,7 @@ export default function ExploreClient({ circles, people, initialView, origin: or
                     back to. A disabled control still says "there is more,
                     elsewhere", and there isn't. */}
                 {canShowAll && (
-                  <Button size="sm" variant="outline" onClick={showAll}>
+                  <Button size="sm" variant="secondary" onClick={showAll}>
                     See everywhere
                   </Button>
                 )}
@@ -469,17 +474,17 @@ export default function ExploreClient({ circles, people, initialView, origin: or
           )}
         />
         {selected && (
-          <div className="absolute bottom-[5.5rem] md:bottom-6 left-1/2 -translate-x-1/2 bg-background border border-foreground shadow-lg px-5 py-3 flex items-center gap-4 min-w-[260px] max-w-[calc(100%-2rem)]">
+          <div className="glass absolute bottom-[8.5rem] md:bottom-6 left-1/2 md:left-[calc(50%+190px)] -translate-x-1/2 rounded-[22px] px-5 py-3.5 flex items-center gap-4 min-w-[260px] max-w-[calc(100%-2rem)] md:max-w-[420px]">
             <div className="flex-1 min-w-0">
-              <p className="font-display font-semibold text-lg leading-tight truncate">
+              <p className="text-lg font-medium tracking-tight leading-tight truncate">
                 {selected.emoji && <span className="mr-1.5">{selected.emoji}</span>}{selected.name}
               </p>
-              <p className="font-display italic text-sm text-pen truncate">
-                {[selected.category, selected.neighborhood ?? selected.location].filter(Boolean).join(' · ')}
+              <p className="text-sm text-muted-foreground truncate">
+                {[selected.category, selected.neighborhood ?? selected.location].filter(Boolean).join(', ')}
               </p>
             </div>
             <Link href={`/circles/${selected.id}`}>
-              <Button size="sm" className="rounded-full">Open</Button>
+              <Button size="sm">Open</Button>
             </Link>
           </div>
         )}
@@ -490,8 +495,8 @@ export default function ExploreClient({ circles, people, initialView, origin: or
           indicator. "+ New Circle" used to be a full-width button pinned
           under the list; it is a destination in the bottom bar now, so it
           does not need to be here too. */}
-      <div className="md:hidden fixed left-1/2 -translate-x-1/2 bottom-[calc(4.75rem+env(safe-area-inset-bottom))] z-30">
-        <div className="flex bg-background border border-foreground rounded-full shadow-[0_4px_14px_-4px_rgba(34,31,27,0.4)] p-1">
+      <div className="md:hidden fixed left-1/2 -translate-x-1/2 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-30">
+        <div className="glass flex rounded-full p-1">
           {(['map', 'list'] as const).map((v) => (
             <button
               key={v}
@@ -499,7 +504,7 @@ export default function ExploreClient({ circles, people, initialView, origin: or
               onClick={() => setMobileView(v)}
               aria-pressed={mobileView === v}
               className={`min-h-9 px-5 rounded-full text-sm font-medium capitalize transition-colors ${
-                mobileView === v ? 'bg-pen text-white' : 'text-foreground'
+                mobileView === v ? 'bg-foreground text-background' : 'text-muted-foreground'
               }`}
             >
               {v}

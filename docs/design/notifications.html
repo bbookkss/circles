@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Notifications – Circles</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Host+Grotesk:wght@300;400;500;600&display=swap">
+<script>try { const t = localStorage.getItem("circles-theme"); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
+<link rel="stylesheet" href="circles.css">
+<style>
+/* Notifications: new ones first, each with a heat dot; a join request carries its own buttons. */
+.head { padding-block: 24px 28px; display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.group { margin-top: 36px; }
+.group h2 { margin-bottom: 10px; }
+.note { display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; gap: 14px; align-items: start; }
+.note .txt { font-size: 15px; padding-top: 7px; }
+.note .txt b { font-weight: 500; }
+.note .txt a:hover { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; }
+.note .when { font-size: 14px; color: var(--quiet); padding-top: 8px; display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--heat); }
+.read .txt { color: var(--quiet); }
+.read .txt b { color: var(--ink); }
+.req-acts { display: flex; gap: 8px; margin-top: 12px; }
+.quote { margin-top: 6px; font-size: 15px; color: var(--quiet); border-left: 2px solid var(--cool-2); padding-left: 12px; }
+</style>
+</head>
+<body>
+<header class="nav" data-page="notifications"></header>
+
+<main class="page">
+  <div class="col">
+    <div class="head">
+      <h1>Notifications</h1>
+      <p class="quiet small">Opening this page marks everything as read.</p>
+    </div>
+
+    <section class="group" aria-labelledby="new-h">
+      <h2 id="new-h">New</h2>
+      <ul class="rows" id="new">
+        <li class="note unread">
+          <span class="av" aria-hidden="true">PS</span>
+          <div class="txt">
+            <b>Priya Shah</b> asked to join <a href="circle-requests.html">Thursday chess</a>
+            <div class="req-acts"><a class="btn sm" href="circle-requests.html">Review request</a></div>
+          </div>
+          <span class="when"><span class="dot" aria-label="New"></span>8m</span>
+        </li>
+        <li class="note unread">
+          <span class="av" aria-hidden="true">MO</span>
+          <div class="txt"><b>Maya Ortiz</b> commented on your post in <a href="circle.html">Thursday chess</a></div>
+          <span class="when"><span class="dot" aria-label="New"></span>2h</span>
+        </li>
+      </ul>
+    </section>
+
+    <section class="group" aria-labelledby="old-h">
+      <h2 id="old-h">Earlier</h2>
+      <ul class="rows">
+        <li class="note read"><span class="av" aria-hidden="true">JP</span>
+          <div class="txt"><b>Jon Park</b> liked your post in <a href="circle.html">Saturday morning run</a></div>
+          <span class="when">Yesterday</span></li>
+        <li class="note read"><span class="av" aria-hidden="true">SK</span>
+          <div class="txt"><b>Sam Kim</b> liked your comment in <a href="circle.html">Thursday chess</a></div>
+          <span class="when">2d</span></li>
+        <li class="note read"><span class="av" aria-hidden="true">LV</span>
+          <div class="txt"><b>Lena Voss</b> approved your request to join <a href="circle.html">Saturday morning run</a></div>
+          <span class="when">5d</span></li>
+      </ul>
+    </section>
+  </div>
+</main>
+
+<nav class="tabs" data-page="notifications"></nav>
+<script src="circles.js"></script>
+</body>
+</html>

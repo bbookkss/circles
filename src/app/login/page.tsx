@@ -21,22 +21,22 @@ export default function LoginPage() {
     if (result?.error) {
       const isInvalidCreds = result.error.toLowerCase().includes('invalid login credentials')
       setNotFound(isInvalidCreds)
-      setError(isInvalidCreds ? 'No account found, or password is incorrect.' : result.error)
+      setError(isInvalidCreds ? 'No account matches that, or the password is wrong.' : result.error)
       setLoading(false)
     }
   }
 
   return (
-    <AuthShell altHref="/signup" altLabel="Create an account">
+    <AuthShell altHref="/signup" altLabel="Sign up">
       <div className="space-y-6">
         <div>
-          <h2 className="text-3xl">Welcome back</h2>
-          <p className="text-muted-foreground text-sm mt-1">Sign in to your account</p>
+          <h1 className="text-[1.75rem] sm:text-[2.2rem]">Welcome back</h1>
+          <p className="text-muted-foreground mt-2">Log in to see who is coming this week.</p>
         </div>
 
         <form action={handleSubmit} className="space-y-4">
           {error && (
-            <div className="text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-md space-y-1">
+            <div className="text-sm text-destructive bg-destructive/10 px-3.5 py-2.5 rounded-xl space-y-1">
               <p>{error}</p>
               {notFound && (
                 <p>
@@ -65,19 +65,19 @@ export default function LoginPage() {
               <Label htmlFor="password">Password</Label>
               <Link
                 href="/forgot-password"
-                className="text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground"
+                className="text-sm text-muted-foreground underline underline-offset-4 decoration-cool-2 hover:text-foreground"
               >
                 Forgot password?
               </Link>
             </div>
             <Input id="password" name="password" type="password" placeholder="••••••••" required />
           </div>
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? 'Signing in...' : 'Sign in'}
+          <Button type="submit" size="lg" className="w-full" disabled={loading}>
+            {loading ? 'Logging in…' : 'Log in'}
           </Button>
         </form>
 
-        <p className="text-sm text-muted-foreground text-center">
+        <p className="text-[15px] text-muted-foreground text-center">
           New to Circles?{' '}
           <Link href="/signup" className="underline underline-offset-4 hover:text-foreground">
             Create an account

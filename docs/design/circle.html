@@ -1,0 +1,440 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Thursday chess – Circles</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Host+Grotesk:wght@300;400;500;600&display=swap">
+<script>try { const t = localStorage.getItem("circles-theme"); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
+<link rel="stylesheet" href="circles.css">
+<style>
+/* Circle: the place is the picture. The map strip runs under the nav and the
+   masthead sits on it in glass. Members see the pin; everyone else sees heat. */
+.place { margin-top: -66px; height: 380px; }
+.place-wrap {
+  position: relative; height: 100%; max-width: 792px; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex; align-items: flex-end; padding-bottom: 24px;
+}
+.place .sheet { width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px 24px; align-items: end; }
+.kicker { font-size: 15px; color: var(--quiet); margin-bottom: 8px; }
+.summary { font-size: 16px; color: var(--quiet); margin-top: 12px; max-width: 54ch; }
+.summary b { color: var(--ink); font-weight: 500; }
+.head-acts { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.viewas {
+  max-width: 792px; margin: 18px auto 0;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.viewas-inner { padding-inline: 28px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; font-size: 14px; color: var(--quiet); }
+.viewas-inner .seg { background: var(--cool); }
+
+.adminbar { display: flex; gap: 18px; font-size: 15px; }
+.adminbar a { color: var(--quiet); }
+.adminbar a:hover { color: var(--ink); }
+.adminbar .chip { margin-left: 4px; }
+
+.grid { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 48px; }
+.left > section + section { margin-top: 44px; }
+.right > section + section { margin-top: 32px; }
+.sec-h { margin-bottom: 12px; display: flex; justify-content: space-between; align-items: baseline; }
+
+.next { border-radius: 24px; padding: 24px; background: var(--cool); }
+.next-top { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 6px 16px; }
+.next-day { font-size: 28px; letter-spacing: -0.025em; line-height: 1; }
+.next-time { font-size: 15px; color: var(--quiet); }
+.open { font-size: 14px; color: var(--heat-ink); font-weight: 500; display: flex; align-items: center; gap: 7px; margin-top: 12px; }
+.open::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--heat); }
+.next .seg { background: var(--paper); margin-top: 16px; }
+.next .seg button[aria-pressed="true"]:not([data-v="yes"]) { background: var(--cool-2); }
+.tally { font-size: 15px; color: var(--quiet); margin-top: 14px; }
+
+.register { border-top: 1px solid var(--rule); padding-top: 20px; }
+.register ul { list-style: none; padding: 0; margin: 12px 0 0; display: grid; gap: 4px; }
+.register label { display: flex; align-items: center; gap: 12px; padding: 8px 0; cursor: pointer; font-size: 15px; }
+.register input { width: 20px; height: 20px; accent-color: var(--ink); }
+.register input:not(:checked) + span { color: var(--quiet); text-decoration: line-through; }
+.register .foot { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; font-size: 14px; color: var(--quiet); }
+
+.members { list-style: none; margin: 0; padding: 0; }
+.members li { display: flex; align-items: center; gap: 12px; padding-block: 11px; border-bottom: 1px solid var(--rule); }
+.members li:first-child { border-top: 1px solid var(--rule); }
+.m-body { flex: 1; min-width: 0; }
+.m-name { font-size: 15px; }
+.m-name .role { color: var(--quiet); margin-left: 6px; font-size: 14px; }
+.m-rate { font-size: 13px; color: var(--quiet); }
+.m-st { font-size: 14px; color: var(--quiet); }
+.m-st.yes { color: var(--heat-ink); font-weight: 500; }
+.follow { border: 0; cursor: pointer; border-radius: 999px; padding: 6px 13px; font-size: 13px; font-weight: 500; background: var(--cool); }
+.follow[aria-pressed="true"] { background: transparent; color: var(--quiet); box-shadow: inset 0 0 0 1px var(--rule); }
+.role-btn { border: 0; background: none; cursor: pointer; font-size: 13px; color: var(--quiet); padding: 4px; }
+.role-btn:hover { color: var(--ink); }
+
+.compose { border-radius: 22px; padding: 6px 6px 6px 20px; display: flex; align-items: center; gap: 12px; background: var(--cool); margin-bottom: 4px; }
+.compose input { flex: 1; min-width: 0; border: 0; background: transparent; font: inherit; font-size: 15px; color: var(--ink); padding-block: 10px; }
+.compose input::placeholder { color: var(--quiet); }
+.compose input:focus { outline: none; }
+.compose:focus-within { box-shadow: 0 0 0 2px var(--cool-2); }
+.posts { list-style: none; padding: 0; margin: 0; }
+.post { padding-block: 22px; border-bottom: 1px solid var(--rule); display: grid; grid-template-columns: 36px minmax(0, 1fr); gap: 14px; }
+.post-head { font-size: 15px; display: flex; gap: 8px; align-items: baseline; }
+.post-head b { font-weight: 500; }
+.post-head .t { color: var(--quiet); font-size: 14px; }
+.post-head .more { margin-left: auto; position: relative; }
+.post p { margin-top: 4px; max-width: 62ch; }
+.acts { display: flex; gap: 18px; margin-top: 10px; font-size: 14px; color: var(--quiet); }
+.acts button { border: 0; background: none; padding: 0; cursor: pointer; color: inherit; }
+.acts button:hover { color: var(--ink); }
+.acts button[aria-pressed="true"] { color: var(--ink); font-weight: 500; }
+.comments { list-style: none; margin: 12px 0 0; padding: 0 0 0 14px; border-left: 2px solid var(--rule); display: grid; gap: 10px; }
+.comments li { font-size: 15px; }
+.comments b { font-weight: 500; }
+.comments .t { color: var(--quiet); font-size: 13px; margin-left: 6px; }
+.c-form { display: flex; gap: 8px; margin-top: 4px; }
+.c-form input { flex: 1; min-width: 0; font: inherit; font-size: 14px; color: var(--ink); background: var(--cool); border: 0; border-radius: 999px; padding: 8px 14px; }
+.c-form input:focus { outline: 2px solid var(--cool-2); }
+
+.dots { border: 0; background: none; cursor: pointer; color: var(--quiet); padding: 2px 6px; border-radius: 8px; font-size: 18px; line-height: 1; }
+.dots:hover { color: var(--ink); background: var(--cool); }
+.menu { position: absolute; right: 0; top: 28px; z-index: 4; min-width: 170px; background: var(--paper); border: 1px solid var(--rule); border-radius: 16px; padding: 6px; box-shadow: 0 12px 30px var(--shade); }
+.menu[hidden] { display: none; }
+.menu button { display: block; width: 100%; text-align: left; border: 0; background: none; cursor: pointer; padding: 9px 12px; border-radius: 10px; font-size: 14px; }
+.menu button:hover { background: var(--cool); }
+.menu .bad { color: var(--danger); }
+
+.gate { border-radius: 24px; padding: 28px; background: var(--cool); text-align: center; }
+
+.where-text { font-size: 15px; }
+.where-text .quiet { display: block; font-size: 14px; }
+.when-text { font-size: 15px; }
+.when-text .quiet { display: block; font-size: 14px; margin-top: 2px; }
+.report-link { border: 0; background: none; padding: 0; cursor: pointer; font-size: 14px; color: var(--quiet); }
+.report-link:hover { color: var(--ink); text-decoration: underline; text-underline-offset: 4px; }
+
+dialog { border: 0; padding: 0; border-radius: 26px; max-width: 440px; width: calc(100% - 32px); background: var(--paper); color: var(--ink); box-shadow: 0 30px 80px var(--shade); }
+dialog::backdrop { background: rgba(26, 34, 48, 0.35); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+.dlg { padding: 26px; display: grid; gap: 16px; }
+.dlg .h3 { font-size: 21px; }
+.reasons { display: grid; gap: 2px; }
+.reasons label { display: flex; gap: 10px; align-items: center; padding: 8px 0; font-size: 15px; cursor: pointer; }
+.reasons input { accent-color: var(--ink); width: 18px; height: 18px; }
+.dlg-acts { display: flex; justify-content: flex-end; gap: 8px; }
+.btn.outline-danger { background: transparent; color: var(--danger); box-shadow: inset 0 0 0 1px var(--danger); }
+.btn.outline-danger:hover { background: var(--danger); color: var(--paper); }
+
+.toast { position: fixed; z-index: 9; left: 50%; transform: translateX(-50%); bottom: calc(24px + env(safe-area-inset-bottom, 0px)); border-radius: 999px; padding: 11px 20px; font-size: 14px; background: var(--ink); color: var(--paper); }
+.toast[hidden] { display: none; }
+
+[data-only] { display: none; }
+body[data-as="admin"] [data-only~="admin"], body[data-as="member"] [data-only~="member"], body[data-as="visitor"] [data-only~="visitor"] { display: revert; }
+
+@media (max-width: 760px) {
+  .place { height: 420px; }
+  .place .sheet { grid-template-columns: 1fr; }
+  .grid { grid-template-columns: 1fr; gap: 40px; }
+  .viewas-inner { padding-inline: 4px; }
+  .toast { bottom: calc(92px + env(safe-area-inset-bottom, 0px)); }
+}
+</style>
+</head>
+<body data-as="member">
+
+<header class="nav" data-page="none"></header>
+
+<section class="place map" aria-label="Where Thursday chess meets">
+  <canvas id="map" aria-hidden="true"></canvas>
+  <div class="place-wrap">
+    <div class="sheet glass">
+      <div>
+        <p class="kicker">Social, public</p>
+        <h1>Thursday chess</h1>
+        <p class="summary">
+          Meets <b>every Thursday, 7 to 9 pm</b><span id="venueBit"> at Ritual Coffee</span>.
+          Started by Maya. 14 members.
+        </p>
+      </div>
+      <div class="head-acts">
+        <button class="btn ghost sm" type="button" data-only="member" id="leave">Leave</button>
+        <button class="btn sm" type="button" data-only="visitor" id="join">Join</button>
+        <button class="btn ghost sm" type="button" id="copy">Copy link</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="viewas">
+  <div class="viewas-inner">
+    <span>Preview this page as</span>
+    <div class="seg" role="group" aria-label="Preview this page as">
+      <button type="button" data-as="admin" aria-pressed="false">Admin</button>
+      <button type="button" data-as="member" aria-pressed="true">Member</button>
+      <button type="button" data-as="visitor" aria-pressed="false">Visitor</button>
+    </div>
+  </div>
+</div>
+
+<main class="page">
+  <div class="col">
+    <div data-only="admin"><div class="adminbar" style="margin-bottom:28px">
+      <a href="circle-edit.html">Edit circle</a>
+      <a href="circle-requests.html">Join requests</a>
+    </div></div>
+
+    <div class="grid">
+      <div class="left">
+        <section aria-labelledby="next-h">
+          <h2 id="next-h" class="sr">Next meet</h2>
+          <div class="next">
+            <div class="next-top">
+              <div class="next-day">Tomorrow</div>
+              <div class="next-time">7:00 to 9:00 pm</div>
+            </div>
+            <div class="open">Check-in open</div>
+            <div data-only="admin member">
+              <div class="seg" role="group" aria-label="Are you going?" id="checkin">
+                <button type="button" data-v="yes" aria-pressed="false">Going</button>
+                <button type="button" data-v="maybe" aria-pressed="false">Maybe</button>
+                <button type="button" data-v="no" aria-pressed="false">Can't go</button>
+              </div>
+            </div>
+            <p class="tally" data-only="visitor">Join this circle to check in.</p>
+            <p class="tally" id="tally"></p>
+          </div>
+        </section>
+
+        <section class="register" aria-labelledby="reg-h" data-only="admin member" id="register">
+          <p class="quiet small">Last meet, Thursday, November 12</p>
+          <p class="h3" id="reg-h" style="font-size:19px;margin-top:2px">Who made it?</p>
+          <ul>
+            <li><label><input type="checkbox" checked><span>Maya Ortiz</span></label></li>
+            <li><label><input type="checkbox" checked><span>Sam Lee</span></label></li>
+            <li><label><input type="checkbox"><span>Jon Park</span></label></li>
+            <li><label><input type="checkbox" checked><span>You</span></label></li>
+          </ul>
+          <div class="foot"><span id="regCount"></span><button class="btn sm" type="button" id="regSave">Save</button></div>
+        </section>
+
+        <section aria-labelledby="who-h">
+          <div class="sec-h"><h2 id="who-h">Who's coming</h2></div>
+          <ul class="members" id="members"></ul>
+          <p class="quiet small" style="margin-top:10px">And 8 more</p>
+        </section>
+
+        <section aria-labelledby="notes-h">
+          <div class="sec-h"><h2 id="notes-h">Notes</h2></div>
+          <div data-only="admin member"><form class="compose" id="compose">
+            <label for="note" class="sr">Leave a note for the circle</label>
+            <input id="note" placeholder="Leave a note for the next meet" autocomplete="off">
+            <button class="btn sm" id="postBtn" disabled>Post</button>
+          </form></div>
+          <ul class="posts" id="posts"></ul>
+        </section>
+      </div>
+
+      <aside class="right">
+        <section aria-labelledby="where-h">
+          <div class="sec-h"><h2 id="where-h">Where</h2></div>
+          <p class="where-text" data-only="admin member">Ritual Coffee, 1026 Valencia St<span class="quiet">Mission Dolores, 0.4 mi from you</span></p>
+          <p class="where-text" data-only="visitor">Mission Dolores<span class="quiet">About 0.4 mi from you. The exact spot is shown to members.</span></p>
+        </section>
+        <section aria-labelledby="when-h">
+          <div class="sec-h"><h2 id="when-h">When</h2></div>
+          <p class="when-text">Every Thursday, 7 to 9 pm<span class="quiet">Back table by the window. Boards provided, bring a clock if you have one.</span></p>
+        </section>
+        <section>
+          <button class="report-link" type="button" data-report="circle">Report this circle</button>
+        </section>
+      </aside>
+    </div>
+  </div>
+</main>
+
+<dialog id="reportDlg" aria-labelledby="rep-h">
+  <form class="dlg" id="reportForm" method="dialog">
+    <p class="h3" id="rep-h">Report this note</p>
+    <fieldset class="reasons" style="border:0;padding:0;margin:0">
+      <legend class="quiet small" style="padding:0;margin-bottom:4px">What is wrong with it?</legend>
+      <label><input type="radio" name="reason" value="spam" required>Spam or scam</label>
+      <label><input type="radio" name="reason" value="harassment">Harassment or bullying</label>
+      <label><input type="radio" name="reason" value="hate">Hate speech</label>
+      <label><input type="radio" name="reason" value="violence">Violence or threats</label>
+      <label><input type="radio" name="reason" value="sexual">Sexual content</label>
+      <label><input type="radio" name="reason" value="other">Something else</label>
+    </fieldset>
+    <div class="field"><label for="rep-details">Details</label><textarea id="rep-details" placeholder="Anything that would help (optional)"></textarea></div>
+    <div class="dlg-acts"><button class="btn ghost" type="button" data-close>Cancel</button><button class="btn" type="submit">Send report</button></div>
+  </form>
+</dialog>
+
+<dialog id="blockDlg" aria-labelledby="blk-h">
+  <div class="dlg">
+    <p class="h3" id="blk-h">Block Jon?</p>
+    <p class="quiet">Neither of you will be able to message or follow the other, and you'll stop seeing each other's notes and comments. Jon isn't told. You both stay in any circle you share.</p>
+    <div class="dlg-acts"><button class="btn ghost" type="button" data-close>Cancel</button><button class="btn outline-danger" type="button" id="blockGo">Block</button></div>
+  </div>
+</dialog>
+
+<div class="toast" id="toast" role="status" hidden></div>
+
+<nav class="tabs" data-page="none"></nav>
+
+<script src="circles.js"></script>
+<script>
+const toast = msg => { const t = document.getElementById("toast"); t.textContent = msg; t.hidden = false; clearTimeout(toast.h); toast.h = setTimeout(() => t.hidden = true, 2400); };
+
+/* ---------- view as ---------- */
+const areas = [{ x: .5, y: .38, r: 120, temp: .9 }], exact = [];
+const mapCtl = Circles.drawMap(document.getElementById("map"), areas, { exact, seed: 5 });
+function setAs(as) {
+  document.body.dataset.as = as;
+  document.querySelectorAll(".viewas .seg button").forEach(b => b.setAttribute("aria-pressed", b.dataset.as === as));
+  document.getElementById("venueBit").textContent = as === "visitor" ? " in Mission Dolores" : " at Ritual Coffee";
+  // Members get the pin. Everyone else gets the area, which is offset from the pin.
+  exact.length = 0; if (as !== "visitor") exact.push({ x: .53, y: .34 });
+  areas[0].x = as === "visitor" ? .47 : .5;
+  mapCtl.redraw();
+  renderMembers(); renderPosts();
+}
+document.querySelector(".viewas .seg").addEventListener("click", e => { const b = e.target.closest("button"); if (b) setAs(b.dataset.as); });
+
+/* ---------- check-in ---------- */
+let mine = null;
+const going = ["Maya", "Sam", "Priya"], maybe = 1;
+function tally() {
+  const n = going.length + (mine === "yes" ? 1 : 0), m = maybe + (mine === "maybe" ? 1 : 0);
+  document.getElementById("tally").textContent = `${n} going${m ? `, ${m} maybe` : ""}`;
+}
+document.getElementById("checkin").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  mine = mine === b.dataset.v ? null : b.dataset.v;
+  document.querySelectorAll("#checkin button").forEach(x => x.setAttribute("aria-pressed", x.dataset.v === mine));
+  tally(); renderMembers();
+});
+tally();
+
+/* ---------- register ---------- */
+const reg = document.getElementById("register");
+function regCount() { const all = reg.querySelectorAll("input"), on = reg.querySelectorAll("input:checked"); document.getElementById("regCount").textContent = `${on.length} of ${all.length} here`; }
+reg.addEventListener("change", regCount); regCount();
+document.getElementById("regSave").addEventListener("click", e => { e.currentTarget.textContent = "Saved"; toast("Saved. Thanks for taking the register."); });
+
+/* ---------- members ---------- */
+const members = [
+  { n: "Maya Ortiz", i: "MO", role: "admin", st: "yes", rate: "shows up 11 of 12", f: true },
+  { n: "Sam Lee", i: "SL", role: "cohost", st: "yes", rate: "shows up 7 of 8", f: true },
+  { n: "Priya Shah", i: "PS", st: "yes", rate: null, f: false },
+  { n: "Jon Park", i: "JP", st: "maybe", rate: "shows up 4 of 7", f: false },
+  { n: "Ade Bello", i: "AB", st: "no", rate: null, f: false },
+  { n: "Ben Bookstaver", i: "BB", me: true, st: null }
+];
+const rank = s => s === "yes" ? 0 : s === "maybe" ? 1 : s === "no" ? 3 : 2;
+function renderMembers() {
+  const as = document.body.dataset.as;
+  const me = members.find(m => m.me); me.st = as === "visitor" ? null : mine;
+  const list = members.filter(m => !(m.me && as === "visitor")).sort((a, b) => rank(a.st) - rank(b.st));
+  document.getElementById("members").innerHTML = list.map((m, i) => `
+    <li>
+      <span class="av" aria-hidden="true">${m.i}</span>
+      <span class="m-body">
+        <a class="m-name" href="${m.me ? "profile.html" : "person.html"}">${m.me ? "You" : m.n}${m.role ? `<span class="role">${m.role}</span>` : ""}</a>
+        ${m.rate ? `<span class="m-rate" title="Meets they said yes to, and turned up for">${m.rate}</span>` : ""}
+      </span>
+      ${m.st ? `<span class="m-st ${m.st}">${m.st === "yes" ? "Going" : m.st === "maybe" ? "Maybe" : "Can't go"}</span>` : ""}
+      ${as === "admin" && !m.me ? `<button class="role-btn" type="button" data-role="${i}">${m.role === "admin" ? "Remove admin" : "Make admin"}</button>` : ""}
+      ${!m.me ? `<button class="follow" type="button" data-follow="${m.n}" aria-pressed="${m.f}">${m.f ? "Following" : "Follow"}</button>` : ""}
+    </li>`).join("");
+}
+document.getElementById("members").addEventListener("click", e => {
+  const f = e.target.closest("[data-follow]");
+  if (f) { const m = members.find(x => x.n === f.dataset.follow); m.f = !m.f; renderMembers(); }
+  const r = e.target.closest("[data-role]");
+  if (r) { const name = r.closest("li").querySelector(".m-name").firstChild.textContent; const m = members.find(x => x.n === name); m.role = m.role === "admin" ? null : "admin"; toast(m.role ? `${name} is now an admin.` : `${name} is no longer an admin.`); renderMembers(); }
+});
+
+/* ---------- notes ---------- */
+const posts = [
+  { a: "Maya Ortiz", i: "MO", t: "2h", text: "Bringing the travel set this week since the café ones are missing a knight. Anyone want to try a 10-minute clock?", likes: 3,
+    comments: [{ a: "Sam Lee", t: "1h", text: "Yes please. I'll bring mine too." }, { a: "Priya Shah", t: "40m", text: "I'm in for one game, then I have to run." }] },
+  { a: "Jon Park", i: "JP", t: "Monday", text: "Lost my scarf last week, dark green. If anyone saw it at the back table, let me know.", likes: 1, comments: [] },
+  { a: "Ben Bookstaver", i: "BB", me: true, t: "Nov 12", text: "Good games tonight. Same table next week, I'll get there early to hold it.", likes: 6, comments: [] }
+];
+function renderPosts() {
+  const as = document.body.dataset.as, member = as !== "visitor";
+  document.getElementById("posts").innerHTML = posts.map((p, i) => `
+    <li class="post">
+      <span class="av" aria-hidden="true">${p.i}</span>
+      <div style="min-width:0">
+        <div class="post-head"><b>${p.me ? "You" : p.a}</b><span class="t">${p.t}</span>
+          ${member ? `<span class="more"><button class="dots" type="button" aria-label="More options" aria-expanded="false" data-menu="${i}">…</button>
+            <div class="menu" hidden>${p.me ? `<button type="button" class="bad" data-del="${i}">Delete note</button>` :
+              `<button type="button" data-report="note">Report note</button><button type="button" class="bad" data-block="${p.a.split(" ")[0]}">Block ${p.a.split(" ")[0]}</button>`}</div></span>` : ""}
+        </div>
+        <p>${p.text}</p>
+        <div class="acts">
+          ${member ? `<button type="button" data-like="${i}" aria-pressed="${!!p.liked}">${p.likes + (p.liked ? 1 : 0)} likes</button>` : `<span>${p.likes} likes</span>`}
+          <span>${p.comments.length ? `${p.comments.length} comment${p.comments.length > 1 ? "s" : ""}` : ""}</span>
+        </div>
+        ${p.comments.length || member ? `<ul class="comments">
+          ${p.comments.map(c => `<li><b>${c.a}</b><span class="t">${c.t}</span><div>${c.text}</div></li>`).join("")}
+          ${member ? `<li><form class="c-form" data-c="${i}"><label class="sr" for="c${i}">Add a comment</label><input id="c${i}" placeholder="Add a comment" autocomplete="off"></form></li>` : ""}
+        </ul>` : ""}
+      </div>
+    </li>`).join("");
+}
+const esc = s => s.replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+document.getElementById("posts").addEventListener("click", e => {
+  const like = e.target.closest("[data-like]");
+  if (like) { const p = posts[+like.dataset.like]; p.liked = !p.liked; renderPosts(); return; }
+  const mb = e.target.closest("[data-menu]");
+  if (mb) { const m = mb.nextElementSibling, open = m.hidden; document.querySelectorAll(".menu").forEach(x => x.hidden = true); m.hidden = !open; mb.setAttribute("aria-expanded", open); e.stopPropagation(); return; }
+  const del = e.target.closest("[data-del]");
+  if (del) { posts.splice(+del.dataset.del, 1); renderPosts(); toast("Note deleted."); return; }
+  const blk = e.target.closest("[data-block]");
+  if (blk) { document.getElementById("blk-h").textContent = `Block ${blk.dataset.block}?`; document.getElementById("blockDlg").showModal(); }
+});
+document.getElementById("posts").addEventListener("submit", e => {
+  e.preventDefault(); const f = e.target.closest("[data-c]"), v = f.querySelector("input").value.trim(); if (!v) return;
+  posts[+f.dataset.c].comments.push({ a: "You", t: "now", text: esc(v) }); renderPosts();
+  document.getElementById("c" + f.dataset.c)?.focus();
+});
+document.addEventListener("click", e => { if (!e.target.closest(".more")) document.querySelectorAll(".menu").forEach(x => x.hidden = true); });
+
+const note = document.getElementById("note"), postBtn = document.getElementById("postBtn");
+note.addEventListener("input", () => postBtn.disabled = !note.value.trim());
+document.getElementById("compose").addEventListener("submit", e => {
+  e.preventDefault(); if (!note.value.trim()) return;
+  posts.unshift({ a: "Ben Bookstaver", i: "BB", me: true, t: "just now", text: esc(note.value.trim()), likes: 0, comments: [] });
+  note.value = ""; postBtn.disabled = true; renderPosts();
+});
+
+/* ---------- report and block ---------- */
+const repDlg = document.getElementById("reportDlg");
+document.addEventListener("click", e => {
+  const r = e.target.closest("[data-report]"); if (!r) return;
+  document.getElementById("rep-h").textContent = r.dataset.report === "circle" ? "Report this circle" : "Report this note";
+  document.getElementById("reportForm").reset(); repDlg.showModal();
+});
+document.getElementById("reportForm").addEventListener("submit", e => { e.preventDefault(); repDlg.close(); toast("Report sent. Thanks."); });
+document.querySelectorAll("[data-close]").forEach(b => b.addEventListener("click", () => b.closest("dialog").close()));
+document.getElementById("blockGo").addEventListener("click", () => {
+  const name = document.getElementById("blk-h").textContent.replace("Block ", "").replace("?", "");
+  for (let i = posts.length - 1; i >= 0; i--) if (posts[i].a.startsWith(name)) posts.splice(i, 1);
+  document.getElementById("blockDlg").close(); renderPosts(); toast(`${name} is blocked.`);
+});
+
+/* ---------- header actions ---------- */
+document.getElementById("join").addEventListener("click", () => { setAs("member"); toast("You joined Thursday chess."); });
+document.getElementById("leave").addEventListener("click", () => { setAs("visitor"); toast("You left Thursday chess."); });
+document.getElementById("copy").addEventListener("click", e => {
+  const b = e.currentTarget;
+  Promise.resolve(navigator.clipboard?.writeText(location.href)).catch(() => {}).finally(() => { b.textContent = "Link copied"; setTimeout(() => b.textContent = "Copy link", 1800); });
+});
+
+setAs("member");
+</script>
+</body>
+</html>

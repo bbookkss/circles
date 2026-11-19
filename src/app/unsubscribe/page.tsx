@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import AuthShell from '@/components/AuthShell'
 import { whoIsUnsubscribing } from '@/app/actions/email'
 import UnsubscribeForm from '@/components/UnsubscribeForm'
 
@@ -21,23 +22,19 @@ export default async function UnsubscribePage({
   const who = token ? await whoIsUnsubscribing(token) : null
 
   return (
-    <main className="min-h-screen flex items-center justify-center px-6 py-16">
-      <div className="w-full max-w-md space-y-6">
-        <Link href="/" className="font-display font-semibold text-[1.35rem] tracking-tight block">
-          circles
-        </Link>
+    <AuthShell altHref="/" altLabel="Circles">
+      <div className="space-y-6">
 
         {!who ? (
           <div className="space-y-2">
-            <h1 className="text-3xl">Link expired</h1>
-            <p className="text-sm text-muted-foreground">
-              This unsubscribe link is no longer valid. If you are still getting
-              emails you did not ask for, use the link in the most recent one, or
-              turn reminders off in your profile.
+            <h1 className="text-[1.75rem] sm:text-[2.2rem]">That link has expired</h1>
+            <p className="text-muted-foreground mt-2">
+              This unsubscribe link no longer works. Use the link in the most
+              recent email, or turn reminders off in your profile.
             </p>
             <Link
               href="/profile"
-              className="text-sm underline underline-offset-4 inline-block pt-2"
+              className="text-[15px] underline underline-offset-4 decoration-cool-2 hover:decoration-current inline-block pt-3"
             >
               Go to your profile
             </Link>
@@ -46,6 +43,6 @@ export default async function UnsubscribePage({
           <UnsubscribeForm token={token!} email={who.email} />
         )}
       </div>
-    </main>
+    </AuthShell>
   )
 }

@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label'
 import LocationSearch from '@/components/LocationSearch'
 import BackButton from '@/components/BackButton'
 import { reverseGeocode } from '@/lib/geocoding'
-import { installCoffeeTheme, COFFEE } from '@/lib/mapTheme'
+import { installMapTheme, MAP_BG } from '@/lib/mapTheme'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN!
@@ -121,7 +121,7 @@ export default function EditCircleClient({ circle, schedule }: { circle: Circle;
 
         <form onSubmit={handleSubmit} className="md:flex-1 md:overflow-y-auto p-4 pb-24 md:pb-4 space-y-5">
           {error && (
-            <p className="text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-md">{error}</p>
+            <p className="text-sm text-destructive bg-destructive/10 px-3.5 py-2.5 rounded-xl">{error}</p>
           )}
 
           <input type="hidden" name="circle_id" value={circle.id} />
@@ -140,7 +140,7 @@ export default function EditCircleClient({ circle, schedule }: { circle: Circle;
                   key={emoji}
                   type="button"
                   onClick={() => setSelectedEmoji(selectedEmoji === emoji ? null : emoji)}
-                  className={`text-xl p-1 rounded-md transition-colors hover:bg-muted ${selectedEmoji === emoji ? 'bg-muted ring-2 ring-foreground' : ''}`}
+                  className={`text-xl p-1 rounded-lg transition-colors hover:bg-muted ${selectedEmoji === emoji ? 'bg-muted ring-2 ring-foreground' : ''}`}
                 >
                   {emoji}
                 </button>
@@ -155,7 +155,7 @@ export default function EditCircleClient({ circle, schedule }: { circle: Circle;
               name="description"
               defaultValue={circle.description ?? ''}
               rows={3}
-              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring resize-none"
+              className="w-full rounded-xl border border-transparent bg-muted px-3.5 py-2.5 text-base placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring resize-none"
             />
           </div>
 
@@ -227,8 +227,8 @@ export default function EditCircleClient({ circle, schedule }: { circle: Circle;
                   key={v}
                   type="button"
                   onClick={() => setVisibility(v)}
-                  className={`flex-1 py-2 rounded-md text-sm font-medium border transition-colors ${
-                    visibility === v ? 'bg-foreground text-background border-foreground' : 'bg-background text-foreground border-input hover:bg-muted'
+                  className={`flex-1 py-2 rounded-full text-sm font-medium border transition-colors ${
+                    visibility === v ? 'bg-foreground text-background border-foreground' : 'bg-muted text-foreground border-transparent hover:bg-cool-2'
                   }`}
                 >
                   {v === 'public' ? 'Public' : 'Private'}
@@ -255,8 +255,8 @@ export default function EditCircleClient({ circle, schedule }: { circle: Circle;
                         key={day.value}
                         type="button"
                         onClick={() => toggleDay(day.value)}
-                        className={`px-2.5 py-1 rounded-md text-xs font-medium border transition-colors ${
-                          selectedDays.includes(day.value) ? 'bg-foreground text-background border-foreground' : 'bg-background text-foreground border-input hover:bg-muted'
+                        className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
+                          selectedDays.includes(day.value) ? 'bg-foreground text-background border-foreground' : 'bg-muted text-foreground border-transparent hover:bg-cool-2'
                         }`}
                       >
                         {day.label}
@@ -324,11 +324,11 @@ export default function EditCircleClient({ circle, schedule }: { circle: Circle;
       <main className="h-[45vh] min-h-[280px] md:h-auto md:min-h-0 flex-shrink-0 md:flex-1 relative border-b md:border-b-0 sticky top-14 md:static">
         <Map
           initialViewState={{ ...mapCenter, zoom: 13 }}
-          style={{ width: '100%', height: '100%', background: COFFEE }}
+          style={{ width: '100%', height: '100%', background: MAP_BG }}
           mapStyle="mapbox://styles/mapbox/light-v11"
           mapboxAccessToken={MAPBOX_TOKEN}
           cursor="crosshair"
-          onLoad={(e) => installCoffeeTheme(e.target)}
+          onLoad={(e) => installMapTheme(e.target)}
           onClick={(e) => handleMapClick(e.lngLat.lng, e.lngLat.lat)}
         >
           <NavigationControl position="top-right" showCompass={false} />
@@ -345,7 +345,7 @@ export default function EditCircleClient({ circle, schedule }: { circle: Circle;
             </Marker>
           )}
         </Map>
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/60 text-white text-xs px-3 py-1.5 rounded-full pointer-events-none">
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 glass text-foreground text-xs px-3 py-1.5 rounded-full pointer-events-none">
           Click to move the pin
         </div>
       </main>

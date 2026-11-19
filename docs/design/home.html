@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Home – Circles</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Host+Grotesk:wght@300;400;500;600&display=swap">
+<script>try { const t = localStorage.getItem("circles-theme"); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
+<link rel="stylesheet" href="circles.css">
+<style>
+/* Home: the map runs up under the glass nav; the week sits on a glass sheet over it. */
+.place { margin-top: -66px; height: 410px; }
+.place-wrap {
+  position: relative; height: 100%; max-width: 792px; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex; align-items: flex-end; padding-bottom: 24px;
+}
+.place .sheet { width: 100%; }
+.week { list-style: none; margin: 22px 0 0; padding: 0; display: grid; grid-template-columns: repeat(7, 1fr); }
+.week li { text-align: center; padding-block: 8px 4px; border-radius: 14px; }
+.week .d { font-size: 13px; color: var(--quiet); }
+.week .n { font-size: 20px; letter-spacing: -0.02em; margin-top: 2px; }
+.week .today { background: var(--ink); color: var(--paper); }
+.week .today .d { color: inherit; opacity: .7; }
+.week .dot { height: 6px; margin-top: 4px; display: flex; justify-content: center; }
+.week .dot span { width: 6px; height: 6px; border-radius: 50%; background: var(--heat); }
+
+main.page { padding-top: 8px; }
+.meets { list-style: none; margin: 0; padding: 0; }
+.meet { display: grid; grid-template-columns: 168px minmax(0, 1fr); gap: 6px 28px; padding-block: 30px; border-bottom: 1px solid var(--rule); }
+.when-day { font-size: 26px; letter-spacing: -0.025em; line-height: 1; }
+.when-time { color: var(--quiet); font-size: 15px; margin-top: 8px; }
+.when-state { font-size: 14px; margin-top: 10px; color: var(--quiet); }
+.when-state.open { color: var(--heat-ink); display: flex; align-items: center; gap: 7px; font-weight: 500; }
+.when-state.open::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--heat); }
+.circle-name a:hover { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; }
+.where { color: var(--quiet); font-size: 15px; margin-top: 2px; }
+.rsvp { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-top: 18px; }
+.who { font-size: 15px; color: var(--quiet); }
+.who b { color: var(--ink); font-weight: 500; }
+
+.later { padding-block: 34px 8px; }
+.later ul { list-style: none; padding: 0; margin: 12px 0 0; }
+.later li { display: grid; grid-template-columns: 168px minmax(0, 1fr); gap: 28px; padding-block: 9px; font-size: 15px; }
+.later .dt, .later .fq { color: var(--quiet); }
+
+.notes { margin-top: 56px; }
+.compose { margin-top: 14px; border-radius: 22px; padding: 6px 6px 6px 20px; display: flex; align-items: center; gap: 12px; background: var(--cool); }
+.compose input { flex: 1; min-width: 0; border: 0; background: transparent; font: inherit; font-size: 15px; color: var(--ink); padding-block: 10px; }
+.compose input::placeholder { color: var(--quiet); }
+.compose input:focus { outline: none; }
+.compose:focus-within { box-shadow: 0 0 0 2px var(--cool-2); }
+.posts { list-style: none; padding: 0; margin: 8px 0 0; }
+.post { padding-block: 24px; border-bottom: 1px solid var(--rule); display: grid; grid-template-columns: 36px minmax(0, 1fr); gap: 14px; }
+.post-head { font-size: 15px; display: flex; flex-wrap: wrap; gap: 0 8px; align-items: baseline; }
+.post-head b { font-weight: 500; }
+.post-head span { color: var(--quiet); font-size: 14px; }
+.post p { margin: 4px 0 0; max-width: 62ch; }
+.post-acts { display: flex; gap: 18px; margin-top: 10px; font-size: 14px; color: var(--quiet); }
+.post-acts button { border: 0; background: none; padding: 0; cursor: pointer; color: inherit; }
+.post-acts button:hover { color: var(--ink); }
+.post-acts button[aria-pressed="true"] { color: var(--ink); font-weight: 500; }
+
+@media (max-width: 640px) {
+  .place { height: 370px; }
+  .week .n { font-size: 17px; }
+  .week li { border-radius: 11px; }
+  .meet { grid-template-columns: 1fr; gap: 4px; padding-block: 24px; }
+  .when { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+  .when-time, .when-state { margin-top: 0; }
+  .circle-name { margin-top: 8px; }
+  .later li { grid-template-columns: 96px minmax(0, 1fr); gap: 14px; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .place .sheet { animation: lift .7s cubic-bezier(.2,.7,.2,1) both .15s; }
+  @keyframes lift { from { transform: translateY(14px); } to { transform: none; } }
+}
+</style>
+</head>
+<body>
+
+<header class="nav" data-page="home"></header>
+
+<section class="place map" aria-label="Your week">
+  <canvas id="map" aria-hidden="true"></canvas>
+  <div class="place-wrap">
+    <div class="sheet glass">
+      <h1>Two meets this week, Ben.</h1>
+      <ol class="week" id="week"></ol>
+    </div>
+  </div>
+</section>
+
+<main class="page">
+  <div class="col">
+    <ul class="meets" id="meets"></ul>
+
+    <section class="later" aria-labelledby="later-h">
+      <h2 id="later-h">Later</h2>
+      <ul>
+        <li><span class="dt">Mon, Nov 30</span><a href="circle.html">Book club at Dog Eared <span class="fq">, monthly</span></a></li>
+        <li><span class="dt">Wed, Dec 2</span><a href="circle.html">Sketching at the Main Library <span class="fq">, every other week</span></a></li>
+      </ul>
+    </section>
+
+    <section class="notes" aria-labelledby="notes-h">
+      <h2 id="notes-h">Notes from your circles</h2>
+      <form class="compose" id="compose">
+        <label for="note" class="sr">Write a note to one of your circles</label>
+        <input id="note" placeholder="Write a note to Thursday chess…" autocomplete="off">
+        <button class="btn sm" id="post" disabled>Post</button>
+      </form>
+      <ul class="posts" id="posts"></ul>
+    </section>
+  </div>
+</main>
+
+<nav class="tabs" data-page="home"></nav>
+
+<script src="circles.js"></script>
+<script>
+const week = [["Wed",18],["Thu",19],["Fri",20],["Sat",21],["Sun",22],["Mon",23],["Tue",24]];
+const meetDays = new Set([19, 21]);
+const meets = [
+  { day: "Tomorrow", time: "7:00 – 9:00 pm", open: true, name: "Thursday chess", where: "Mission Dolores", going: ["Maya","Sam"], maybe: 1, mine: null },
+  { day: "Saturday", time: "8:30 – 9:30 am", open: false, state: "Check-in opens Friday morning", name: "Saturday morning run", where: "Duboce Triangle", going: ["Priya","Jon","Ade","Lena"], maybe: 0, mine: null }
+];
+const posts = [
+  { a: "Maya Ortiz", i: "MO", c: "Thursday chess", t: "2h", text: "Bringing the travel set this week since the café ones are missing a knight. Anyone want to try a 10-minute clock?", likes: 3, comments: 2 },
+  { a: "Jon Park", i: "JP", c: "Saturday morning run", t: "Yesterday", text: "Same loop as last week, around the park twice. We'll wait at the steps until 8:35 for anyone running late.", likes: 5, comments: 0 }
+];
+
+document.getElementById("week").innerHTML = week.map(([d, n], i) =>
+  `<li class="${i === 0 ? "today" : ""}"><div class="d">${d}</div><div class="n">${n}</div><div class="dot">${meetDays.has(n) ? "<span></span>" : ""}</div></li>`).join("");
+
+function whoLine(m) {
+  const names = m.mine === "yes" ? ["you", ...m.going] : m.going;
+  let line;
+  if (!names.length) line = "Nobody has said yes yet";
+  else if (names.length <= 3) {
+    const list = names.length === 1 ? names[0] : names.slice(0, -1).join(", ") + " and " + names.at(-1);
+    line = `<b>${list}</b> ${names.length === 1 && names[0] !== "you" ? "is" : "are"} in`;
+  } else line = `<b>${names.slice(0, 2).join(", ")}</b> and ${names.length - 2} more are in`;
+  const maybes = m.maybe + (m.mine === "maybe" ? 1 : 0);
+  return line + (maybes ? `, ${maybes} maybe` : "");
+}
+function renderMeets() {
+  document.getElementById("meets").innerHTML = meets.map((m, i) => `
+    <li class="meet">
+      <div class="when">
+        <div class="when-day">${m.day}</div>
+        <div class="when-time">${m.time}</div>
+        <div class="when-state ${m.open ? "open" : ""}">${m.open ? "Check-in open" : m.state}</div>
+      </div>
+      <div style="min-width:0">
+        <div class="h3 circle-name"><a href="circle.html">${m.name}</a></div>
+        <div class="where">${m.where}</div>
+        <div class="rsvp">
+          <div class="seg" role="group" aria-label="Are you going to ${m.name}?">
+            ${[["yes","Going"],["maybe","Maybe"],["no","Can't go"]].map(([v,l]) =>
+              `<button type="button" data-i="${i}" data-v="${v}" aria-pressed="${m.mine === v}" ${m.open ? "" : "disabled"}>${l}</button>`).join("")}
+          </div>
+          <span class="who">${whoLine(m)}</span>
+        </div>
+      </div>
+    </li>`).join("");
+}
+document.getElementById("meets").addEventListener("click", e => {
+  const b = e.target.closest("button[data-v]"); if (!b || b.disabled) return;
+  const m = meets[+b.dataset.i]; m.mine = m.mine === b.dataset.v ? null : b.dataset.v;
+  renderMeets();
+  document.querySelector(`button[data-i="${b.dataset.i}"][data-v="${b.dataset.v}"]`)?.focus();
+});
+renderMeets();
+
+// What you told the assistant shows up here too.
+function applyRsvp(r) {
+  if (!r) return;
+  [["chess", 0], ["run", 1]].forEach(([k, i]) => { if (k in r) meets[i].mine = r[k] ? r[k].s : null; });
+  renderMeets();
+}
+try { applyRsvp(JSON.parse(localStorage.getItem("circles-rsvp") || "null")); } catch (e) {}
+window.addEventListener("circles:rsvp", e => applyRsvp(e.detail));
+
+function renderPosts() {
+  document.getElementById("posts").innerHTML = posts.map((p, i) => `
+    <li class="post">
+      <div class="av" aria-hidden="true">${p.i}</div>
+      <div style="min-width:0">
+        <div class="post-head"><b>${p.a}</b><span>in ${p.c}, ${p.t}</span></div>
+        <p>${p.text}</p>
+        <div class="post-acts">
+          <button type="button" data-like="${i}" aria-pressed="${!!p.liked}">${p.likes + (p.liked ? 1 : 0)} likes</button>
+          <button type="button">${p.comments ? p.comments + " comments" : "Comment"}</button>
+        </div>
+      </div>
+    </li>`).join("");
+}
+document.getElementById("posts").addEventListener("click", e => {
+  const b = e.target.closest("[data-like]"); if (!b) return;
+  posts[+b.dataset.like].liked = !posts[+b.dataset.like].liked; renderPosts();
+});
+const note = document.getElementById("note"), postBtn = document.getElementById("post");
+note.addEventListener("input", () => postBtn.disabled = !note.value.trim());
+document.getElementById("compose").addEventListener("submit", e => {
+  e.preventDefault(); if (!note.value.trim()) return;
+  const esc = s => s.replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  posts.unshift({ a: "Ben Bookstaver", i: "BB", c: "Thursday chess", t: "just now", text: esc(note.value.trim()), likes: 0, comments: 0 });
+  note.value = ""; postBtn.disabled = true; renderPosts();
+});
+renderPosts();
+
+// Hotter = sooner. Tomorrow's chess burns brightest.
+Circles.drawMap(document.getElementById("map"), [
+  { x: .30, y: .30, r: 90, temp: 1 },
+  { x: .66, y: .20, r: 72, temp: .7 },
+  { x: .82, y: .48, r: 54, temp: .35 }
+]);
+</script>
+</body>
+</html>

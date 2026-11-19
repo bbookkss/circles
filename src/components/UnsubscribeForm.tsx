@@ -24,18 +24,18 @@ export default function UnsubscribeForm({
   if (state === 'done') {
     return (
       <div className="space-y-2">
-        <h1 className="text-3xl">Unsubscribed</h1>
-        <p className="text-sm text-muted-foreground">
+        <h1 className="text-[1.75rem] sm:text-[2.2rem]">You&apos;re unsubscribed</h1>
+        <p className="text-muted-foreground mt-2">
           We will not email <span className="text-foreground">{email}</span> about
           circles again. Your account and your circles are untouched.
         </p>
-        <p className="text-xs text-muted-foreground pt-2">
+        <p className="text-sm text-muted-foreground pt-2">
           Password resets still work. Those are not marketing, and you would be
           stuck without them.
         </p>
         <Link
           href="/"
-          className="text-sm underline underline-offset-4 inline-block pt-2"
+          className="text-[15px] underline underline-offset-4 decoration-cool-2 hover:decoration-current inline-block pt-3"
         >
           Back to Circles
         </Link>
@@ -53,8 +53,8 @@ export default function UnsubscribeForm({
       }}
     >
       <div className="space-y-2">
-        <h1 className="text-3xl">Stop these emails?</h1>
-        <p className="text-sm text-muted-foreground">
+        <h1 className="text-[1.75rem] sm:text-[2.2rem]">Stop these emails?</h1>
+        <p className="text-muted-foreground mt-2">
           This turns off meet reminders for{' '}
           <span className="text-foreground">{email}</span>. You stay in your
           circles and nothing else changes.
@@ -62,18 +62,18 @@ export default function UnsubscribeForm({
       </div>
 
       {state === 'error' && (
-        <p className="text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-md">
+        <p className="text-sm text-destructive bg-destructive/10 px-3.5 py-2.5 rounded-xl">
           That did not save. Try again, and if it keeps failing reply to the
           email you got and we will do it by hand.
         </p>
       )}
 
-      <div className="flex gap-2">
-        <Button type="submit" disabled={state === 'working'}>
-          {state === 'working' ? 'Unsubscribing...' : 'Unsubscribe'}
+      <div className="flex flex-wrap gap-2">
+        <Button type="submit" size="lg" disabled={state === 'working'}>
+          {state === 'working' ? 'Unsubscribing…' : 'Unsubscribe'}
         </Button>
         <Link href="/">
-          <Button type="button" variant="outline">
+          <Button type="button" size="lg" variant="outline">
             Keep them
           </Button>
         </Link>

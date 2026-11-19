@@ -35,7 +35,7 @@ export default async function NewCirclePage() {
           scrolls by the difference, and the form's own scroller ends up
           nested inside a container that is already the wrong height. That
           combination is what produced the dead space below Create Circle. */}
-      <div className="pt-14 md:h-screen">
+      <div className="pt-16 md:h-screen">
         <NewCircleClient
           isBusiness={profile?.is_business === true}
           initialView={initialView}

@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Your profile – Circles</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Host+Grotesk:wght@300;400;500;600&display=swap">
+<script>try { const t = localStorage.getItem("circles-theme"); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
+<link rel="stylesheet" href="circles.css">
+<style>
+/* Your profile: who you are, what you show up to, then settings in plain sections. */
+[hidden] { display: none !important; }
+.me-head { display: grid; grid-template-columns: 72px minmax(0, 1fr); gap: 22px; align-items: start; padding-block: 24px 8px; }
+.av.lg { background: var(--ink); color: var(--paper); }
+.contact { font-size: 15px; color: var(--quiet); margin-top: 8px; display: flex; flex-wrap: wrap; gap: 4px 16px; }
+.bio { margin-top: 12px; max-width: 56ch; }
+.head-acts { margin-top: 16px; display: flex; gap: 8px; flex-wrap: wrap; }
+
+.counts { display: flex; flex-wrap: wrap; gap: 8px 28px; margin-top: 32px; padding-block: 18px; border-block: 1px solid var(--rule); }
+.counts a, .counts span { font-size: 15px; color: var(--quiet); }
+.counts b { display: block; font-size: 26px; font-weight: 300; letter-spacing: -0.02em; color: var(--ink); line-height: 1.1; }
+.counts a:hover b { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; }
+.reliable { margin-top: 16px; font-size: 15px; color: var(--quiet); }
+.reliable b { color: var(--ink); font-weight: 500; }
+
+.sec { margin-top: 52px; }
+.sec h2 { margin-bottom: 12px; }
+.circ { display: flex; align-items: center; gap: 14px; padding-block: 14px; }
+.circ .nm { flex: 1; min-width: 0; font-size: 17px; font-weight: 500; letter-spacing: -0.01em; }
+.circ .sub { display: block; font-size: 14px; color: var(--quiet); font-weight: 400; letter-spacing: 0; }
+.circ:hover .nm > span:first-child { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; }
+.blk { display: flex; align-items: center; gap: 14px; padding-block: 12px; }
+.blk .nm { flex: 1; }
+.edit { margin-top: 24px; }
+.check { display: flex; gap: 12px; align-items: flex-start; font-size: 15px; cursor: pointer; }
+.check input { width: 18px; height: 18px; margin: 2px 0 0; accent-color: var(--ink); }
+.danger-box { margin-top: 18px; border-radius: 24px; padding: 24px; border: 1px solid color-mix(in srgb, var(--danger) 40%, transparent); display: grid; gap: 14px; }
+.danger-box ul { margin: 0; padding-left: 20px; color: var(--quiet); font-size: 15px; display: grid; gap: 6px; }
+.btn.danger-fill { background: var(--danger); color: var(--paper); }
+.row-acts { display: flex; gap: 8px; flex-wrap: wrap; }
+.ok { font-size: 14px; color: var(--quiet); }
+@media (max-width: 640px) {
+  .me-head { grid-template-columns: 56px minmax(0, 1fr); gap: 16px; }
+  .av.lg { width: 56px; height: 56px; font-size: 20px; }
+}
+</style>
+</head>
+<body>
+<header class="nav" data-page="profile"></header>
+
+<main class="page">
+  <div class="col">
+    <section class="me-head">
+      <div class="av lg" aria-hidden="true">BB</div>
+      <div style="min-width:0">
+        <h1 class="h-md" id="nameView">Ben Bookstaver</h1>
+        <div class="contact"><span>ben@example.com</span><a class="link" href="#">@benbookstaver</a></div>
+        <p class="bio" id="bioView">Usually at chess on Thursdays. Learning to run without complaining.</p>
+        <div class="head-acts" id="headActs">
+          <button class="btn ghost sm" type="button" id="editBtn">Edit profile</button>
+        </div>
+        <p class="ok" id="saved" role="status" hidden style="margin-top:10px">Saved.</p>
+      </div>
+    </section>
+
+    <form class="form edit panel" id="edit" hidden>
+      <div class="field"><label for="full_name">Full name</label><input id="full_name" value="Ben Bookstaver" autocomplete="name"></div>
+      <div class="field"><label for="username">Username (optional)</label><input id="username" placeholder="yourname" value="ben"><span class="hint">Sign in with this instead of your email.</span></div>
+      <div class="field"><label for="instagram">Instagram</label><input id="instagram" placeholder="yourhandle" value="benbookstaver"><span class="hint">Links to your Instagram so people can find you.</span></div>
+      <div class="field"><label for="bio">Bio (optional)</label><textarea id="bio" placeholder="Tell people a bit about yourself">Usually at chess on Thursdays. Learning to run without complaining.</textarea></div>
+      <label class="check"><input type="checkbox" id="email_reminders" checked><span>Email me before my circles meet<span class="hint" style="display:block;font-size:13px;color:var(--quiet)">A day before and a few hours before.</span></span></label>
+      <div class="row-acts"><button class="btn" type="submit">Save</button><button class="btn ghost" type="button" id="cancelEdit">Cancel</button></div>
+    </form>
+
+    <div class="counts">
+      <a href="followers.html#followers"><b>48</b>Followers</a>
+      <a href="followers.html#following"><b>31</b>Following</a>
+      <a href="#circles"><b>3</b>Circles</a>
+      <span title="Meets you were confirmed at"><b>22</b>Meets</span>
+    </div>
+    <p class="reliable"><b>Shows up 9 of 10</b> meets you said yes to.</p>
+
+    <section class="sec" id="circles" aria-labelledby="c-h">
+      <h2 id="c-h">Your circles</h2>
+      <ul class="rows">
+        <li><a class="circ" href="circle.html"><span class="nm"><span>Thursday chess</span><span class="sub">Mission Dolores</span></span><span class="chip">Admin</span></a></li>
+        <li><a class="circ" href="circle.html"><span class="nm"><span>Saturday morning run</span><span class="sub">Duboce Triangle</span></span></a></li>
+        <li><a class="circ" href="circle.html"><span class="nm"><span>Book club at Dog Eared</span><span class="sub">Valencia Street</span></span><span class="chip">Private</span></a></li>
+      </ul>
+    </section>
+
+    <section class="sec" aria-labelledby="b-h" id="blockedSec">
+      <h2 id="b-h">Blocked</h2>
+      <p class="quiet small" style="margin-bottom:12px">Blocked people disappear from your feed and messages. This is the one place to find them again.</p>
+      <ul class="rows" id="blocked">
+        <li class="blk"><span class="av" aria-hidden="true">DR</span><span class="nm">Dan Reyes</span><button class="btn ghost sm" type="button" data-unblock>Unblock</button></li>
+      </ul>
+    </section>
+
+    <section class="sec" aria-labelledby="biz-h">
+      <h2 id="biz-h">Business</h2>
+      <p>Run a café, bar or shop that hosts groups? <a class="link" href="business.html">Set up a business account</a></p>
+    </section>
+
+    <section class="sec" aria-labelledby="acct-h">
+      <h2 id="acct-h">Account</h2>
+      <div class="row-acts">
+        <a class="btn ghost" href="index.html">Sign out</a>
+        <button class="btn danger" type="button" id="delOpen">Delete account</button>
+      </div>
+
+      <form class="danger-box" id="del" hidden>
+        <p style="font-weight:500">Delete your account</p>
+        <p class="quiet">This can't be undone. Here is exactly what happens:</p>
+        <ul>
+          <li>Your profile, memberships, follows, likes and messages are erased.</li>
+          <li>Your posts and comments stay in their circles, shown as Deleted user, so conversations still make sense to everyone else.</li>
+          <li>Any circle where you're the only admin is handed to its longest-standing member.</li>
+          <li>Any circle where you're the last member is deleted.</li>
+        </ul>
+        <div class="field"><label for="confirm">Type delete to confirm</label><input id="confirm" placeholder="delete" autocomplete="off"></div>
+        <div class="row-acts"><button class="btn danger-fill" type="submit" id="delGo" disabled>Delete my account</button><button class="btn ghost" type="button" id="delCancel">Cancel</button></div>
+      </form>
+    </section>
+  </div>
+</main>
+
+<nav class="tabs" data-page="profile"></nav>
+<script src="circles.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+$("editBtn").onclick = () => { $("edit").hidden = false; $("headActs").hidden = true; $("saved").hidden = true; $("full_name").focus(); };
+$("cancelEdit").onclick = () => { $("edit").hidden = true; $("headActs").hidden = false; };
+$("edit").addEventListener("submit", e => {
+  e.preventDefault();
+  $("nameView").textContent = $("full_name").value.trim() || "Ben Bookstaver";
+  $("bioView").textContent = $("bio").value.trim();
+  $("edit").hidden = true; $("headActs").hidden = false; $("saved").hidden = false;
+});
+$("blocked").addEventListener("click", e => {
+  const b = e.target.closest("[data-unblock]"); if (!b) return;
+  b.closest("li").remove();
+  if (!$("blocked").children.length) $("blockedSec").hidden = true;
+});
+$("delOpen").onclick = () => { $("del").hidden = false; $("confirm").focus(); };
+$("delCancel").onclick = () => { $("del").hidden = true; $("confirm").value = ""; $("delGo").disabled = true; };
+$("confirm").addEventListener("input", () => $("delGo").disabled = $("confirm").value.trim().toLowerCase() !== "delete");
+$("del").addEventListener("submit", e => { e.preventDefault(); location.href = "index.html"; });
+</script>
+</body>
+</html>

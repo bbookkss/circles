@@ -54,7 +54,7 @@ function timeAgo(ts: string) {
 
 function Avatar({ name, size = 'sm' }: { name: string; size?: 'sm' | 'xs' }) {
   return (
-    <div className={`rounded-full bg-muted flex items-center justify-center font-semibold flex-shrink-0 ${size === 'xs' ? 'w-6 h-6 text-[10px]' : 'w-7 h-7 text-xs'}`}>
+    <div className={`rounded-full bg-cool-2 flex items-center justify-center font-medium flex-shrink-0 ${size === 'xs' ? 'w-7 h-7 text-[11px]' : 'w-9 h-9 text-xs'}`}>
       {initialsOf(name)}
     </div>
   )
@@ -134,44 +134,44 @@ export default function PostItem({
   const isMyPost = post.user_id === currentUserId
 
   return (
-    <article className="py-5">
+    <article className="py-6">
       <div className="flex gap-3">
         <Avatar name={post.author_name} />
         <div className="flex-1 min-w-0">
-          <div className="flex items-baseline gap-2 mb-1">
+          <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 mb-1">
             {post.user_id ? (
               <Link
                 href={isMyPost ? '/profile' : `/profile/${post.user_id}`}
-                className="text-sm font-medium hover:underline underline-offset-2"
+                className="text-[0.95rem] font-medium hover:underline underline-offset-4 decoration-1"
               >
                 {post.author_name}
               </Link>
             ) : (
-              <span className="text-sm font-medium text-muted-foreground">{post.author_name}</span>
+              <span className="text-[0.95rem] font-medium text-muted-foreground">{post.author_name}</span>
             )}
             {circle && (
               <>
-                <span className="text-xs text-muted-foreground">in</span>
+                <span className="text-sm text-muted-foreground">in</span>
                 <Link
                   href={`/circles/${circle.id}`}
-                  className="text-xs font-medium hover:underline underline-offset-2 truncate"
+                  className="text-sm text-muted-foreground hover:text-foreground hover:underline underline-offset-4 decoration-1 truncate"
                 >
                   {circle.emoji && <span className="mr-1">{circle.emoji}</span>}
                   {circle.name}
                 </Link>
               </>
             )}
-            <span className="text-xs text-muted-foreground">{timeAgo(post.created_at)}</span>
+            <span className="text-sm text-muted-foreground">{timeAgo(post.created_at)}</span>
           </div>
-          <p className="text-sm whitespace-pre-wrap break-words">{post.content}</p>
+          <p className="text-[0.95rem] leading-relaxed whitespace-pre-wrap break-words max-w-[62ch]">{post.content}</p>
 
           {/* Actions */}
-          <div className="flex items-center gap-5 mt-2.5 text-xs">
+          <div className="flex items-center gap-5 mt-3 text-sm">
             <button
               type="button"
               onClick={onLike}
               disabled={!canInteract}
-              className={`${liked ? 'text-pen font-medium' : 'text-muted-foreground hover:text-foreground'} ${!canInteract ? 'cursor-default' : ''} transition-colors`}
+              className={`${liked ? 'text-foreground font-medium' : 'text-muted-foreground hover:text-foreground'} ${!canInteract ? 'cursor-default' : ''} transition-colors`}
             >
               {liked ? 'Liked' : 'Like'}{likeCount > 0 ? ` (${likeCount})` : ''}
             </button>
@@ -186,7 +186,7 @@ export default function PostItem({
               <form action={deletePost} className="ml-auto">
                 <input type="hidden" name="post_id" value={post.id} />
                 <input type="hidden" name="circle_id" value={post.circleId} />
-                <button type="submit" className="text-muted-foreground hover:text-destructive transition-colors">delete</button>
+                <button type="submit" className="text-muted-foreground hover:text-destructive transition-colors">Delete</button>
               </form>
             ) : (
               <span className="ml-auto">
@@ -197,30 +197,30 @@ export default function PostItem({
 
           {/* Comments */}
           {showComments && (
-            <div className="mt-4 space-y-3.5 fade-in">
+            <div className="mt-4 space-y-3.5 rounded-2xl bg-muted p-4 fade-in">
               {comments.map((c) => {
                 const mine = c.user_id === currentUserId
                 return (
-                  <div key={c.id} className="flex gap-2">
+                  <div key={c.id} className="flex gap-2.5">
                     <Avatar name={c.author_name} size="xs" />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-baseline gap-2">
                         {c.user_id ? (
                           <Link
                             href={mine ? '/profile' : `/profile/${c.user_id}`}
-                            className="text-xs font-medium hover:underline underline-offset-2"
+                            className="text-sm font-medium hover:underline underline-offset-4 decoration-1"
                           >
                             {c.author_name}
                           </Link>
                         ) : (
-                          <span className="text-xs font-medium text-muted-foreground">{c.author_name}</span>
+                          <span className="text-sm font-medium text-muted-foreground">{c.author_name}</span>
                         )}
-                        <span className="text-[10px] text-muted-foreground">{timeAgo(c.created_at)}</span>
+                        <span className="text-xs text-muted-foreground">{timeAgo(c.created_at)}</span>
                         {mine ? (
                           <button
                             type="button"
                             onClick={() => onDeleteComment(c.id)}
-                            className="text-[10px] text-muted-foreground hover:text-destructive ml-auto"
+                            className="text-xs text-muted-foreground hover:text-destructive ml-auto"
                           >
                             delete
                           </button>
@@ -229,18 +229,18 @@ export default function PostItem({
                             <ReportButton
                               targetType="comment"
                               targetId={c.id}
-                              className="text-[10px] text-muted-foreground hover:text-destructive"
+                              className="text-xs text-muted-foreground hover:text-destructive"
                             />
                           </span>
                         )}
                       </div>
-                      <p className="text-xs whitespace-pre-wrap break-words">{c.content}</p>
+                      <p className="text-sm whitespace-pre-wrap break-words">{c.content}</p>
                       {!c.id.startsWith('temp-') && (
                         <button
                           type="button"
                           onClick={() => onLikeComment(c.id)}
                           disabled={!canInteract}
-                          className={`mt-1 text-[10px] ${c.likedByMe ? 'text-pen font-medium' : 'text-muted-foreground hover:text-foreground'} ${!canInteract ? 'cursor-default' : ''} transition-colors`}
+                          className={`mt-1 text-xs ${c.likedByMe ? 'text-foreground font-medium' : 'text-muted-foreground hover:text-foreground'} ${!canInteract ? 'cursor-default' : ''} transition-colors`}
                         >
                           {c.likedByMe ? 'Liked' : 'Like'}{c.likeCount > 0 ? ` (${c.likeCount})` : ''}
                         </button>
@@ -259,12 +259,12 @@ export default function PostItem({
                     onChange={(e) => setCommentText(e.target.value)}
                     placeholder="Add a comment..."
                     maxLength={500}
-                    className="flex-1 min-w-0 rounded-full border border-input bg-background px-3.5 py-1.5 text-xs placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-shadow"
+                    className="flex-1 min-w-0 rounded-full border border-transparent bg-background px-4 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:border-ring"
                   />
                   <button
                     type="submit"
                     disabled={posting || !commentText.trim()}
-                    className="text-xs text-muted-foreground hover:text-foreground disabled:opacity-40 transition-colors px-1"
+                    className="text-sm font-medium text-foreground hover:opacity-75 disabled:opacity-35 transition-opacity px-2"
                   >
                     post
                   </button>

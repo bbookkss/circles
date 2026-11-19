@@ -51,31 +51,31 @@ export default async function RequestsPage({
   return (
     <>
     <TopNav />
-    <div className="pt-14 min-h-screen bg-background">
-      <div className="max-w-2xl mx-auto px-4 py-8">
+    <div className="pt-20 pb-24 min-h-screen bg-background">
+      <div className="max-w-2xl mx-auto px-5 py-8">
         <div className="mb-6">
           <Link href={`/circles/${id}`} className="text-sm text-muted-foreground hover:text-foreground">
             ← {circle.emoji} {circle.name}
           </Link>
         </div>
 
-        <h1 className="text-2xl font-bold mb-6">Join requests</h1>
+        <h1 className="text-[2.2rem] md:text-[2.8rem] mb-6">Join requests</h1>
 
         {actionError && (
-          <p className="mb-6 text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-md">
+          <p className="mb-6 text-sm text-destructive bg-destructive/10 px-3.5 py-2.5 rounded-xl">
             {actionError}
           </p>
         )}
 
         {!requests || requests.length === 0 ? (
-          <div className="border rounded-lg p-8 text-center text-muted-foreground">
+          <div className="rounded-3xl bg-muted p-8 text-center text-muted-foreground">
             <p className="font-medium mb-1">No pending requests</p>
             <p className="text-sm">New requests will appear here.</p>
           </div>
         ) : (
           <ul className="space-y-3">
             {requests.map((req) => (
-              <li key={req.user_id} className="border rounded-lg px-4 py-3 flex items-center justify-between gap-4">
+              <li key={req.user_id} className="rounded-2xl bg-muted px-4 py-3.5 flex items-center justify-between gap-4">
                 <div>
                   <p className="font-medium text-sm">{profileMap[req.user_id] ?? 'Unknown user'}</p>
                   <p className="text-xs text-muted-foreground">

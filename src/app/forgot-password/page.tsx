@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import AuthShell from '@/components/AuthShell'
 import { requestPasswordReset } from '@/app/actions/auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -22,28 +23,25 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 bg-background">
-      <div className="w-full max-w-sm space-y-6">
-        <Link href="/login" className="font-display font-semibold text-[1.35rem] tracking-tight block">
-          circles
-        </Link>
+    <AuthShell altHref="/login" altLabel="Log in">
+      <div className="space-y-6">
 
         {sent ? (
           <div className="space-y-3">
-            <h1 className="text-xl font-semibold">Check your email</h1>
-            <p className="text-sm text-muted-foreground">
+            <h1 className="text-[1.75rem] sm:text-[2.2rem]">Check your email</h1>
+            <p className="text-muted-foreground mt-2">
               If that address has an account, we&apos;ve sent a link to reset
               your password. The link expires after an hour.
             </p>
-            <Link href="/login" className="text-sm underline underline-offset-4">
-              Back to sign in
+            <Link href="/login" className="inline-block text-[15px] underline underline-offset-4 decoration-cool-2 hover:decoration-current">
+              Back to log in
             </Link>
           </div>
         ) : (
           <>
-            <div className="space-y-2">
-              <h1 className="text-xl font-semibold">Reset your password</h1>
-              <p className="text-sm text-muted-foreground">
+            <div>
+              <h1 className="text-[1.75rem] sm:text-[2.2rem]">Reset your password</h1>
+              <p className="text-muted-foreground mt-2">
                 Enter the email you signed up with and we&apos;ll send you a
                 link. Username won&apos;t work here. We need somewhere to send
                 it.
@@ -65,19 +63,19 @@ export default function ForgotPasswordPage() {
 
               {error && <p className="text-sm text-destructive">{error}</p>}
 
-              <Button type="submit" className="w-full" disabled={loading}>
+              <Button type="submit" size="lg" className="w-full" disabled={loading}>
                 {loading ? 'Sending…' : 'Send reset link'}
               </Button>
             </form>
 
             <p className="text-sm text-muted-foreground text-center">
-              <Link href="/login" className="underline underline-offset-4 hover:text-foreground">
-                Back to sign in
+              <Link href="/login" className="underline underline-offset-4 decoration-cool-2 hover:text-foreground">
+                Back to log in
               </Link>
             </p>
           </>
         )}
       </div>
-    </div>
+    </AuthShell>
   )
 }

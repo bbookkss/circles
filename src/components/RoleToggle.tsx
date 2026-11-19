@@ -45,7 +45,7 @@ export default function RoleToggle({
         onClick={go}
         disabled={busy}
         title={isAdmin ? `Remove ${name} as an admin` : `Make ${name} an admin`}
-        className="min-h-9 px-3 rounded-full border border-border text-xs hover:border-foreground hover:bg-muted disabled:opacity-40 transition-colors whitespace-nowrap"
+        className="min-h-9 px-3.5 rounded-full bg-background text-xs font-medium hover:bg-cool-2 disabled:opacity-40 transition-colors whitespace-nowrap"
       >
         {busy ? '…' : isAdmin ? 'Remove admin' : 'Make admin'}
       </button>

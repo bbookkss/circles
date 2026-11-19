@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 
 /**
  * Light / dark. Follows the system until clicked, then remembers the choice
@@ -8,11 +8,11 @@ import { useEffect, useState } from 'react'
  * script in layout.tsx, before paint; this only flips it.
  */
 export default function ThemeToggle({ className = '' }: { className?: string }) {
-  const [dark, setDark] = useState<boolean | null>(null)
-
-  useEffect(() => {
-    setDark(document.documentElement.classList.contains('dark'))
-  }, [])
+  // Read once on the client; the server renders without it, hence the
+  // suppressed hydration warning on the label below.
+  const [dark, setDark] = useState(
+    () => typeof document !== 'undefined' && document.documentElement.classList.contains('dark')
+  )
 
   function flip() {
     const next = !document.documentElement.classList.contains('dark')
@@ -27,6 +27,7 @@ export default function ThemeToggle({ className = '' }: { className?: string }) 
     <button
       type="button"
       onClick={flip}
+      suppressHydrationWarning
       aria-label={dark ? 'Switch to light mode' : 'Switch to dark mode'}
       className={`w-9 h-9 rounded-full grid place-items-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors ${className}`}
     >

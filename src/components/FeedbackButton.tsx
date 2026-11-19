@@ -50,10 +50,10 @@ export default function FeedbackButton() {
       {open && (
         <form
           onSubmit={submit}
-          className="w-[min(320px,calc(100vw-2rem))] bg-background border border-foreground shadow-[0_10px_30px_-12px_rgba(34,31,27,0.45)] p-4 space-y-3 fade-rise"
+          className="w-[min(320px,calc(100vw-2rem))] glass rounded-3xl p-5 space-y-3 fade-rise"
         >
           <div className="flex items-baseline justify-between gap-3">
-            <p className="font-display font-semibold text-lg leading-tight">Tell Ben</p>
+            <p className="text-xl font-medium tracking-tight leading-tight">Tell Ben</p>
             <button
               type="button"
               onClick={() => setOpen(false)}
@@ -63,7 +63,7 @@ export default function FeedbackButton() {
               Close
             </button>
           </div>
-          <p className="text-xs text-foreground/75">
+          <p className="text-sm text-muted-foreground">
             Anything: a bug, something confusing, something you wish it did. It goes straight to his inbox and he can reply to you.
           </p>
           <textarea
@@ -73,15 +73,15 @@ export default function FeedbackButton() {
             maxLength={4000}
             autoFocus
             placeholder="What happened, or what would help?"
-            className="w-full border border-border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:border-pen resize-none"
+            className="w-full rounded-2xl border border-transparent bg-background/70 px-3.5 py-2.5 text-[0.95rem] placeholder:text-muted-foreground focus-visible:outline-none focus-visible:border-ring resize-none"
           />
-          {error && <p className="text-xs text-destructive">{error}</p>}
+          {error && <p className="text-sm text-destructive">{error}</p>}
           <div className="flex items-center justify-between gap-3">
-            <span className="label">{state === 'sent' ? 'sent. thank you.' : pathname}</span>
+            <span className="text-sm text-muted-foreground truncate">{state === 'sent' ? 'Sent. Thank you.' : pathname}</span>
             <button
               type="submit"
               disabled={state === 'sending' || !message.trim()}
-              className="text-sm font-medium rounded-full border border-foreground px-4 py-1.5 hover:bg-pen hover:border-pen hover:text-white disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-foreground disabled:hover:border-foreground transition-colors"
+              className="text-sm font-medium rounded-full bg-foreground text-background px-5 py-2 hover:opacity-85 disabled:opacity-35 transition-opacity"
             >
               {state === 'sending' ? 'Sending…' : state === 'sent' ? 'Sent' : 'Send'}
             </button>
@@ -95,7 +95,7 @@ export default function FeedbackButton() {
         aria-expanded={open}
         aria-label={open ? 'Close feedback' : 'Send feedback'}
         title="Send feedback"
-        className="w-11 h-11 md:w-auto md:h-auto md:px-3.5 md:py-2 rounded-full bg-background border border-foreground shadow-[0_2px_8px_-2px_rgba(34,31,27,0.35)] hover:-translate-y-0.5 transition-transform flex items-center justify-center font-display font-semibold text-sm"
+        className="glass w-11 h-11 md:w-auto md:h-auto md:px-4 md:py-2.5 rounded-full text-sm font-medium transition-colors flex items-center justify-center"
       >
         <span className="md:hidden text-lg leading-none" aria-hidden>{open ? '\u00d7' : '?'}</span>
         <span className="hidden md:inline">{open ? 'Close' : 'Feedback'}</span>

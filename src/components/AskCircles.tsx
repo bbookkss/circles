@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
+import Logo from '@/components/Logo'
 import { useRouter } from 'next/navigation'
 import { setCheckIn, clearCheckIn } from '@/app/actions/checkins'
 import { scheduleCheckIn, cancelScheduledCheckIn } from '@/app/actions/scheduled'
@@ -43,17 +44,12 @@ function load(): { turns: Turn[]; open: boolean } {
   return { turns: [], open: false }
 }
 
+/** The logo ring; it turns faster while a request is in flight (.logo-busy, globals.css). */
 function Ring({ spinning = false }: { spinning?: boolean }) {
   return (
-    <svg width="18" height="18" viewBox="0 0 20 20" aria-hidden="true" className="shrink-0">
-      <circle
-        cx="10" cy="10" r="8" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"
-        pathLength={50} strokeDasharray="6.4 3.6"
-        className={spinning ? 'origin-center animate-spin motion-reduce:animate-none [animation-duration:2.4s]' : ''}
-        style={{ transformBox: 'fill-box' }}
-      />
-      <circle cx="10" cy="10" r="3" fill="currentColor" />
-    </svg>
+    <span className={`shrink-0 ${spinning ? 'logo-busy' : ''}`}>
+      <Logo size={18} />
+    </span>
   )
 }
 
@@ -167,7 +163,7 @@ export default function AskCircles() {
           onClick={() => setOpen(true)}
           aria-expanded={false}
           aria-controls="ask-circles"
-          className="fixed z-40 right-4 bottom-[calc(8.5rem+env(safe-area-inset-bottom))] md:bottom-[4.75rem] h-11 rounded-full bg-foreground text-background pl-3 pr-4 flex items-center gap-2 text-sm font-medium shadow-[0_10px_30px_-12px_rgba(34,31,27,0.45)] hover:opacity-90 print:hidden"
+          className="fixed z-40 right-4 bottom-[calc(8.5rem+env(safe-area-inset-bottom))] md:bottom-[4.75rem] h-11 rounded-full glass text-foreground pl-3.5 pr-4 flex items-center gap-2 text-sm font-medium hover:bg-background/70 transition-colors print:hidden"
         >
           <Ring />
           <span className="max-md:sr-only">Ask Circles</span>
@@ -179,24 +175,24 @@ export default function AskCircles() {
           id="ask-circles"
           role="dialog"
           aria-label="Ask Circles"
-          className="fixed z-50 inset-x-2 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] md:inset-x-auto md:right-4 md:bottom-6 md:w-[420px] h-[min(640px,calc(100dvh-7rem))] bg-background border border-foreground shadow-[0_10px_30px_-12px_rgba(34,31,27,0.45)] flex flex-col print:hidden"
+          className="fixed z-50 inset-x-2 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] md:inset-x-auto md:right-4 md:bottom-6 md:w-[420px] h-[min(660px,calc(100dvh-7rem))] glass rounded-[26px] overflow-hidden flex flex-col print:hidden"
         >
-          <header className="flex items-center gap-2 px-4 h-12 border-b shrink-0">
+          <header className="flex items-center gap-2.5 pl-5 pr-3 h-14 shrink-0">
             <Ring spinning={busy} />
-            <p className="font-display font-semibold text-lg leading-none">Ask Circles</p>
+            <p className="font-medium leading-none">Ask Circles</p>
             <button
               type="button"
               onClick={() => { setOpen(false); setTimeout(() => buttonRef.current?.focus(), 0) }}
-              className="ml-auto min-h-9 px-2 -mr-2 text-sm text-muted-foreground hover:text-foreground"
+              className="ml-auto min-h-9 px-3 rounded-full text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
             >
               Close
             </button>
           </header>
 
-          <div ref={logRef} aria-live="polite" className="flex-1 overflow-y-auto overscroll-contain px-4 py-4 space-y-4">
+          <div ref={logRef} aria-live="polite" className="flex-1 overflow-y-auto overscroll-contain px-5 pb-4 pt-1 space-y-4">
             {turns.length === 0 && (
               <div className="space-y-3">
-                <p className="text-sm text-muted-foreground">
+                <p className="text-[0.95rem] text-muted-foreground">
                   Ask about your week, your messages, or circles anywhere. I&apos;ll lay out the options and you choose.
                 </p>
                 <Chips items={suggestions} onPick={ask} />
@@ -205,12 +201,12 @@ export default function AskCircles() {
 
             {turns.map((t, i) =>
               t.role === 'user' ? (
-                <p key={i} className="ml-auto w-fit max-w-[85%] bg-foreground text-background px-3 py-2 text-sm whitespace-pre-wrap break-words">
+                <p key={i} className="ml-auto w-fit max-w-[85%] bg-foreground text-background px-3.5 py-2 rounded-[18px_18px_6px_18px] text-[0.95rem] whitespace-pre-wrap break-words">
                   {t.text}
                 </p>
               ) : (
                 <div key={i} className="space-y-2">
-                  <p className={`text-sm whitespace-pre-wrap break-words ${t.error ? 'text-muted-foreground' : ''}`}>{t.text}</p>
+                  <p className={`text-[0.95rem] whitespace-pre-wrap break-words ${t.error ? 'text-muted-foreground' : ''}`}>{t.text}</p>
                   {(t.cards ?? []).length > 0 && (
                     <ul className="space-y-2">
                       {(t.cards ?? []).map((c, j) => (
@@ -230,13 +226,13 @@ export default function AskCircles() {
               )
             )}
 
-            {busy && <p className="text-sm text-muted-foreground">Looking…</p>}
+            {busy && <p className="text-sm text-muted-foreground flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-muted-foreground animate-pulse motion-reduce:animate-none" />Looking…</p>}
             {!busy && last?.role === 'assistant' && suggestions.length > 0 && <Chips items={suggestions.slice(0, 3)} onPick={ask} />}
           </div>
 
           <form
             onSubmit={(e) => { e.preventDefault(); ask(input) }}
-            className="shrink-0 border-t p-2 flex gap-2"
+            className="shrink-0 m-2.5 mt-0 p-1.5 pl-2 rounded-[20px] bg-background flex gap-2 items-center"
           >
             <label htmlFor="ask-circles-input" className="sr-only">Ask Circles</label>
             <input
@@ -247,12 +243,12 @@ export default function AskCircles() {
               maxLength={500}
               autoComplete="off"
               placeholder="Ask about your circles"
-              className="flex-1 min-w-0 bg-transparent px-2 text-base md:text-sm outline-none placeholder:text-muted-foreground"
+              className="flex-1 min-w-0 bg-transparent px-2 py-1.5 text-base outline-none placeholder:text-muted-foreground"
             />
             <button
               type="submit"
               disabled={busy || !input.trim()}
-              className="h-9 px-4 bg-foreground text-background text-sm font-medium disabled:opacity-40"
+              className="h-9 px-4 rounded-full bg-foreground text-background text-sm font-medium disabled:opacity-35"
             >
               Send
             </button>
@@ -280,7 +276,7 @@ function Chips({ items, onPick }: { items: string[]; onPick: (s: string) => void
           key={s}
           type="button"
           onClick={() => onPick(s)}
-          className="text-left text-sm px-3 py-1.5 border border-border hover:border-foreground transition-colors"
+          className="text-left text-sm px-3.5 py-2 rounded-full bg-muted hover:bg-cool-2 transition-colors"
         >
           {s}
         </button>
@@ -303,14 +299,14 @@ function CardView({
   }
   if (card.kind === 'message') {
     return (
-      <div className="border border-border p-3 space-y-1">
+      <div className="rounded-2xl bg-muted p-3.5 space-y-1">
         <p className="text-sm flex flex-wrap items-baseline gap-x-2">
           <span className="font-medium">{card.from_name}</span>
           <span className="text-xs text-muted-foreground">{new Date(card.sent_at).toLocaleString('en-US', { weekday: 'short', hour: 'numeric', minute: '2-digit' })}</span>
           {card.unread && <span className="text-xs text-pen font-medium">New</span>}
         </p>
         <p className="text-sm whitespace-pre-wrap break-words">{card.text}</p>
-        <Link href={`/messages/${encodeURIComponent(card.from_id)}`} className="inline-block text-sm underline underline-offset-4 decoration-pen-soft hover:decoration-foreground">
+        <Link href={`/messages/${encodeURIComponent(card.from_id)}`} className="inline-block text-sm underline underline-offset-4 decoration-1 decoration-cool-2 hover:decoration-foreground">
           Open conversation
         </Link>
       </div>
@@ -318,7 +314,7 @@ function CardView({
   }
   if (card.kind === 'circle') {
     return (
-      <Link href={`/circles/${encodeURIComponent(card.circle_id)}`} className="flex gap-3 border border-border p-2 hover:border-foreground transition-colors">
+      <Link href={`/circles/${encodeURIComponent(card.circle_id)}`} className="flex gap-3 rounded-2xl bg-muted p-2 pr-3 hover:bg-cool-2 transition-colors">
         {card.thumb && <MapThumb lat={card.thumb.lat} lng={card.thumb.lng} exact={card.thumb.exact} label={card.name} />}
         <span className="min-w-0 text-sm">
           <span className="block font-medium truncate">{card.emoji ? `${card.emoji} ` : ''}{card.name}</span>
@@ -338,7 +334,7 @@ function CardView({
     <button
       type="button"
       onClick={() => onNavigate(href)}
-      className="w-full text-left border border-border p-3 hover:border-foreground transition-colors text-sm"
+      className="w-full text-left rounded-2xl bg-muted p-3.5 hover:bg-cool-2 transition-colors text-sm"
     >
       Open the map at <span className="font-medium">{card.label}</span>
     </button>
@@ -360,7 +356,7 @@ function MeetCard({
   const showSuggestion = suggested && current !== suggested
 
   return (
-    <div className="flex gap-3 border border-border p-2">
+    <div className="flex gap-3 rounded-2xl bg-muted p-2 pr-3">
       {meet.thumb && <MapThumb lat={meet.thumb.lat} lng={meet.thumb.lng} exact={meet.thumb.exact} label={meet.circle_name} />}
       <div className="min-w-0 flex-1 text-sm space-y-1.5">
         <p>
@@ -377,11 +373,11 @@ function MeetCard({
 
         <p className="flex flex-wrap gap-1.5">
           {meet.open && status ? (
-            <Chip tone="sent">✓ Sent: {WORD[status]}</Chip>
+            <Chip tone="sent"><Tick />Sent: {WORD[status]}</Chip>
           ) : !meet.open && scheduled ? (
             <Chip tone="scheduled">Scheduled: {WORD[scheduled]}. Sends {meet.opens_label}.</Chip>
           ) : status ? (
-            <Chip tone="sent">✓ Sent: {WORD[status]}</Chip>
+            <Chip tone="sent"><Tick />Sent: {WORD[status]}</Chip>
           ) : (
             <Chip tone="none">Not answered</Chip>
           )}
@@ -400,10 +396,10 @@ function MeetCard({
                 aria-pressed={pressed}
                 onClick={() => onAnswer(meet, s)}
                 className={[
-                  'h-8 px-3 text-xs font-medium border transition-colors disabled:opacity-50',
+                  'h-8 px-3.5 rounded-full text-[0.8rem] font-medium border transition-colors disabled:opacity-50',
                   pressed
-                    ? s === 'yes' ? 'bg-pen text-background border-pen' : 'bg-foreground text-background border-foreground'
-                    : isSuggested ? 'border-dashed border-foreground' : 'border-border hover:border-foreground',
+                    ? s === 'yes' ? 'bg-heat text-[#1a2230] border-heat' : 'bg-foreground text-background border-foreground'
+                    : isSuggested ? 'bg-background border-dashed border-foreground' : 'bg-background border-transparent hover:border-cool-2',
                 ].join(' ')}
               >
                 {LABEL[s]}
@@ -425,10 +421,18 @@ function MeetCard({
 
 function Chip({ tone, children }: { tone: 'none' | 'sent' | 'scheduled' | 'suggested'; children: React.ReactNode }) {
   const cls = {
-    none: 'bg-muted text-muted-foreground',
+    none: 'bg-background text-muted-foreground',
     sent: 'bg-foreground text-background',
-    scheduled: 'bg-pen-bg text-pen',
-    suggested: 'border border-dashed border-foreground text-foreground',
+    scheduled: 'bg-cool-2 text-foreground',
+    suggested: 'border border-dashed border-muted-foreground text-foreground',
   }[tone]
-  return <span className={`inline-flex items-center px-2 py-0.5 text-xs font-medium ${cls}`}>{children}</span>
+  return <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${cls}`}>{children}</span>
+}
+
+function Tick() {
+  return (
+    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M5 12l5 5L20 7" />
+    </svg>
+  )
 }

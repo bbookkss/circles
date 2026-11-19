@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label'
 import LocationSearch from '@/components/LocationSearch'
 import BackButton from '@/components/BackButton'
 import { reverseGeocode } from '@/lib/geocoding'
-import { installCoffeeTheme, COFFEE } from '@/lib/mapTheme'
+import { installMapTheme, MAP_BG } from '@/lib/mapTheme'
 import type { MapView } from '@/lib/mapView'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
@@ -150,8 +150,8 @@ export default function NewCircleClient({
           <div className="md:hidden flex items-center gap-2">
             {[1, 2, 3].map((n) => (
               <div key={n} className="flex-1 space-y-1">
-                <div className={`h-1 rounded-full ${n <= step ? 'bg-pen' : 'bg-border'}`} />
-                <p className={`label ${n === step ? 'text-pen' : ''}`}>
+                <div className={`h-1 rounded-full ${n <= step ? 'bg-foreground' : 'bg-border'}`} />
+                <p className={`label ${n === step ? 'text-foreground' : ''}`}>
                   {n === 1 ? 'What' : n === 2 ? 'Where' : 'When'}
                 </p>
               </div>
@@ -161,7 +161,7 @@ export default function NewCircleClient({
 
         <form onSubmit={handleSubmit} className="md:flex-1 md:overflow-y-auto p-4 pb-24 md:pb-4 space-y-5">
           {error && (
-            <p className="text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-md">
+            <p className="text-sm text-destructive bg-destructive/10 px-3.5 py-2.5 rounded-xl">
               {error}
             </p>
           )}
@@ -217,7 +217,7 @@ export default function NewCircleClient({
                     type="button"
                     onClick={() => setSelectedEmoji(selectedEmoji === emoji ? null : emoji)}
                     aria-pressed={selectedEmoji === emoji}
-                    className={`text-xl aspect-square rounded-md transition-colors hover:bg-muted ${
+                    className={`text-xl aspect-square rounded-lg transition-colors hover:bg-muted ${
                       selectedEmoji === emoji ? 'bg-muted ring-2 ring-pen' : ''
                     }`}
                   >
@@ -241,7 +241,7 @@ export default function NewCircleClient({
                 name="description"
                 placeholder="What's this circle about?"
                 rows={3}
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring resize-none"
+                className="w-full rounded-xl border border-transparent bg-muted px-3.5 py-2.5 text-base placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring resize-none"
               />
             </div>
           </div>
@@ -269,7 +269,7 @@ export default function NewCircleClient({
               <p className="text-xs text-muted-foreground">Or tap the map to drop a pin yourself.</p>
             </div>
 
-            <div className={`border p-3 ${pin ? 'border-pen bg-pen-bg' : 'border-border'}`}>
+            <div className={`rounded-2xl p-3.5 ${pin ? 'bg-muted' : 'border border-border'}`}>
               {pin ? (
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
@@ -313,10 +313,10 @@ export default function NewCircleClient({
                   key={v}
                   type="button"
                   onClick={() => setVisibility(v)}
-                  className={`flex-1 py-2 rounded-md text-sm font-medium border transition-colors ${
+                  className={`flex-1 py-2 rounded-full text-sm font-medium border transition-colors ${
                     visibility === v
                       ? 'bg-foreground text-background border-foreground'
-                      : 'bg-background text-foreground border-input hover:bg-muted'
+                      : 'bg-muted text-foreground border-transparent hover:bg-cool-2'
                   }`}
                 >
                   {v === 'public' ? 'Public' : 'Private'}
@@ -342,10 +342,10 @@ export default function NewCircleClient({
                     key={k}
                     type="button"
                     onClick={() => setKind(k)}
-                    className={`flex-1 py-2 rounded-md text-sm font-medium border transition-colors ${
+                    className={`flex-1 py-2 rounded-full text-sm font-medium border transition-colors ${
                       kind === k
                         ? 'bg-foreground text-background border-foreground'
-                        : 'bg-background text-foreground border-input hover:bg-muted'
+                        : 'bg-muted text-foreground border-transparent hover:bg-cool-2'
                     }`}
                   >
                     {k === 'social' ? 'Social' : 'Commercial'}
@@ -377,10 +377,10 @@ export default function NewCircleClient({
                         key={day.value}
                         type="button"
                         onClick={() => toggleDay(day.value)}
-                        className={`px-2.5 py-1 rounded-md text-xs font-medium border transition-colors ${
+                        className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
                           selectedDays.includes(day.value)
                             ? 'bg-foreground text-background border-foreground'
-                            : 'bg-background text-foreground border-input hover:bg-muted'
+                            : 'bg-muted text-foreground border-transparent hover:bg-cool-2'
                         }`}
                       >
                         {day.label}
@@ -502,11 +502,11 @@ export default function NewCircleClient({
       <main className={`${step === 2 ? 'block' : 'hidden'} md:block h-[55vh] min-h-[300px] md:h-auto md:min-h-0 flex-shrink-0 md:flex-1 relative border-b md:border-b-0 sticky top-14 md:static`}>
         <Map
           initialViewState={initialView}
-          style={{ width: '100%', height: '100%', background: COFFEE }}
+          style={{ width: '100%', height: '100%', background: MAP_BG }}
           mapStyle="mapbox://styles/mapbox/light-v11"
           mapboxAccessToken={MAPBOX_TOKEN}
           cursor="crosshair"
-          onLoad={(e) => installCoffeeTheme(e.target)}
+          onLoad={(e) => installMapTheme(e.target)}
           onClick={(e) => handleMapClick(e.lngLat.lng, e.lngLat.lat)}
         >
           {/* The explore map had a locate button; this one did not, and this
@@ -527,7 +527,7 @@ export default function NewCircleClient({
             </Marker>
           )}
         </Map>
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/60 text-white text-xs px-3 py-1.5 rounded-full pointer-events-none">
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 glass text-foreground text-xs px-3 py-1.5 rounded-full pointer-events-none">
           Tap to place your circle&apos;s location
         </div>
       </main>

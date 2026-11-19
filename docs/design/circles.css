@@ -1,0 +1,203 @@
+/* Circles mockup kit. Every page links this file and circles.js.
+
+   Palette after FLIR's Arctic thermal palette (cold reads blue, warm reads gold),
+   split by the 60-30-10 rule:
+     60  neutral  page, text           --paper, --ink, --quiet, --rule
+     30  cool     map, glass, controls  --cool, --cool-2, --cool-line
+     10  heat     only what you can act on now  --heat (fills), --heat-ink (text)
+   Heat means one thing: a meet you can act on. Primary buttons are ink, not heat.
+
+   Type: Host Grotesk only. Big headings are weight 300 with tight tracking.
+   No all-caps labels, no monospace, no italics for emphasis, no "→" on links,
+   no middle-dot meta strings (use commas). */
+:root {
+  --paper: #f7f8fa;
+  --ink: #1a2230;
+  --quiet: #5c6878;
+  --rule: #e3e7ed;
+
+  --cool: #e2e9f1;
+  --cool-2: #cfdbe8;
+  --cool-line: #f4f7fa;
+  --water: #c6d6e6;
+
+  --heat: #f2a531;
+  --heat-ink: #8f5a00;
+  --on-heat: #1a2230;
+  --danger: #b4232c;
+
+  --glass: rgba(255, 255, 255, 0.55);
+  --glass-edge: rgba(255, 255, 255, 0.9);
+  --shade: rgba(26, 34, 48, 0.08);
+  color-scheme: light;
+  --font: "Host Grotesk", "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+/* Dark is slate, not black: a dim room, not a void. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #252b34; --ink: #e8ecf1; --quiet: #a1abb8; --rule: #353d48;
+    --cool: #2e3640; --cool-2: #3a4450; --cool-line: #414b58; --water: #2c3d50;
+    --heat: #f5b44c; --heat-ink: #f5b44c; --on-heat: #1a2230; --danger: #f07a80;
+    --glass: rgba(46, 54, 64, 0.55); --glass-edge: rgba(255, 255, 255, 0.12); --shade: rgba(0, 0, 0, 0.25);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #252b34; --ink: #e8ecf1; --quiet: #a1abb8; --rule: #353d48;
+  --cool: #2e3640; --cool-2: #3a4450; --cool-line: #414b58; --water: #2c3d50;
+  --heat: #f5b44c; --heat-ink: #f5b44c; --on-heat: #1a2230; --danger: #f07a80;
+  --glass: rgba(46, 54, 64, 0.55); --glass-edge: rgba(255, 255, 255, 0.12); --shade: rgba(0, 0, 0, 0.25);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--paper); color: var(--ink);
+  font-family: var(--font); font-size: 16px; line-height: 1.5;
+  font-feature-settings: "tnum" 1; -webkit-font-smoothing: antialiased;
+  transition: background-color .25s ease, color .25s ease;
+}
+a { color: inherit; text-decoration: none; }
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--heat); outline-offset: 2px; border-radius: 8px; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+.glass {
+  background: var(--glass);
+  -webkit-backdrop-filter: blur(22px) saturate(1.5);
+  backdrop-filter: blur(22px) saturate(1.5);
+  border: 1px solid var(--glass-edge);
+  box-shadow: 0 1px 0 var(--glass-edge) inset, 0 12px 40px var(--shade);
+}
+
+/* ---------- nav (rendered by circles.js into <header class="nav" data-page="…">) ---------- */
+.nav {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5;
+  padding-block: 12px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.nav-inner { max-width: 760px; margin: 0 auto; display: flex; align-items: center; gap: 28px; padding: 6px 6px 6px 18px; border-radius: 999px; }
+.mark { font-weight: 600; font-size: 17px; letter-spacing: -0.01em; display: flex; align-items: center; gap: 8px; }
+.mark svg { display: block; overflow: visible; }
+.links { display: flex; gap: 22px; font-size: 15px; color: var(--quiet); }
+.links a[aria-current], .links a:hover { color: var(--ink); }
+.end { margin-left: auto; display: flex; align-items: center; gap: 6px; }
+.icon-btn {
+  position: relative; width: 36px; height: 36px; border-radius: 50%; border: 0; cursor: pointer;
+  background: transparent; color: var(--quiet); display: grid; place-items: center;
+}
+.icon-btn:hover, .icon-btn[aria-current] { color: var(--ink); background: var(--cool); }
+.icon-btn .badge { position: absolute; top: 7px; right: 8px; width: 7px; height: 7px; border-radius: 50%; background: var(--heat); }
+.theme .moon { display: none; }
+:root[data-theme="dark"] .theme .sun { display: none; }
+:root[data-theme="dark"] .theme .moon { display: block; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .theme .sun { display: none; }
+  :root:not([data-theme="light"]) .theme .moon { display: block; }
+}
+.me { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; font-size: 13px; font-weight: 500; background: var(--ink); color: var(--paper); }
+.nav-out .end a { font-size: 15px; padding: 8px 14px; border-radius: 999px; }
+.nav-out .end a.btn { padding: 8px 16px; }
+
+/* The logo's ring: five dashes, turning once a minute. */
+.ring { transform-box: fill-box; transform-origin: center; }
+@media (prefers-reduced-motion: no-preference) {
+  .ring { animation: turn 60s linear infinite; }
+  @keyframes turn { to { transform: rotate(360deg); } }
+}
+
+/* phone tab bar */
+.tabs { display: none; }
+
+/* ---------- page frame ---------- */
+.page {
+  max-width: 792px; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 24px 120px;
+}
+.col { padding-inline: 28px; }
+.narrow { max-width: 440px; margin: 0 auto; }
+
+h1, .h1 { margin: 0; font-weight: 300; font-size: clamp(2rem, 5.4vw, 3.25rem); line-height: 1.04; letter-spacing: -0.035em; text-wrap: balance; }
+.h-md { margin: 0; font-weight: 300; font-size: clamp(1.6rem, 4vw, 2.2rem); line-height: 1.1; letter-spacing: -0.03em; text-wrap: balance; }
+h2, .h2 { font-size: 15px; font-weight: 500; color: var(--quiet); margin: 0; }
+.h3 { font-size: 22px; font-weight: 500; letter-spacing: -0.02em; line-height: 1.2; margin: 0; }
+.lede { font-size: 18px; color: var(--quiet); max-width: 52ch; margin: 12px 0 0; }
+.quiet { color: var(--quiet); }
+.small { font-size: 14px; }
+.heat-ink { color: var(--heat-ink); }
+p { margin: 0; }
+.stack > * + * { margin-top: var(--gap, 16px); }
+
+/* sheet: a glass panel. Use over the map; on plain paper use .panel instead. */
+.sheet { border-radius: 28px; padding: 26px 28px 20px; }
+.panel { border-radius: 24px; padding: 28px; background: var(--cool); }
+
+/* rows divided by hairlines */
+.rows { list-style: none; margin: 0; padding: 0; }
+.rows > li { padding-block: 20px; border-bottom: 1px solid var(--rule); }
+.rows > li:first-child { border-top: 1px solid var(--rule); }
+
+/* ---------- controls ---------- */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  border: 0; cursor: pointer; border-radius: 999px; padding: 11px 20px;
+  font-size: 15px; font-weight: 500; background: var(--ink); color: var(--paper);
+}
+.btn:disabled { opacity: .35; cursor: default; }
+.btn.sm { padding: 8px 15px; font-size: 14px; }
+.btn.ghost { background: var(--cool); color: var(--ink); }
+.btn.ghost:hover { background: var(--cool-2); }
+.btn.heat { background: var(--heat); color: var(--on-heat); }
+.btn.danger { background: transparent; color: var(--danger); padding-inline: 4px; }
+.btn.block { width: 100%; }
+.link { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; text-decoration-color: var(--cool-2); }
+.link:hover { text-decoration-color: currentColor; }
+
+.seg { display: inline-flex; padding: 3px; border-radius: 999px; background: var(--cool); gap: 2px; }
+.seg button { border: 0; background: transparent; cursor: pointer; padding: 7px 15px; border-radius: 999px; font-size: 14px; font-weight: 500; color: var(--quiet); transition: background-color .18s ease, color .18s ease; }
+.seg button:hover:not(:disabled) { color: var(--ink); }
+.seg button[aria-pressed="true"] { background: var(--paper); color: var(--ink); box-shadow: 0 1px 3px var(--shade); }
+.seg button[aria-pressed="true"][data-v="yes"] { background: var(--heat); color: var(--on-heat); }
+.seg button:disabled { cursor: not-allowed; opacity: .55; }
+
+.field { display: grid; gap: 6px; }
+.field label { font-size: 14px; font-weight: 500; }
+.field .hint { font-size: 13px; color: var(--quiet); }
+.input, .field input, .field textarea, .field select {
+  width: 100%; font: inherit; font-size: 16px; color: var(--ink);
+  background: var(--cool); border: 1px solid transparent; border-radius: 14px; padding: 12px 14px;
+}
+.field textarea { min-height: 110px; resize: vertical; }
+.input:focus, .field input:focus, .field textarea:focus, .field select:focus { outline: none; border-color: var(--cool-2); background: var(--paper); box-shadow: 0 0 0 3px var(--cool); }
+.input::placeholder, .field input::placeholder, .field textarea::placeholder { color: var(--quiet); }
+.form { display: grid; gap: 18px; }
+.err { font-size: 14px; color: var(--danger); }
+
+.chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 11px; border-radius: 999px; font-size: 13px; background: var(--cool); color: var(--ink); }
+.chip.heat { background: var(--heat); color: var(--on-heat); }
+
+.av { width: 36px; height: 36px; flex: none; border-radius: 50%; display: grid; place-items: center; font-size: 13px; font-weight: 500; background: var(--cool-2); color: var(--ink); }
+.av.lg { width: 72px; height: 72px; font-size: 24px; font-weight: 400; }
+
+/* the map canvas, drawn by Circles.drawMap */
+.map { position: relative; overflow: hidden; }
+.map canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+
+@media (max-width: 640px) {
+  .links { display: none; }
+  .nav-inner { padding: 5px 5px 5px 16px; }
+  .sheet { padding: 20px 16px 14px; border-radius: 24px; }
+  .col { padding-inline: 4px; }
+  .panel { padding: 20px; }
+  .tabs {
+    display: flex; position: fixed; z-index: 5;
+    left: max(12px, env(safe-area-inset-left, 0px)); right: max(12px, env(safe-area-inset-right, 0px));
+    bottom: calc(12px + env(safe-area-inset-bottom, 0px)); border-radius: 999px; padding: 6px;
+  }
+  .tabs a { flex: 1; text-align: center; padding: 10px 0; border-radius: 999px; font-size: 14px; color: var(--quiet); }
+  .tabs a[aria-current] { color: var(--ink); background: var(--glass-edge); }
+}

@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Maya Ortiz – Messages – Circles</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Host+Grotesk:wght@300;400;500;600&display=swap">
+<script>try { const t = localStorage.getItem("circles-theme"); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
+<link rel="stylesheet" href="circles.css">
+<style>
+/* Thread: the conversation fills the screen; the composer is a glass bar over it. */
+.page { padding-bottom: 150px; }
+.who-bar { display: flex; align-items: center; gap: 14px; padding-block: 12px 20px; border-bottom: 1px solid var(--rule); }
+.back { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; color: var(--quiet); }
+.back:hover { background: var(--cool); color: var(--ink); }
+.who-bar .av { width: 44px; height: 44px; font-size: 14px; }
+.who-bar .nm { font-size: 20px; font-weight: 500; letter-spacing: -0.02em; line-height: 1.2; }
+.who-bar .nm:hover { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; }
+.who-bar .ctx { font-size: 14px; color: var(--quiet); }
+.who-bar .acts { margin-left: auto; display: flex; gap: 14px; }
+
+.msgs { list-style: none; margin: 0; padding: 28px 0 0; display: grid; gap: 6px; }
+.day { text-align: center; font-size: 13px; color: var(--quiet); padding-block: 14px 8px; }
+.msg { display: flex; }
+.msg.mine { justify-content: flex-end; }
+.bub { max-width: min(75%, 46ch); padding: 10px 15px; border-radius: 20px; background: var(--cool); font-size: 15px; line-height: 1.45; white-space: pre-wrap; overflow-wrap: anywhere; }
+.mine .bub { background: var(--ink); color: var(--paper); border-bottom-right-radius: 6px; }
+.msg:not(.mine) .bub { border-bottom-left-radius: 6px; }
+.time { font-size: 12px; color: var(--quiet); padding: 2px 6px 8px; }
+.mine + .time { text-align: right; }
+
+.composer {
+  position: fixed; z-index: 4; left: 0; right: 0;
+  bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.composer form { max-width: 736px; margin: 0 auto; display: flex; gap: 8px; align-items: center; border-radius: 999px; padding: 6px 6px 6px 20px; }
+.composer input { flex: 1; min-width: 0; border: 0; background: transparent; font: inherit; font-size: 16px; color: var(--ink); padding-block: 9px; }
+.composer input::placeholder { color: var(--quiet); }
+.composer input:focus { outline: none; }
+
+[hidden] { display: none !important; }
+.blocked { text-align: center; padding-block: 72px; display: grid; gap: 14px; justify-items: center; }
+@media (max-width: 640px) {
+  .composer { bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
+  .page { padding-bottom: 210px; }
+  .who-bar .ctx { display: none; }
+}
+</style>
+</head>
+<body>
+<header class="nav" data-page="messages"></header>
+
+<main class="page">
+  <div class="col">
+    <div class="who-bar">
+      <a class="back" href="messages.html" aria-label="Back to messages">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+      </a>
+      <span class="av" aria-hidden="true">MO</span>
+      <div style="min-width:0">
+        <a class="nm" href="person.html">Maya Ortiz</a>
+        <div class="ctx">You're both in Thursday chess</div>
+      </div>
+      <div class="acts" id="acts">
+        <button class="text-btn warn" type="button" data-report="person">Report</button>
+        <button class="text-btn warn" type="button" data-block="Maya Ortiz">Block</button>
+      </div>
+    </div>
+
+    <div id="body">
+      <ol class="msgs" id="msgs"></ol>
+    </div>
+  </div>
+</main>
+
+<div class="composer" id="composer">
+  <form class="glass" id="send">
+    <label for="msg" class="sr">Message Maya</label>
+    <input id="msg" placeholder="Message Maya" maxlength="2000" autocomplete="off">
+    <button class="btn sm" id="sendBtn" disabled>Send</button>
+  </form>
+</div>
+
+<nav class="tabs" data-page="messages"></nav>
+<script src="circles.js"></script>
+<script src="safety.js"></script>
+<script>
+const msgs = [
+  { day: "Monday" },
+  { me: false, t: "6:12 pm", text: "Hey Ben, good game last week. That endgame was brutal." },
+  { me: true, t: "6:20 pm", text: "Ha, thanks. I got lucky with the clock." },
+  { me: true, t: "6:20 pm", text: "Are you coming Thursday?" },
+  { day: "Today" },
+  { me: false, t: "4:41 pm", text: "Yes! Bringing the travel set Thursday since the café ones are missing a knight." },
+  { me: false, t: "4:42 pm", text: "Do you still have the clock?" }
+];
+const esc = s => s.replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+function render() {
+  document.getElementById("msgs").innerHTML = msgs.map(m => m.day
+    ? `<li class="day">${m.day}</li>`
+    : `<li class="msg ${m.me ? "mine" : ""}"><div class="bub">${esc(m.text)}</div></li><li class="time" ${m.me ? 'style="text-align:right"' : ""}>${m.t}</li>`).join("");
+  scrollTo({ top: document.body.scrollHeight });
+}
+render();
+const input = document.getElementById("msg"), btn = document.getElementById("sendBtn");
+input.addEventListener("input", () => btn.disabled = !input.value.trim());
+document.getElementById("send").addEventListener("submit", e => {
+  e.preventDefault(); const v = input.value.trim(); if (!v) return;
+  if (msgs.at(-1).day !== "Today" && !msgs.some(m => m.day === "Today")) msgs.push({ day: "Today" });
+  msgs.push({ me: true, t: "Just now", text: v });
+  input.value = ""; btn.disabled = true; render(); input.focus();
+});
+
+// After a block: the thread is hidden for both of you.
+document.addEventListener("circles:blocked", () => {
+  document.getElementById("acts").hidden = true;
+  document.getElementById("composer").hidden = true;
+  document.getElementById("body").innerHTML = `
+    <div class="blocked">
+      <p>You blocked Maya Ortiz. The conversation is hidden for both of you.</p>
+      <button class="btn ghost sm" type="button" id="unblock">Unblock</button>
+    </div>`;
+  document.getElementById("unblock").onclick = () => {
+    document.getElementById("acts").hidden = false;
+    document.getElementById("composer").hidden = false;
+    document.getElementById("body").innerHTML = `<ol class="msgs" id="msgs"></ol>`;
+    render();
+  };
+});
+</script>
+</body>
+</html>

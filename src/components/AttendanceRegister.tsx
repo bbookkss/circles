@@ -72,12 +72,12 @@ export default function AttendanceRegister({
 
   if (!open) {
     return (
-      <div className="border border-border p-4 flex items-baseline justify-between gap-3 flex-wrap">
-        <p className="text-sm text-foreground/80">
-          <span className="font-display font-semibold">{dateLabel}</span>
+      <div className="rounded-2xl bg-muted p-4 flex items-baseline justify-between gap-3 flex-wrap">
+        <p className="text-sm text-muted-foreground">
+          <span className="font-medium text-foreground">{dateLabel}</span>
           {': '}
           {cameCount} of {people.length} made it.
-          {done && <span className="text-pen"> Thanks.</span>}
+          {done && <span className="text-foreground"> Thanks.</span>}
         </p>
         <button
           type="button"
@@ -91,17 +91,17 @@ export default function AttendanceRegister({
   }
 
   return (
-    <div className="border border-foreground p-4 space-y-3">
+    <div className="rounded-3xl bg-muted p-5 space-y-3">
       <div>
-        <p className="label">Last meet · {dateLabel}</p>
-        <p className="font-display font-semibold text-lg mt-0.5">Who made it?</p>
-        <p className="text-xs text-foreground/75 mt-1">
+        <p className="label">Last meet, {dateLabel}</p>
+        <p className="text-lg font-medium tracking-tight mt-0.5">Who made it?</p>
+        <p className="text-xs text-muted-foreground mt-1">
           Untick anyone who said they were coming and did not. This is what
           &ldquo;shows up&rdquo; on a profile is counted from.
         </p>
       </div>
 
-      <ul className="divide-y divide-border/70 border-t border-b border-border/70">
+      <ul className="divide-y divide-border">
         {people.map((p) => {
           const on = here.has(p.user_id)
           return (
@@ -114,8 +114,8 @@ export default function AttendanceRegister({
               >
                 <span
                   aria-hidden
-                  className={`w-4 h-4 border flex items-center justify-center text-[10px] leading-none flex-shrink-0 ${
-                    on ? 'bg-pen border-pen text-white' : 'border-foreground text-transparent'
+                  className={`w-[18px] h-[18px] rounded-md border flex items-center justify-center text-[11px] leading-none flex-shrink-0 ${
+                    on ? 'bg-foreground border-foreground text-background' : 'border-muted-foreground text-transparent'
                   }`}
                 >
                   ✓
@@ -137,7 +137,7 @@ export default function AttendanceRegister({
           type="button"
           onClick={save}
           disabled={saving}
-          className="text-sm font-medium rounded-full border border-foreground px-4 py-1.5 hover:bg-pen hover:border-pen hover:text-white disabled:opacity-40 transition-colors"
+          className="text-sm font-medium rounded-full bg-foreground text-background px-4 py-1.5 hover:opacity-85 disabled:opacity-40 transition-opacity"
         >
           {saving ? 'Saving…' : 'Save'}
         </button>

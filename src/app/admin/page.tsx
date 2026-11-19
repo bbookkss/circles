@@ -59,16 +59,17 @@ export default async function AdminPage() {
   return (
     <>
       <TopNav />
-      <main className="pt-14 min-h-screen bg-background">
-        <div className="max-w-2xl mx-auto px-4 py-8 space-y-8">
+      <main className="pt-16 min-h-screen bg-background">
+        <div className="max-w-[720px] mx-auto px-4 sm:px-7 pt-8 pb-28 space-y-10">
 
           <div className="space-y-3">
             <div className="space-y-1">
-              <h1 className="text-xl font-semibold">
-                Reports{reports.length > 0 ? ` · ${reports.length}` : ''}
-              </h1>
-              <p className="text-sm text-muted-foreground">
-                Oldest first. The text is what the reporter saw when they filed it, even if
+              <h1 className="text-[2rem] sm:text-[2.6rem]">Reports</h1>
+              <p className="text-lg text-muted-foreground">
+                {reports.length === 0 ? 'Nothing open.' : `${reports.length} open, oldest first.`}
+              </p>
+              <p className="text-sm text-muted-foreground max-w-[60ch] pt-1">
+                The text is what the reporter saw when they filed it, even if
                 it has since been edited or deleted. Removing deletes the post or comment and
                 closes every report on it.
               </p>
@@ -78,11 +79,11 @@ export default async function AdminPage() {
             ) : (
               <ul className="space-y-3">
                 {reports.map((r) => (
-                  <li key={r.id} className="border rounded-xl p-4 space-y-2">
+                  <li key={r.id} className="rounded-3xl bg-muted p-5 space-y-2.5">
                     <p className="text-sm">
-                      <span className="font-semibold capitalize">{r.target_type}</span>
-                      {' · '}{reasonLabel(r.reason)}
-                      <span className="text-muted-foreground"> · {new Date(r.created_at).toLocaleString()}</span>
+                      <span className="font-medium capitalize">{r.target_type}</span>
+                      {', '}{reasonLabel(r.reason)}
+                      <span className="text-muted-foreground">, {new Date(r.created_at).toLocaleString()}</span>
                     </p>
                     <p className="text-sm text-muted-foreground">
                       {nameOf(r.reporter_id)} reported{' '}
@@ -91,11 +92,11 @@ export default async function AdminPage() {
                           {nameOf(r.reported_user_id)}
                         </a>
                       ) : 'a deleted account'}
-                      {' · '}
-                      <a href={targetHref(r)} className="underline underline-offset-2">open</a>
+                      {'. '}
+                      <a href={targetHref(r)} className="underline underline-offset-2">Open it</a>
                     </p>
                     {r.snapshot && (
-                      <pre className="text-sm whitespace-pre-wrap break-words font-sans bg-muted/50 rounded-md p-3">{r.snapshot}</pre>
+                      <pre className="text-sm whitespace-pre-wrap break-words font-sans bg-background rounded-2xl p-3.5">{r.snapshot}</pre>
                     )}
                     {r.details && <p className="text-sm whitespace-pre-wrap">&ldquo;{r.details}&rdquo;</p>}
                     <ReportActions
@@ -108,8 +109,8 @@ export default async function AdminPage() {
             )}
           </div>
 
-          <div className="space-y-1 pt-4 border-t">
-            <h2 className="text-xl font-semibold">Business requests</h2>
+          <div className="space-y-1 pt-6 border-t border-border">
+            <h2 className="text-[1.6rem] font-light tracking-[-0.03em]">Business requests</h2>
             <p className="text-sm text-muted-foreground">
               Call or email them before approving. Approving flips their
               account to verified, which lets them mark their own circles
@@ -118,16 +119,14 @@ export default async function AdminPage() {
           </div>
 
           <div className="space-y-3">
-            <p className="text-sm font-semibold">
-              Pending{pending.length > 0 ? ` · ${pending.length}` : ''}
-            </p>
+            <h3 className="label">{pending.length > 0 ? `Waiting, ${pending.length}` : 'Waiting'}</h3>
             {pending.length === 0 ? (
               <p className="text-sm text-muted-foreground">Nothing waiting.</p>
             ) : (
               <ul className="space-y-3">
                 {pending.map((r) => (
-                  <li key={r.id} className="border rounded-xl p-4 space-y-2">
-                    <p className="text-sm font-semibold">{r.business_name}</p>
+                  <li key={r.id} className="rounded-3xl bg-muted p-5 space-y-2">
+                    <p className="font-medium">{r.business_name}</p>
                     <div className="text-sm text-muted-foreground space-y-0.5">
                       {r.contact_name && <p>Contact: {r.contact_name}</p>}
                       {r.phone && (
@@ -157,15 +156,15 @@ export default async function AdminPage() {
 
           {settled.length > 0 && (
             <div className="space-y-3">
-              <p className="text-sm font-semibold">Reviewed</p>
+              <h3 className="label">Reviewed</h3>
               <ul className="space-y-2">
                 {settled.map((r) => (
                   <li
                     key={r.id}
-                    className="flex items-center gap-3 border rounded-xl px-3 py-2.5"
+                    className="flex items-center gap-3 border-b border-border py-3"
                   >
                     <span className="flex-1 text-sm">{r.business_name}</span>
-                    <span className="text-xs text-muted-foreground capitalize">{r.status}</span>
+                    <span className="text-sm text-muted-foreground capitalize">{r.status}</span>
                   </li>
                 ))}
               </ul>

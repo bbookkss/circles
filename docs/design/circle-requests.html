@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Join requests – Circles</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Host+Grotesk:wght@300;400;500;600&display=swap">
+<script>try { const t = localStorage.getItem("circles-theme"); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
+<link rel="stylesheet" href="circles.css">
+<style>
+/* Requests: a short queue. Each row says who, what they share with you, and two choices. */
+.back { font-size: 15px; color: var(--quiet); display: inline-block; margin-bottom: 18px; }
+.back:hover { color: var(--ink); }
+.reqs { margin-top: 32px; }
+.req { display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; gap: 14px; align-items: center; }
+.req .av { width: 44px; height: 44px; font-size: 14px; }
+.req-name { font-size: 17px; font-weight: 500; letter-spacing: -0.01em; }
+.req-meta { font-size: 14px; color: var(--quiet); }
+.req-note { font-size: 15px; margin-top: 6px; max-width: 56ch; }
+.req-acts { display: flex; gap: 8px; }
+.done { font-size: 14px; color: var(--quiet); }
+.empty { margin-top: 32px; }
+@media (max-width: 560px) {
+  .req { grid-template-columns: 44px minmax(0, 1fr); }
+  .req-acts { grid-column: 2; }
+}
+</style>
+</head>
+<body>
+
+<header class="nav" data-page="none"></header>
+
+<main class="page">
+  <div class="col">
+    <a class="back" href="circle.html">Back to Book club at Dog Eared</a>
+    <h1 class="h-md">Join requests</h1>
+    <p class="lede">Book club at Dog Eared is private. People you approve can see its notes and where it meets.</p>
+
+    <ul class="rows reqs" id="reqs"></ul>
+    <div class="panel empty" id="empty" hidden>
+      <p class="h3" style="font-size:19px">No pending requests</p>
+      <p class="quiet" style="margin-top:4px">New requests will appear here.</p>
+    </div>
+  </div>
+</main>
+
+<nav class="tabs" data-page="none"></nav>
+
+<script src="circles.js"></script>
+<script>
+const reqs = [
+  { n: "Lena Fischer", i: "LF", when: "Asked yesterday", shared: "Follows you, and is in Saturday morning run with you", note: "I just finished the last pick and loved it. Would love to join for December." },
+  { n: "Ade Bello", i: "AB", when: "Asked 3 days ago", shared: "In Thursday chess with you", note: null },
+  { n: "Tom Reyes", i: "TR", when: "Asked last week", shared: "No circles in common", note: null }
+];
+function render() {
+  const pending = reqs.filter(r => !r.done).length;
+  document.getElementById("empty").hidden = pending > 0 || reqs.some(r => r.done);
+  document.getElementById("reqs").innerHTML = reqs.map((r, i) => `
+    <li class="req">
+      <span class="av" aria-hidden="true">${r.i}</span>
+      <div>
+        <a class="req-name" href="person.html">${r.n}</a>
+        <div class="req-meta">${r.when}. ${r.shared}.</div>
+        ${r.note ? `<p class="req-note">${r.note}</p>` : ""}
+      </div>
+      <div class="req-acts">${r.done ? `<span class="done">${r.done === "yes" ? "Approved" : "Declined"}</span>` :
+        `<button class="btn sm" type="button" data-a="yes" data-i="${i}">Approve</button><button class="btn ghost sm" type="button" data-a="no" data-i="${i}">Decline</button>`}</div>
+    </li>`).join("");
+  if (!pending && !reqs.length) document.getElementById("empty").hidden = false;
+}
+document.getElementById("reqs").addEventListener("click", e => {
+  const b = e.target.closest("[data-a]"); if (!b) return;
+  reqs[+b.dataset.i].done = b.dataset.a; render();
+  if (reqs.every(r => r.done)) setTimeout(() => { reqs.length = 0; render(); document.getElementById("empty").hidden = false; }, 1400);
+});
+render();
+</script>
+</body>
+</html>

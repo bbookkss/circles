@@ -44,7 +44,7 @@ export default function EditProfileForm({
       <div className="space-y-1">
         {bio && <p className="text-sm text-muted-foreground">{bio}</p>}
         <div className="flex items-center gap-3 pt-1">
-          {success && <p className="text-sm text-green-600">Saved!</p>}
+          {success && <p className="text-sm text-muted-foreground">Saved</p>}
           <Button variant="outline" size="sm" onClick={() => setEditing(true)}>
             Edit profile
           </Button>
@@ -54,7 +54,7 @@ export default function EditProfileForm({
   }
 
   return (
-    <form action={handleSubmit} className="space-y-3 max-w-sm">
+    <form action={handleSubmit} className="space-y-4 max-w-sm pt-2">
       <div className="space-y-1">
         <Label htmlFor="full_name">Full name</Label>
         <Input id="full_name" name="full_name" defaultValue={fullName} required />
@@ -103,7 +103,7 @@ export default function EditProfileForm({
           name="email_reminders"
           type="checkbox"
           defaultChecked={emailReminders}
-          className="mt-0.5 size-4 accent-foreground cursor-pointer"
+          className="mt-1 size-4 accent-[var(--foreground)] cursor-pointer"
         />
         <span className="text-sm">
           Email me before my circles meet
@@ -121,7 +121,7 @@ export default function EditProfileForm({
           placeholder="Tell people a bit about yourself..."
           rows={3}
           maxLength={200}
-          className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring resize-none"
+          className="w-full rounded-xl border border-transparent bg-muted px-3.5 py-2.5 text-base placeholder:text-muted-foreground focus-visible:outline-none focus-visible:bg-background focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-muted"
         />
       </div>
       {error && <p className="text-sm text-destructive">{error}</p>}

@@ -3,7 +3,7 @@
 import { useMemo } from 'react'
 import Map, { Marker, Source, Layer } from 'react-map-gl/mapbox'
 import 'mapbox-gl/dist/mapbox-gl.css'
-import { installCoffeeTheme, COFFEE } from '@/lib/mapTheme'
+import { installMapTheme, MAP_BG } from '@/lib/mapTheme'
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN!
 
@@ -68,10 +68,10 @@ export default function CircleLocationMap({
         // like a specific target again rather than a rough part of town.
         zoom: radiusM ? 11.6 : 14,
       }}
-      style={{ width: '100%', height: '100%', background: COFFEE }}
+      style={{ width: '100%', height: '100%', background: MAP_BG }}
       mapStyle="mapbox://styles/mapbox/light-v11"
       mapboxAccessToken={MAPBOX_TOKEN}
-      onLoad={(e) => installCoffeeTheme(e.target)}
+      onLoad={(e) => installMapTheme(e.target)}
       scrollZoom={false}
       dragRotate={false}
       attributionControl={false}
@@ -83,19 +83,19 @@ export default function CircleLocationMap({
           <Layer
             id="approx-area-fill"
             type="fill"
-            paint={{ 'fill-color': '#2b5c8a', 'fill-opacity': 0.12 }}
+            paint={{ 'fill-color': '#f2a531', 'fill-opacity': 0.2 }}
           />
           <Layer
             id="approx-area-line"
             type="line"
-            paint={{ 'line-color': '#2b5c8a', 'line-opacity': 0.6, 'line-width': 1.5 }}
+            paint={{ 'line-color': '#f2a531', 'line-opacity': 0.55, 'line-width': 1.5 }}
           />
         </Source>
       ) : (
         <Marker longitude={longitude} latitude={latitude} anchor="bottom">
           {/* Matches the explore map: a paper tag on a pin. */}
           <div className="flex flex-col items-center">
-            <div className="font-display font-semibold text-[13px] leading-none rounded-full px-2.5 py-1.5 bg-background border border-foreground shadow-[0_1px_3px_rgba(34,31,27,0.25)]">
+            <div className="font-medium text-[13px] leading-none rounded-full px-2.5 py-1.5 bg-background border border-foreground shadow-[0_2px_8px_rgba(26,34,48,0.14)]">
               {emoji ?? '●'}
             </div>
             <span aria-hidden className="w-px h-2 bg-foreground" />

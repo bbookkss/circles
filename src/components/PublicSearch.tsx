@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 
 /**
  * "What do you want to find?" for signed-out visitors. Calls /api/find.
@@ -113,23 +112,23 @@ export default function PublicSearch() {
   }
 
   return (
-    <div className="mt-8 max-w-md">
+    <div className="mt-7">
       <form
         role="search"
-        className="flex gap-2"
+        className="flex items-center gap-2 p-1.5 rounded-full bg-background shadow-[0_1px_2px_var(--shade)] focus-within:ring-3 focus-within:ring-cool-2"
         onSubmit={(e) => { e.preventDefault(); search(query) }}
       >
         <label htmlFor="public-search" className="sr-only">What do you want to find?</label>
-        <Input
+        <input
           id="public-search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="What do you want to find?"
           maxLength={120}
           autoComplete="off"
-          className="h-10 rounded-full px-4 bg-card"
+          className="flex-1 min-w-0 bg-transparent border-0 outline-none text-[17px] px-3.5 py-2 placeholder:text-muted-foreground"
         />
-        <Button type="submit" size="lg" className="rounded-full" disabled={loading || !query.trim()}>
+        <Button type="submit" size="lg" disabled={loading || !query.trim()}>
           Search
         </Button>
       </form>
@@ -141,7 +140,7 @@ export default function PublicSearch() {
             <span key={ex}>
               <button
                 type="button"
-                className="underline underline-offset-4 decoration-pen-soft hover:text-foreground"
+                className="text-foreground underline underline-offset-[3px] decoration-cool-2 hover:decoration-current"
                 onClick={() => { setQuery(ex); search(ex) }}
               >
                 {ex}
@@ -154,16 +153,22 @@ export default function PublicSearch() {
 
       <div ref={widgetEl} className="mt-2" />
 
-      <div aria-live="polite" className="mt-4 space-y-3">
-        {loading && <p className="text-sm text-muted-foreground">Searching public circles…</p>}
+      <div aria-live="polite" className="mt-3 grid gap-3">
+        {loading && (
+          <p className="text-sm text-muted-foreground flex items-center gap-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/70 animate-pulse motion-reduce:animate-none" />
+            Searching public circles…
+          </p>
+        )}
 
         {error && (
-          <div className="space-y-2">
-            <p className="text-sm">{error.text}</p>
+          <div className="grid gap-3">
+            <p>{error.text}</p>
             {error.signup && (
-              <Link href="/signup" className="text-sm underline underline-offset-4 decoration-pen-soft">
-                Create a free account
-              </Link>
+              <div className="flex flex-wrap items-center gap-3">
+                <Link href="/signup"><Button>Create an account</Button></Link>
+                <Link href="/login" className="text-sm underline underline-offset-4 decoration-cool-2 hover:decoration-current">I have one</Link>
+              </div>
             )}
           </div>
         )}
@@ -172,26 +177,23 @@ export default function PublicSearch() {
           <>
             {result.sentence && <p>{result.sentence}</p>}
             {result.circles.length > 0 && (
-              <ul className="divide-y divide-border border-y border-border">
+              <ul className="grid gap-2">
                 {result.circles.map((c) => (
-                  <li key={c.id} className="py-3">
+                  <li key={c.id} className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-3.5 gap-y-1 items-baseline rounded-2xl bg-background px-4 py-3">
                     <p className="font-medium">{c.name}</p>
-                    <p className="text-sm text-foreground/75">
-                      {[c.neighborhood ?? c.city, daysText(c.days), c.members ? `${c.members} members` : null]
-                        .filter(Boolean)
-                        .join(', ')}
+                    <p className="text-sm text-muted-foreground">{c.members ? `${c.members} members` : ''}</p>
+                    <p className="col-span-2 text-sm text-muted-foreground">
+                      {[c.neighborhood ?? c.city, daysText(c.days)].filter(Boolean).join(', ')}
                     </p>
                   </li>
                 ))}
               </ul>
             )}
-            <div className="flex flex-wrap items-center gap-3 pt-1">
-              <p className="text-sm text-foreground/75 flex-1 min-w-[14rem]">
+            <div className="flex flex-wrap items-center gap-x-3.5 gap-y-2.5 pt-1">
+              <p className="text-[15px] text-muted-foreground flex-[1_1_220px]">
                 Make a free account to see exactly where they meet and who&apos;s going this week.
               </p>
-              <Link href="/signup">
-                <Button size="sm" className="rounded-full">Create an account</Button>
-              </Link>
+              <Link href="/signup"><Button>Create an account</Button></Link>
             </div>
           </>
         )}

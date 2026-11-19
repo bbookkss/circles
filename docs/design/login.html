@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Log in – Circles</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Host+Grotesk:wght@300;400;500;600&display=swap">
+<script>try { const t = localStorage.getItem("circles-theme"); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
+<link rel="stylesheet" href="circles.css">
+<style>
+
+.band { height: 260px; margin-top: -66px; }
+.band::after { content: ""; position: absolute; inset: auto 0 0 0; height: 120px; background: linear-gradient(to bottom, transparent, var(--paper)); }
+.auth { position: relative; z-index: 1; margin-top: -150px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 0 96px; }
+.auth .sheet { padding: 32px; }
+.auth .h-md + p { margin-top: 8px; }
+.auth .form { margin-top: 26px; }
+.auth .foot { margin-top: 22px; text-align: center; font-size: 15px; color: var(--quiet); }
+.label-row { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.label-row a { font-size: 13px; color: var(--quiet); }
+.notice { border-radius: 14px; padding: 12px 14px; font-size: 14px; background: var(--cool); }
+.notice.err-box { color: var(--danger); }
+.notice a { color: var(--ink); }
+@media (max-width: 640px) { .auth .sheet { padding: 24px 20px; } .band { height: 220px; } .auth { margin-top: -120px; } }
+
+.states { position: fixed; z-index: 6; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  display: flex; align-items: center; gap: 4px; padding: 5px 5px 5px 14px; border-radius: 999px; font-size: 13px; color: var(--quiet); max-width: calc(100vw - 32px); overflow-x: auto; }
+.states button { border: 0; background: transparent; cursor: pointer; padding: 6px 11px; border-radius: 999px; font-size: 13px; color: var(--quiet); white-space: nowrap; }
+.states button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+@media (max-width: 640px) { .states.above-tabs { bottom: calc(84px + env(safe-area-inset-bottom, 0px)); } }
+
+</style>
+</head>
+<body>
+<header class="nav" data-page="out"></header>
+<section class="band map" aria-hidden="true"><canvas id="map"></canvas></section>
+<main class="auth"><div class="narrow">
+<div class="sheet glass">
+
+<h1 class="h-md">Welcome back</h1>
+<p class="quiet">Log in to see who is coming this week.</p>
+<form class="form" id="f">
+  <div class="notice err-box" data-state="error" hidden>
+    No account matches that, or the password is wrong. <a class="link" href="signup.html">Create an account instead</a>
+  </div>
+  <div class="field">
+    <label for="identifier">Email or username</label>
+    <input id="identifier" name="identifier" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="you@example.com or yourname" required>
+  </div>
+  <div class="field">
+    <div class="label-row"><label for="password">Password</label><a class="link" href="forgot-password.html">Forgot password?</a></div>
+    <input id="password" name="password" type="password" autocomplete="current-password" required>
+  </div>
+  <button class="btn block" id="go" type="submit">Log in</button>
+</form>
+<p class="foot">New to Circles? <a class="link" href="signup.html">Create an account</a></p>
+
+</div>
+</div></main>
+<div class="states glass" role="group" aria-label="Mockup state"></div>
+<script src="circles.js"></script>
+<script>
+
+// Mockup-only: switch between the page's states. [data-state] blocks show for the chosen one.
+function states(list, start) {
+  const bar = document.querySelector(".states");
+  bar.innerHTML = '<span>Mockup state</span>' + list.map(([k, l]) => `<button type="button" data-s="${k}">${l}</button>`).join("");
+  function show(k) {
+    document.querySelectorAll("[data-state]").forEach(el => el.hidden = !el.dataset.state.split(" ").includes(k));
+    bar.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", b.dataset.s === k));
+  }
+  bar.addEventListener("click", e => { const b = e.target.closest("button"); if (b) show(b.dataset.s); });
+  show(start || list[0][0]);
+  return show;
+}
+
+Circles.drawMap(document.getElementById("map"), [
+  { x: .18, y: .40, r: 80, temp: .55 }, { x: .52, y: .30, r: 64, temp: .35 }, { x: .84, y: .46, r: 72, temp: .45 }
+], { seed: 11 });
+
+document.querySelectorAll("form").forEach(f => f.addEventListener("submit", e => e.preventDefault()));
+
+const show = states([["form", "Empty"], ["error", "Wrong password"]]);
+document.getElementById("f").addEventListener("submit", () => {
+  const b = document.getElementById("go"); b.disabled = true; b.textContent = "Logging in…";
+  setTimeout(() => { b.disabled = false; b.textContent = "Log in"; show("error"); }, 700);
+});
+
+</script>
+</body>
+</html>

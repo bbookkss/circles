@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Messages – Circles</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Host+Grotesk:wght@300;400;500;600&display=swap">
+<script>try { const t = localStorage.getItem("circles-theme"); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
+<link rel="stylesheet" href="circles.css">
+<style>
+/* Messages: one column of conversations, newest first. Unread is the only heat. */
+.head { padding-block: 24px 28px; }
+.convs > li { padding: 0; }
+.conv { display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; gap: 14px; align-items: center; padding-block: 16px; }
+.conv .av { width: 44px; height: 44px; font-size: 14px; }
+.conv:hover .name { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; }
+.name { font-size: 17px; font-weight: 500; letter-spacing: -0.01em; }
+.last { font-size: 15px; color: var(--quiet); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.unread .last { color: var(--ink); }
+.meta { display: grid; justify-items: end; gap: 6px; font-size: 14px; color: var(--quiet); }
+.count { min-width: 22px; height: 22px; padding: 0 7px; border-radius: 999px; background: var(--heat); color: var(--on-heat); font-size: 12px; font-weight: 600; display: grid; place-items: center; }
+.start { margin-top: 56px; }
+.start h2 { margin-bottom: 4px; }
+.start .why { font-size: 15px; color: var(--quiet); margin-bottom: 14px; }
+.person { display: flex; align-items: center; gap: 14px; padding-block: 12px; }
+.person .who { flex: 1; min-width: 0; }
+.person .sub { font-size: 14px; color: var(--quiet); }
+</style>
+</head>
+<body>
+<header class="nav" data-page="messages"></header>
+
+<main class="page">
+  <div class="col">
+    <div class="head">
+      <h1>Messages</h1>
+    </div>
+
+    <ul class="rows convs">
+      <li><a class="conv unread" href="thread.html">
+        <span class="av" aria-hidden="true">MO</span>
+        <span style="min-width:0"><span class="name">Maya Ortiz</span><span class="last" style="display:block">Bringing the travel set Thursday. Do you still have the clock?</span></span>
+        <span class="meta"><span>12m</span><span class="count" aria-label="2 unread">2</span></span>
+      </a></li>
+      <li><a class="conv" href="thread.html">
+        <span class="av" aria-hidden="true">JP</span>
+        <span style="min-width:0"><span class="name">Jon Park</span><span class="last" style="display:block">You: See you at the steps at 8:30</span></span>
+        <span class="meta"><span>Yesterday</span></span>
+      </a></li>
+      <li><a class="conv" href="thread.html">
+        <span class="av" aria-hidden="true">PS</span>
+        <span style="min-width:0"><span class="name">Priya Shah</span><span class="last" style="display:block">Thanks for adding me to the run. Is it OK to bring my dog?</span></span>
+        <span class="meta"><span>3d</span></span>
+      </a></li>
+    </ul>
+
+    <section class="start" aria-labelledby="start-h">
+      <h2 id="start-h">Start a conversation</h2>
+      <p class="why">People you follow who you haven't messaged yet.</p>
+      <ul class="rows">
+        <li class="person"><span class="av" aria-hidden="true">SK</span><span class="who"><a href="person.html" class="name">Sam Kim</a><div class="sub">Thursday chess</div></span><a class="btn ghost sm" href="thread.html">Message</a></li>
+        <li class="person"><span class="av" aria-hidden="true">AO</span><span class="who"><a href="person.html" class="name">Ade Okafor</a><div class="sub">Saturday morning run</div></span><a class="btn ghost sm" href="thread.html">Message</a></li>
+        <li class="person"><span class="av" aria-hidden="true">LV</span><span class="who"><a href="person.html" class="name">Lena Voss</a><div class="sub">Saturday morning run</div></span><a class="btn ghost sm" href="thread.html">Message</a></li>
+      </ul>
+    </section>
+  </div>
+</main>
+
+<nav class="tabs" data-page="messages"></nav>
+<script src="circles.js"></script>
+</body>
+</html>

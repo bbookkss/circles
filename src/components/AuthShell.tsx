@@ -1,73 +1,61 @@
 import Link from 'next/link'
-import AsciiField from '@/components/AsciiField'
+import { Button } from '@/components/ui/button'
+import HeatMap, { type HeatArea } from '@/components/HeatMap'
+import Logo from '@/components/Logo'
+import ThemeToggle from '@/components/ThemeToggle'
 
 /**
- * The landing hero, reused as the frame for signing in and signing up.
+ * The frame for signing in, signing up and the password pages: a short strip
+ * of the drawn map that fades into the paper, with the form on a glass sheet
+ * overlapping it. Quiet on purpose: the form is the only thing to do here.
  *
- * Login used to be a hard 50/50 split with its own background motif and no
- * header, so arriving from the landing page changed the layout, the wordmark,
- * the tagline's line breaks and the ambient animation all at once. Here the
- * shell does not move at all: same field, same header, same left column, same
- * grid. Only the right-hand slot changes — the demo column on the landing
- * page, the form here — so the page you asked for is the only thing that
- * arrives.
+ * Same glass pill nav as the landing page, so arriving from it changes only
+ * what's under the nav.
  */
+
+const STRIP: HeatArea[] = [
+  { x: 0.18, y: 0.35, r: 90, temp: 0.55 },
+  { x: 0.52, y: 0.22, r: 70, temp: 0.4 },
+  { x: 0.82, y: 0.4, r: 100, temp: 0.75 },
+]
 
 export default function AuthShell({
   altHref,
   altLabel,
   children,
 }: {
-  /** Where the header sends someone who came to the wrong one of the pair. */
+  /** Where the nav sends someone who came to the wrong one of the pair. */
   altHref: string
   altLabel: string
   children: React.ReactNode
 }) {
   return (
-    <main className="relative min-h-screen overflow-hidden bg-background text-foreground">
-      <AsciiField />
-
-      <header className="relative mx-auto w-full max-w-6xl px-6 py-6 flex items-center justify-between">
-        <Link href="/" className="font-display font-semibold text-[1.35rem] tracking-tight">
-          circles
-        </Link>
-        <Link
-          href={altHref}
-          className="text-sm text-foreground/70 hover:text-foreground transition-colors"
-        >
-          {altLabel}
-        </Link>
-      </header>
-
-      <div className="relative mx-auto w-full max-w-6xl px-6 pb-16 pt-6 md:pb-24 md:pt-10 grid md:grid-cols-2 gap-12 md:gap-16 items-center">
-        {/* Same copy, same sizes, same breaks as the landing hero. */}
-        <div className="fade-rise">
-          <h1 className="text-4xl md:text-[2.75rem] font-medium leading-[1.05] text-balance">
-            Nobody makes a friend<br />at a one-off.<br />
-            <em className="italic font-normal text-pen">Circles meet every week.</em>
-          </h1>
-          <p className="text-foreground/75 text-base md:text-lg mt-5 max-w-md">
-            Same place, same time, the same people. Close enough to walk to, and
-            you see who is coming before you go.
-          </p>
-          {/* The landing hero carries a button row here (mt-8 on a size="lg"
-              button, so 32px + 36px). The grid is items-center, so leaving it
-              out lifts this whole column by half of that and the tagline steps
-              34px up the moment you navigate. Reserve the space instead. */}
-          <div aria-hidden className="hidden md:block mt-8 h-9" />
+    <main className="relative min-h-screen bg-background text-foreground">
+      <nav className="fixed top-0 left-0 right-0 z-50 px-3 pt-2 pointer-events-none">
+        <div className="glass pointer-events-auto mx-auto max-w-3xl h-12 rounded-full flex items-center gap-1 pl-4 pr-1.5">
+          <Link href="/" className="flex items-center gap-2 font-semibold text-[1.05rem] tracking-tight">
+            <Logo />
+            Circles
+          </Link>
+          <div className="ml-auto flex items-center gap-1">
+            <ThemeToggle />
+            <Link href={altHref}><Button size="sm">{altLabel}</Button></Link>
+          </div>
         </div>
+      </nav>
 
-        {/* The form sits where the demo column sits: one more paper object,
-            given an ink edge so it reads as an object at all on paper.
-            Matching the demo's height matters: the grid is items-center, so a
-            shorter right column would pull the tagline up and the copy would
-            visibly jump on the way in from the landing page. min-h, not h:
-            the signup form is taller than 520 and must be allowed to grow. */}
-        <div className="fade-rise stagger-1 w-full md:min-h-[520px] flex items-center md:justify-end">
-          <div className="w-full max-w-md">
-            <div className="bg-card text-foreground border border-foreground p-7 md:p-8 shadow-[0_20px_50px_-30px_rgba(34,31,27,0.35)]">
-              {children}
-            </div>
+      {/* The strip fades out at the bottom so the sheet sits on paper. */}
+      <section
+        aria-hidden
+        className="h-[220px] sm:h-[300px] overflow-hidden [mask-image:linear-gradient(to_bottom,black_55%,transparent)]"
+      >
+        <HeatMap areas={STRIP} seed={13} />
+      </section>
+
+      <div className="relative z-[1] -mt-[120px] sm:-mt-[150px] px-4 pb-24">
+        <div className="mx-auto w-full max-w-[440px]">
+          <div className="glass rounded-[28px] p-5 sm:p-8 fade-rise">
+            {children}
           </div>
         </div>
       </div>

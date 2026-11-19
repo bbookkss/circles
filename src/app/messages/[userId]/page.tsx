@@ -44,13 +44,13 @@ export default async function MessageThreadPage({ params }: { params: Promise<{ 
     <>
       <TopNav />
       <div className="pt-14 pb-16 md:pb-0 h-screen flex flex-col bg-background">
-        <header className="border-b px-6 py-3 flex items-center gap-3 flex-shrink-0">
+        <header className="max-w-2xl w-full mx-auto px-4 md:px-6 pt-5 pb-3 flex items-center gap-3 flex-shrink-0 border-b border-border">
           <BackButton fallback="/messages" />
-          <Link href={`/profile/${other.id}`} className="font-medium hover:underline underline-offset-2">
+          <Link href={`/profile/${other.id}`} className="text-xl font-medium tracking-tight hover:underline underline-offset-4 decoration-1">
             {other.full_name}
           </Link>
           {!iBlocked && (
-            <div className="ml-auto flex items-center gap-4 text-xs">
+            <div className="ml-auto flex items-center gap-4 text-sm text-muted-foreground">
               <ReportButton targetType="user" targetId={other.id} />
               <BlockButton userId={other.id} name={other.full_name ?? 'them'} />
             </div>
@@ -58,12 +58,12 @@ export default async function MessageThreadPage({ params }: { params: Promise<{ 
         </header>
         {iBlocked ? (
           <div className="flex-1 flex flex-col items-center justify-center gap-3 px-6 text-center">
-            <p className="text-sm text-foreground/75">
+            <p className="text-muted-foreground max-w-sm">
               You blocked {other.full_name ?? 'them'}. The conversation is hidden for both of you.
             </p>
             <form action={unblockUser}>
               <input type="hidden" name="user_id" value={other.id} />
-              <button type="submit" className="text-sm rounded-full border border-foreground px-4 py-1.5 hover:bg-muted transition-colors">
+              <button type="submit" className="text-sm font-medium rounded-full bg-foreground text-background px-5 py-2.5 hover:opacity-85 transition-opacity">
                 Unblock
               </button>
             </form>
