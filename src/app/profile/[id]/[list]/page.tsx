@@ -1,4 +1,6 @@
 import { redirect, notFound } from 'next/navigation'
+import { isOfficial } from '@/lib/official'
+import OfficialBadge from '@/components/OfficialBadge'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import TopNav from '@/components/TopNav'
@@ -72,7 +74,7 @@ export default async function FollowListPage({
             <div>
               <h1 className="text-[2.2rem] md:text-[2.6rem]">{spec.title}</h1>
               <p className="text-muted-foreground mt-1">
-                {isMe ? 'You' : subject.full_name}, {ids.length} {ids.length === 1 ? 'person' : 'people'}
+                {isMe ? 'You' : subject.full_name}{!isMe && isOfficial(id) && <OfficialBadge />}, {ids.length} {ids.length === 1 ? 'person' : 'people'}
               </p>
             </div>
             {/* Switch between the two lists without going back. */}

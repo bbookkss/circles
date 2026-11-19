@@ -1,4 +1,6 @@
 import { redirect, notFound } from 'next/navigation'
+import { isOfficial } from '@/lib/official'
+import OfficialBadge from '@/components/OfficialBadge'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import TopNav from '@/components/TopNav'
@@ -99,7 +101,7 @@ export default async function UserProfilePage({ params }: { params: Promise<{ id
               {initials}
             </div>
             <div className="flex-1 min-w-0 space-y-2">
-              <h1 className="text-[2.2rem] md:text-[2.6rem]">{profile.full_name}</h1>
+              <h1 className="text-[2.2rem] md:text-[2.6rem]">{profile.full_name}{isOfficial(id) && <OfficialBadge />}</h1>
               {profile.instagram && (
                 <a
                   href={`https://instagram.com/${profile.instagram}`}

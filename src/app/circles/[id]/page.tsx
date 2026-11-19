@@ -1,4 +1,6 @@
 import { notFound } from 'next/navigation'
+import { isOfficial } from '@/lib/official'
+import OfficialBadge from '@/components/OfficialBadge'
 import { headers } from 'next/headers'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
@@ -228,7 +230,7 @@ export default async function CirclePage({
                 ) : (
                   <>No schedule yet. </>
                 )}
-                {creatorFirst && <>Started by {creatorFirst}. </>}
+                {creatorFirst && <>Started by {creatorFirst}{isOfficial(circle.created_by) && <OfficialBadge />}. </>}
                 {count} member{count !== 1 ? 's' : ''}.
               </p>
               {circle.description && <p className="text-muted-foreground max-w-prose">{circle.description}</p>}
@@ -526,7 +528,7 @@ export default async function CirclePage({
                 ) : (
                   <>No schedule yet{isAdmin ? <>. <Link href={`/circles/${id}/edit`} className="underline underline-offset-4 decoration-1">Set one</Link></> : null}. </>
                 )}
-                {creatorFirst && <>Started by {creatorFirst}. </>}
+                {creatorFirst && <>Started by {creatorFirst}{isOfficial(circle.created_by) && <OfficialBadge />}. </>}
                 {totalMembers} member{totalMembers !== 1 ? 's' : ''}.
               </p>
               {circle.description && <p className="text-muted-foreground max-w-prose">{circle.description}</p>}
@@ -631,7 +633,7 @@ export default async function CirclePage({
                               href={m.isMe ? '/profile' : `/profile/${m.user_id}`}
                               className="text-sm block truncate hover:underline underline-offset-4 decoration-1"
                             >
-                              {m.full_name}
+                              {m.full_name}{isOfficial(m.user_id) && <OfficialBadge />}
                               {m.role === 'admin' && <span className="font-medium text-muted-foreground ml-2">admin</span>}
                             </Link>
                             {/* The point of the whole register: a yes from

@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
+import { MARK_SHOULDERS } from '@/lib/mark'
 
 /**
  * The Circles mark: five pairs of shoulders round one shared head. Each
@@ -24,8 +25,7 @@ const RATE = { idle: 1, hover: 3, press: 6, busy: 8 }
 // Five shoulders at 72° apart, the first at the top: each a dome, flat along
 // the ring and rounded toward the middle, so the centre dot is everyone's
 // head. Precomputed so the server and client render identical markup.
-const SHOULDERS =
-  'M7.200 1.600A2.800 2.700 0.00 0 0 12.800 1.600A8.400 8.400 0 0 0 7.200 1.600ZM17.124 4.741A2.800 2.700 72.00 0 0 18.854 10.067A8.400 8.400 0 0 0 17.124 4.741ZM17.203 15.150A2.800 2.700 144.00 0 0 12.672 18.442A8.400 8.400 0 0 0 17.203 15.150ZM7.328 18.442A2.800 2.700 -144.00 0 0 2.797 15.150A8.400 8.400 0 0 0 7.328 18.442ZM1.146 10.067A2.800 2.700 -72.00 0 0 2.876 4.741A8.400 8.400 0 0 0 1.146 10.067Z'
+const SHOULDERS = MARK_SHOULDERS
 
 export default function Logo({ size = 20, className = '', busy = false }: { size?: number; className?: string; busy?: boolean }) {
   const ringRef = useRef<SVGGElement>(null)

@@ -1,6 +1,8 @@
 'use client'
 
 import dynamic from 'next/dynamic'
+import { isOfficial } from '@/lib/official'
+import OfficialBadge from '@/components/OfficialBadge'
 import { CATEGORIES } from '@/lib/categories'
 import Link from 'next/link'
 import { useState, useMemo, useEffect } from 'react'
@@ -424,7 +426,7 @@ export default function ExploreClient({ circles, people, initialView, origin: or
                         {(p.full_name ?? '?').split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)}
                       </div>
                       <div className="min-w-0">
-                        <p className="text-sm font-medium truncate">{p.full_name}</p>
+                        <p className="text-sm font-medium truncate">{p.full_name}{isOfficial(p.id) && <OfficialBadge />}</p>
                         {p.instagram && <p className="text-xs text-muted-foreground truncate">@{p.instagram}</p>}
                       </div>
                     </Link>

@@ -1,6 +1,8 @@
 'use client'
 
 import { useState } from 'react'
+import { isOfficial } from '@/lib/official'
+import OfficialBadge from '@/components/OfficialBadge'
 import Link from 'next/link'
 import { toggleLike, toggleCommentLike, addComment, deleteComment, deletePost } from '@/app/actions/posts'
 import ReportButton from '@/components/ReportButton'
@@ -144,7 +146,7 @@ export default function PostItem({
                 href={isMyPost ? '/profile' : `/profile/${post.user_id}`}
                 className="text-[0.95rem] font-medium hover:underline underline-offset-4 decoration-1"
               >
-                {post.author_name}
+                {post.author_name}{isOfficial(post.user_id) && <OfficialBadge />}
               </Link>
             ) : (
               <span className="text-[0.95rem] font-medium text-muted-foreground">{post.author_name}</span>
