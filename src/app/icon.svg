@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- The Circles mark for browser tabs: five dashes around a dot, in paper on
+       an ink square so it holds an edge against a pale tab strip. Dash lengths
+       are explicit (circumference 2*pi*10 = 62.83, split 64/36 into five) so
+       every renderer draws the same five dashes. Drawn at 32px and legible at 16. -->
+  <rect width="32" height="32" rx="7" fill="#1a2230"/>
+  <circle cx="16" cy="16" r="10" fill="none" stroke="#f7f8fa" stroke-width="2.8"
+          stroke-linecap="round" stroke-dasharray="8.04 4.52" transform="rotate(-90 16 16)"/>
+  <circle cx="16" cy="16" r="3.6" fill="#f7f8fa"/>
+</svg>

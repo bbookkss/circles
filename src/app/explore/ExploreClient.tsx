@@ -443,7 +443,7 @@ export default function ExploreClient({ circles, people, initialView, origin: or
           initialView={initialView}
           // Suppressed while filtering: an empty view is then the filters
           // doing their job, not an area with nothing in it.
-          emptyOverlay={hasFilters ? undefined : ({ showAll, canShowAll, areaName }) => (
+          emptyOverlay={hasFilters ? undefined : ({ showAll, canShowAll }) => (
             <div className="glass rounded-[22px] px-5 py-4 text-center max-w-xs">
               {/* Two different situations, and naming a city in the second one
                   would be a lie by implication: it suggests circles exist
@@ -451,7 +451,9 @@ export default function ExploreClient({ circles, people, initialView, origin: or
                   areaName tracks the map, not the visitor's IP. */}
               <p className="text-sm font-medium">
                 {canShowAll
-                  ? `No circles ${areaName ? `in ${areaName}` : 'here'} yet`
+                  // Not "in <area>": the area name comes from the map's centre
+                  // and is often a neighbourhood off.
+                  ? 'No circles here'
                   : 'No circles anywhere yet'}
               </p>
               <p className="text-sm text-muted-foreground mt-1">

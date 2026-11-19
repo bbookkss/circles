@@ -484,11 +484,12 @@ input[aria-hidden="true"][tabindex="-1"] {
   left: 0;
 }
 
-/* The logo's ring: five dashes, turning once a minute. */
+/* The logo's ring: five dashes, turning once every 20 seconds. Logo.tsx
+   speeds it up on hover, press and while busy by changing the playback
+   rate, never this duration (changing it makes the ring jump). */
 .logo-ring { transform-box: fill-box; transform-origin: center; }
 @media (prefers-reduced-motion: no-preference) {
-  .logo-ring { animation: logo-turn 60s linear infinite; }
-  .logo-busy .logo-ring { animation-duration: 2.4s; }
+  .logo-ring { animation: logo-turn 20s linear infinite; }
 }
 @keyframes logo-turn { to { transform: rotate(360deg); } }
 

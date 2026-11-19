@@ -8,9 +8,10 @@ import { ImageResponse } from 'next/og'
  * a likely thing for someone to do, and the default is a blurry thumbnail of
  * whatever page they were on.
  *
- * Same ring as the tab icon, at 180px with proportionally lighter stroke.
- * iOS rounds the corners itself, so the artwork is a full square with the
- * mark kept well inside the safe area.
+ * The same mark as the tab icon (icon.svg): five dashes around a dot, paper
+ * on ink. iOS rounds the corners itself, so the artwork is a full square with
+ * the mark kept well inside the safe area. Dash lengths are explicit:
+ * circumference 2*pi*54 = 339.3, split 64/36 into five.
  */
 
 export const size = { width: 180, height: 180 }
@@ -26,17 +27,14 @@ export default function AppleIcon() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: '#28231e',
+          background: '#1a2230',
         }}
       >
-        <div
-          style={{
-            width: 104,
-            height: 104,
-            borderRadius: '50%',
-            border: '14px solid #ece3d5',
-          }}
-        />
+        <svg width="132" height="132" viewBox="0 0 132 132">
+          <circle cx="66" cy="66" r="54" fill="none" stroke="#f7f8fa" strokeWidth="11"
+            strokeLinecap="round" strokeDasharray="43.43 24.43" transform="rotate(-90 66 66)" />
+          <circle cx="66" cy="66" r="17" fill="#f7f8fa" />
+        </svg>
       </div>
     ),
     { ...size }

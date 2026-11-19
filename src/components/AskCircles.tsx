@@ -44,11 +44,11 @@ function load(): { turns: Turn[]; open: boolean } {
   return { turns: [], open: false }
 }
 
-/** The logo ring; it turns faster while a request is in flight (.logo-busy, globals.css). */
+/** The logo ring; it spins up while a request is in flight (Logo's busy prop). */
 function Ring({ spinning = false }: { spinning?: boolean }) {
   return (
-    <span className={`shrink-0 ${spinning ? 'logo-busy' : ''}`}>
-      <Logo size={18} />
+    <span className="shrink-0">
+      <Logo size={18} busy={spinning} />
     </span>
   )
 }
