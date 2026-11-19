@@ -1,4 +1,5 @@
 import { redirect, notFound } from 'next/navigation'
+import OfficialAvatar from '@/components/OfficialAvatar'
 import { isOfficial } from '@/lib/official'
 import OfficialBadge from '@/components/OfficialBadge'
 import Link from 'next/link'
@@ -97,9 +98,13 @@ export default async function UserProfilePage({ params }: { params: Promise<{ id
 
           {/* Avatar + name + bio */}
           <div className="flex items-start gap-5">
-            <div className="w-[72px] h-[72px] rounded-full bg-cool-2 flex items-center justify-center text-2xl font-normal flex-shrink-0">
-              {initials}
-            </div>
+            {isOfficial(id) ? (
+              <OfficialAvatar className="w-[72px] h-[72px]" />
+            ) : (
+              <div className="w-[72px] h-[72px] rounded-full bg-cool-2 flex items-center justify-center text-2xl font-normal flex-shrink-0">
+                {initials}
+              </div>
+            )}
             <div className="flex-1 min-w-0 space-y-2">
               <h1 className="text-[2.2rem] md:text-[2.6rem]">{profile.full_name}{isOfficial(id) && <OfficialBadge />}</h1>
               {profile.instagram && (

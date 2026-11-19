@@ -12,9 +12,12 @@ export default function OfficialBadge({ className = '' }: { className?: string }
       role="img"
       aria-label="Official Circles account"
       title="Official Circles account"
-      className={`inline-grid place-items-center align-[-0.12em] ml-[0.3em] w-[1em] h-[1em] rounded-[0.26em] bg-foreground text-background shrink-0 ${className}`}
+      // inline-flex centring is exact where inline-grid let the svg sit on a
+      // text baseline; align-middle lines the square up with the text's middle
+      // rather than letting it hang below the baseline.
+      className={`inline-flex items-center justify-center align-middle -translate-y-[0.06em] ml-[0.3em] w-[0.95em] h-[0.95em] rounded-[0.26em] bg-foreground text-background shrink-0 ${className}`}
     >
-      <svg viewBox="0 0 20 20" className="w-[72%] h-[72%]" aria-hidden>
+      <svg viewBox="0 0 20 20" className="block w-[72%] h-[72%]" aria-hidden>
         <path d={MARK_SHOULDERS} fill="currentColor" stroke="currentColor" strokeWidth="0.5" strokeLinejoin="round" />
         <circle cx="10" cy="10" r={MARK_HEAD_R} fill="currentColor" />
       </svg>

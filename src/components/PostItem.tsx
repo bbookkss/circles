@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import OfficialAvatar from '@/components/OfficialAvatar'
 import { isOfficial } from '@/lib/official'
 import OfficialBadge from '@/components/OfficialBadge'
 import Link from 'next/link'
@@ -138,7 +139,7 @@ export default function PostItem({
   return (
     <article className="py-6">
       <div className="flex gap-3">
-        <Avatar name={post.author_name} />
+        {isOfficial(post.user_id) ? <OfficialAvatar className="w-9 h-9" /> : <Avatar name={post.author_name} />}
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 mb-1">
             {post.user_id ? (
@@ -204,7 +205,7 @@ export default function PostItem({
                 const mine = c.user_id === currentUserId
                 return (
                   <div key={c.id} className="flex gap-2.5">
-                    <Avatar name={c.author_name} size="xs" />
+                    {isOfficial(c.user_id) ? <OfficialAvatar className="w-7 h-7" /> : <Avatar name={c.author_name} size="xs" />}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-baseline gap-2">
                         {c.user_id ? (

@@ -1,6 +1,7 @@
 'use client'
 
 import dynamic from 'next/dynamic'
+import OfficialAvatar from '@/components/OfficialAvatar'
 import { isOfficial } from '@/lib/official'
 import OfficialBadge from '@/components/OfficialBadge'
 import { CATEGORIES } from '@/lib/categories'
@@ -422,9 +423,11 @@ export default function ExploreClient({ circles, people, initialView, origin: or
                 {peopleResults.map((p) => (
                   <li key={p.id}>
                     <Link href={`/profile/${p.id}`} className="flex items-center gap-3 px-4 py-2.5 hover:bg-muted transition-colors">
-                      <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-semibold flex-shrink-0">
-                        {(p.full_name ?? '?').split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)}
-                      </div>
+                      {isOfficial(p.id) ? <OfficialAvatar className="w-8 h-8" /> : (
+                        <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-semibold flex-shrink-0">
+                          {(p.full_name ?? '?').split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)}
+                        </div>
+                      )}
                       <div className="min-w-0">
                         <p className="text-sm font-medium truncate">{p.full_name}{isOfficial(p.id) && <OfficialBadge />}</p>
                         {p.instagram && <p className="text-xs text-muted-foreground truncate">@{p.instagram}</p>}

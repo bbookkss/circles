@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation'
+import OfficialAvatar from '@/components/OfficialAvatar'
 import { isOfficial } from '@/lib/official'
 import OfficialBadge from '@/components/OfficialBadge'
 import { headers } from 'next/headers'
@@ -627,7 +628,7 @@ export default async function CirclePage({
                       const st = statusOf[m.user_id]
                       return (
                         <li key={m.user_id} className="flex items-center gap-3 py-2.5">
-                          <Initials name={m.full_name} size="sm" />
+                          {isOfficial(m.user_id) ? <OfficialAvatar className="w-7 h-7" /> : <Initials name={m.full_name} size="sm" />}
                           <span className="flex-1 min-w-0">
                             <Link
                               href={m.isMe ? '/profile' : `/profile/${m.user_id}`}
