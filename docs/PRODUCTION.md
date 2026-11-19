@@ -454,7 +454,8 @@ are done, in this order:
       runs daily.
 - [ ] **Two Anthropic workspaces, each with its own key and a monthly spend
       limit.** Set `ANTHROPIC_API_KEY_PUBLIC` and `ANTHROPIC_API_KEY_ASSISTANT`
-      in Vercel. In production a missing key switches that agent off; it never
+      in Vercel (production uses `LIGHTWEIGHT_AGENT_CIRCLES` and
+      `ASSISTANT_AGENT_CIRCLES`, also accepted). In production a missing key switches that agent off; it never
       falls back to a shared key. The spend limit is the backstop that caps
       the worst case.
 - [ ] **Cloudflare Turnstile:** `TURNSTILE_SECRET_KEY` and
