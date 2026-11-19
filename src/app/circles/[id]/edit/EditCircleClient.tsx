@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import CostField from '@/components/CostField'
 import Map, { Marker, NavigationControl, GeolocateControl } from 'react-map-gl/mapbox'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import { updateCircle } from '@/app/actions/circles'
@@ -47,6 +48,8 @@ type Circle = {
   neighborhood?: string | null
   city?: string | null
   visibility: string
+  is_free?: boolean | null
+  price_note?: string | null
   latitude?: number | null
   longitude?: number | null
 }
@@ -236,6 +239,8 @@ export default function EditCircleClient({ circle, schedule }: { circle: Circle;
               ))}
             </div>
           </div>
+
+          <CostField initialFree={circle.is_free ?? null} initialNote={circle.price_note ?? ''} />
 
           <div className="border-t pt-4 space-y-4">
             <div className="flex items-center justify-between">

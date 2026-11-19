@@ -21,6 +21,14 @@ function timezoneFor(latitude: number, longitude: number): string {
   }
 }
 
+/** Free or paid from a form: "true", "false", or "" for not said. */
+function costFrom(formData: FormData) {
+  const raw = formData.get('is_free')
+  const is_free = raw === 'true' ? true : raw === 'false' ? false : null
+  const note = ((formData.get('price_note') as string) ?? '').trim().slice(0, 60)
+  return { is_free, price_note: is_free === false && note ? note : null }
+}
+
 export async function createCircle(formData: FormData) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -73,6 +81,7 @@ export async function createCircle(formData: FormData) {
       emoji: emoji || null,
       visibility,
       kind,
+      ...costFrom(formData),
       neighborhood: neighborhood?.trim() || null,
       city: city?.trim() || null,
       latitude: isNaN(latitude) ? null : latitude,
@@ -155,6 +164,7 @@ export async function updateCircle(formData: FormData) {
     location: (formData.get('location') as string)?.trim() || null,
     emoji: (formData.get('emoji') as string) || null,
     visibility,
+    ...costFrom(formData),
     neighborhood: neighborhood?.trim() || null,
     city: city?.trim() || null,
     latitude: isNaN(latitude) ? null : latitude,

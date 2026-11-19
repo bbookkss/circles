@@ -24,7 +24,7 @@ export default async function EditCirclePage({ params }: { params: Promise<{ id:
   const [{ data: row }, { data: places, error: placesError }] = await Promise.all([
     supabase
       .from('circles')
-      .select('id, name, description, category, emoji, neighborhood, city, visibility')
+      .select('id, name, description, category, emoji, neighborhood, city, visibility, is_free, price_note')
       .eq('id', id)
       .single(),
     supabase.rpc('circle_places', { cids: [id] }),

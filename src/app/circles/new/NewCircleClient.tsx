@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import CostField from '@/components/CostField'
 import Map, { Marker, NavigationControl, GeolocateControl } from 'react-map-gl/mapbox'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import { createCircle } from '@/app/actions/circles'
@@ -329,6 +330,8 @@ export default function NewCircleClient({
                 : 'People must request to join. You approve them.'}
             </p>
           </div>
+
+          <CostField />
 
           {/* Kind — only offered to verified businesses. The database rejects
               a commercial circle from anyone else regardless of this UI. */}

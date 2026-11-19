@@ -65,6 +65,7 @@ export default function ExploreClient({ circles, people, initialView, origin: or
   const [cityFilter, setCityFilter] = useState<string | null>(null)
   const [sizeFilter, setSizeFilter] = useState<string | null>(null)
   const [kindFilter, setKindFilter] = useState<'social' | 'commercial' | null>(null)
+  const [costFilter, setCostFilter] = useState<'free' | 'paid' | null>(null)
   const [showFilters, setShowFilters] = useState(false)
   // Phones get one or the other, full screen. A half-height map is too small
   // to pan or pinch, and a squeezed list shows a circle and a half -- which is
@@ -96,9 +97,12 @@ export default function ExploreClient({ circles, people, initialView, origin: or
       if (sizeFilter === 'large' && (c.member_count ?? 0) < 50) return false
       // Anything without an explicit kind is a social circle.
       if (kindFilter && (c.kind ?? 'social') !== kindFilter) return false
+      // Unknown cost (circles made before it was asked) matches neither.
+      if (costFilter === 'free' && c.is_free !== true) return false
+      if (costFilter === 'paid' && c.is_free !== false) return false
       return true
     })
-  }, [circles, search, categoryFilter, dayFilter, cityFilter, neighborhoodFilter, sizeFilter, kindFilter])
+  }, [circles, search, categoryFilter, dayFilter, cityFilter, neighborhoodFilter, sizeFilter, kindFilter, costFilter])
 
   // Where distances are measured from. Starts as the server's IP guess and
   // is replaced by the device's fix when one arrives: silently on mount if
@@ -147,10 +151,10 @@ export default function ExploreClient({ circles, people, initialView, origin: or
       .slice(0, 6)
   }, [people, search])
 
-  const hasFilters = !!(search || categoryFilter || dayFilter !== null || cityFilter || neighborhoodFilter || sizeFilter || kindFilter)
+  const hasFilters = !!(search || categoryFilter || dayFilter !== null || cityFilter || neighborhoodFilter || sizeFilter || kindFilter || costFilter)
   // Search is deliberately not counted: it has its own visible field, and
   // counting it would make the button light up while somebody types.
-  const activeFilterCount = [categoryFilter, dayFilter !== null ? 'd' : null, cityFilter, neighborhoodFilter, sizeFilter, kindFilter].filter(Boolean).length
+  const activeFilterCount = [categoryFilter, dayFilter !== null ? 'd' : null, cityFilter, neighborhoodFilter, sizeFilter, kindFilter, costFilter].filter(Boolean).length
 
   function clearFilters() {
     setSearch('')
@@ -160,6 +164,7 @@ export default function ExploreClient({ circles, people, initialView, origin: or
     setNeighborhoodFilter(null)
     setSizeFilter(null)
     setKindFilter(null)
+    setCostFilter(null)
   }
 
   return (
@@ -238,6 +243,27 @@ export default function ExploreClient({ circles, people, initialView, origin: or
                       kindFilter === k.value
                         ? 'bg-foreground text-background border-foreground'
                         : 'bg-muted hover:bg-cool-2'
+                    }`}
+                  >
+                    {k.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Free or paid */}
+            <div>
+              <p className="text-sm font-medium mb-2">Cost</p>
+              <div className="flex flex-wrap gap-1.5">
+                {([
+                  { value: 'free', label: 'Free' },
+                  { value: 'paid', label: 'Paid' },
+                ] as const).map((k) => (
+                  <button
+                    key={k.value}
+                    onClick={() => setCostFilter(costFilter === k.value ? null : k.value)}
+                    className={`text-sm px-3 py-1 rounded-full transition-colors ${
+                      costFilter === k.value ? 'bg-foreground text-background border-foreground' : 'bg-muted hover:bg-cool-2'
                     }`}
                   >
                     {k.label}
@@ -412,6 +438,14 @@ export default function ExploreClient({ circles, people, initialView, origin: or
                       </p>
                       {miles && <span className="text-sm text-muted-foreground flex-shrink-0">{miles}</span>}
                     </div>
+                    {circle.is_free === false && (
+                      <span className="inline-block mt-1 text-xs font-medium px-2 py-0.5 rounded-full bg-cool-2 text-foreground">
+                        {circle.price_note ? `Paid, ${circle.price_note}` : 'Paid'}
+                      </span>
+                    )}
+                    {circle.is_free === true && (
+                      <span className="inline-block mt-1 text-xs font-medium px-2 py-0.5 rounded-full bg-muted text-muted-foreground">Free</span>
+                    )}
                     <p className="text-sm text-muted-foreground truncate mt-0.5">
                       {[circle.neighborhood ?? circle.location, circle.member_count !== undefined ? `${circle.member_count} member${circle.member_count !== 1 ? 's' : ''}` : null]
                         .filter(Boolean).join(', ')}

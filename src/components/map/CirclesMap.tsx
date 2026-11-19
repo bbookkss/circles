@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useMemo } from 'react'
 import type { ReactNode } from 'react'
 import Link from 'next/link'
-import Map, { Marker, NavigationControl, GeolocateControl } from 'react-map-gl/mapbox'
+import Map, { Marker, NavigationControl, GeolocateControl, Source, Layer } from 'react-map-gl/mapbox'
 import type { Map as MapboxMap, LngLatBounds } from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import { installMapTheme, MAP_BG } from '@/lib/mapTheme'
@@ -23,7 +23,34 @@ export type CirclePin = {
   kind?: string | null
   /** Coordinates are a coarse area, not the meeting place. */
   approximate?: boolean
+  /** true free, false costs something, null/undefined not said. */
+  is_free?: boolean | null
+  /** "$7 cover" and the like, shown with the paid mark. */
+  price_note?: string | null
 }
+
+/** Hex like #f2a531 to an rgba() string Mapbox paint properties accept. */
+function rgba(hex: string, a: number) {
+  const h = hex.replace('#', '').trim()
+  const n = parseInt(h.length === 3 ? h.split('').map((c) => c + c).join('') : h, 16)
+  if (Number.isNaN(n)) return `rgba(242,165,49,${a})`
+  return `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},${a})`
+}
+
+/** Heat weight: bigger circles burn a little hotter, but even a new one glows. */
+function heatWeight(members: number | undefined) {
+  return 0.35 + 0.65 * Math.min(1, Math.log1p(members ?? 0) / Math.log(60))
+}
+
+/** Metres between two points, near enough for "is this the same spot". */
+function metres(a: CirclePin, b: CirclePin) {
+  const k = 111_320
+  const dx = (a.longitude - b.longitude) * k * Math.cos((a.latitude * Math.PI) / 180)
+  const dy = (a.latitude - b.latitude) * k
+  return Math.hypot(dx, dy)
+}
+
+type Group = { key: string; anchor: CirclePin; members: CirclePin[]; samePlace: boolean }
 
 type Props = {
   circles?: CirclePin[]
@@ -88,6 +115,79 @@ export default function CirclesMap({
   // The locate button fails silently by default: the icon just stops
   // spinning. Pilot users read that as "doesn't work". Keep the reason.
   const [locateError, setLocateError] = useState<string | null>(null)
+  // Bumped on every camera move so grouping is recomputed against the pixels
+  // the tags actually occupy now.
+  const [viewTick, setViewTick] = useState(0)
+  const [openGroup, setOpenGroup] = useState<string | null>(null)
+  // The street-label layer the heat goes under, so names stay readable.
+  const [labelLayer, setLabelLayer] = useState<string | undefined>(undefined)
+  // Mapbox paint needs real colours, not CSS variables: read the theme's heat
+  // and re-read it when light/dark flips.
+  const [heat, setHeat] = useState('#f2a531')
+  useEffect(() => {
+    const read = () => {
+      const v = getComputedStyle(document.documentElement).getPropertyValue('--heat').trim()
+      if (v) setHeat(v)
+    }
+    read()
+    const mo = new MutationObserver(read)
+    mo.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
+    return () => mo.disconnect()
+  }, [])
+
+  /**
+   * Heat for every circle, members' included. Exact points for circles you're
+   * in, the displaced area for the rest: the same coordinates the tags use, so
+   * the glow never says more than the data does.
+   */
+  const heatData = useMemo(() => ({
+    type: 'FeatureCollection' as const,
+    features: circles.map((c) => ({
+      type: 'Feature' as const,
+      properties: { w: heatWeight(c.memberCount) },
+      geometry: { type: 'Point' as const, coordinates: [c.longitude, c.latitude] },
+    })),
+  }), [circles])
+
+  /**
+   * Tags that would overlap on screen merge into one "N circles" marker. Four
+   * classes in the same rooftop park used to stack exactly, so only the top
+   * one could ever be seen or tapped. Greedy in pixel space, biggest circle
+   * first, recomputed as the camera moves. The selected circle is never
+   * grouped: it is what the person is looking at.
+   */
+  const groups = useMemo<Group[]>(() => {
+    if (!map) return circles.map((c) => ({ key: c.id, anchor: c, members: [c], samePlace: true }))
+    const order = [...circles].sort((a, b) => (b.memberCount ?? 0) - (a.memberCount ?? 0))
+    const out: (Group & { x: number; y: number })[] = []
+    for (const c of order) {
+      const p = map.project([c.longitude, c.latitude])
+      if (c.id !== popupCircle?.id) {
+        const hit = out.find((g) => g.anchor.id !== popupCircle?.id && Math.abs(g.x - p.x) < 120 && Math.abs(g.y - p.y) < 34)
+        if (hit) { hit.members.push(c); continue }
+      }
+      out.push({ key: c.id, anchor: c, members: [c], samePlace: true, x: p.x, y: p.y })
+    }
+    return out.map((g) => ({
+      anchor: g.anchor,
+      members: g.members,
+      key: g.members.length > 1 ? 'g:' + g.members.map((m) => m.id).sort().join(',') : g.key,
+      samePlace: g.members.every((m) => metres(m, g.anchor) < 40),
+    }))
+    // viewTick is how camera moves reach this memo.
+  }, [circles, map, viewTick, popupCircle?.id]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  /** Open a group: same spot shows a list; nearby spots zoom in to split. */
+  const openGroupAt = useCallback((g: Group) => {
+    if (!map) return
+    if (g.samePlace || map.getZoom() >= 17) {
+      setOpenGroup((k) => (k === g.key ? null : g.key))
+      return
+    }
+    const lats = g.members.map((m) => m.latitude)
+    const lngs = g.members.map((m) => m.longitude)
+    map.fitBounds([[Math.min(...lngs), Math.min(...lats)], [Math.max(...lngs), Math.max(...lats)]], { padding: 140, duration: 700, maxZoom: 17 })
+  }, [map])
 
   const handleMarkerClick = useCallback((circle: CirclePin) => {
     // Second tap on the open tag folds it; a tap on another one swaps.
@@ -197,7 +297,9 @@ export default function CirclesMap({
         installMapTheme(e.target)
         setMap(e.target)
         setBounds(e.target.getBounds())
+        setLabelLayer(e.target.getStyle()?.layers?.find((l) => l.type === 'symbol')?.id)
       }}
+      onMove={() => setViewTick((t) => t + 1)}
       onMoveEnd={(e) => {
         const b = e.target.getBounds()
         setBounds(b)
@@ -213,9 +315,34 @@ export default function CirclesMap({
       // selection. Pin clicks stop propagation, so they never land here.
       onClick={() => {
         setPopupCircle(null)
+        setOpenGroup(null)
         onDeselect?.()
       }}
     >
+      {/* The heat: under the street names, over everything else. Radius grows
+          with zoom so it reads as a neighbourhood from afar and a block up
+          close. */}
+      <Source id="circles-heat" type="geojson" data={heatData}>
+        <Layer
+          id="circles-heat"
+          type="heatmap"
+          beforeId={labelLayer}
+          paint={{
+            'heatmap-weight': ['get', 'w'],
+            'heatmap-intensity': ['interpolate', ['linear'], ['zoom'], 9, 0.7, 13, 1.1, 16, 1.6],
+            'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 9, 14, 12, 34, 14, 60, 16, 110],
+            'heatmap-opacity': 0.8,
+            'heatmap-color': [
+              'interpolate', ['linear'], ['heatmap-density'],
+              0, 'rgba(0,0,0,0)',
+              0.15, rgba(heat, 0.18),
+              0.4, rgba(heat, 0.38),
+              0.7, rgba(heat, 0.6),
+              1, rgba(heat, 0.82),
+            ],
+          }}
+        />
+      </Source>
       <NavigationControl position="top-right" />
       <GeolocateControl
         position="top-right"
@@ -246,7 +373,59 @@ export default function CirclesMap({
         </div>
       )}
 
-      {circles.map((circle) => (
+      {groups.filter((g) => g.members.length > 1).map((g) => {
+        const open = openGroup === g.key
+        return (
+          <Marker
+            key={g.key}
+            longitude={g.anchor.longitude}
+            latitude={g.anchor.latitude}
+            anchor="bottom"
+            style={{ zIndex: open ? 30 : 10 }}
+            onClick={(e) => {
+              e.originalEvent.stopPropagation()
+              openGroupAt(g)
+            }}
+          >
+            <span className="relative flex flex-col items-center cursor-pointer group">
+              <span
+                className="flex items-center gap-1.5 bg-background border border-foreground rounded-full shadow-[0_2px_8px_rgba(26,34,48,0.14)] px-2.5 py-1.5 text-[13px] font-medium leading-none group-hover:-translate-y-0.5 transition-transform"
+                title={g.members.map((m) => m.name).join(', ')}
+              >
+                <span aria-hidden className="tracking-[-0.15em]">{g.members.slice(0, 3).map((m) => m.emoji ?? '•').join('')}</span>
+                {g.members.length} circles
+              </span>
+              <span aria-hidden className="w-px h-2 bg-foreground" />
+              {open && (
+                // Same spot: the list is the only way to tell them apart.
+                <div
+                  onClick={(e) => e.stopPropagation()}
+                  className="absolute bottom-full mb-2 w-[min(280px,80vw)] bg-background border border-border rounded-2xl shadow-[0_8px_30px_rgba(26,34,48,0.18)] p-1.5 text-left cursor-default"
+                >
+                  <p className="px-2.5 pt-1.5 pb-1 text-xs text-muted-foreground">{g.samePlace ? 'All meet at this spot' : 'Close together here'}</p>
+                  <ul>
+                    {g.members.map((m) => (
+                      <li key={m.id}>
+                        <button
+                          type="button"
+                          onClick={() => { setOpenGroup(null); handleMarkerClick(m) }}
+                          className="w-full flex items-center gap-2 px-2.5 py-2 rounded-xl hover:bg-muted text-left"
+                        >
+                          <span aria-hidden>{m.emoji ?? '•'}</span>
+                          <span className="flex-1 min-w-0 truncate text-sm font-medium">{m.name}</span>
+                          {m.is_free === false && <span className="shrink-0 text-[11px] font-medium px-1.5 py-0.5 rounded-full bg-cool-2">{m.price_note ?? 'Paid'}</span>}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </span>
+          </Marker>
+        )
+      })}
+
+      {groups.filter((g) => g.members.length === 1).map(({ anchor: circle }) => (
         <Marker
           key={circle.id}
           longitude={circle.longitude}
@@ -266,12 +445,9 @@ export default function CirclesMap({
           {/* A sharp pin on displaced coordinates would be a confident lie:
               it looks precise, and it is not. Approximate circles get the
               quiet treatment and a soft heat halo that says roughly here. */}
-          {circle.approximate && (
-            <span
-              aria-hidden
-              className="pointer-events-none absolute left-1/2 bottom-0 -translate-x-1/2 translate-y-1/2 w-24 h-24 rounded-full bg-[radial-gradient(circle,color-mix(in_srgb,var(--heat)_55%,transparent)_0%,color-mix(in_srgb,var(--heat)_22%,transparent)_45%,transparent_72%)]"
-            />
-          )}
+          {/* The glow under every pin now comes from the heat layer above,
+              for members' circles too. Approximate circles keep the quiet
+              tag: a sharp pin on displaced coordinates would be a lie. */}
           {/* The tag is the card. Tapping it does not swap it for a different
               popup; it grows downward, same paper, same ink edge, to show a
               line or two, then an Open link. The grid-rows trick animates
@@ -304,7 +480,7 @@ export default function CirclesMap({
                     this, and expanding here put two copies of the same
                     circle on one screen. */}
                 <div
-                  className={`bg-background border shadow-[0_2px_8px_rgba(26,34,48,0.14)] rounded-full ${edge} ${
+                  className={`${circle.is_free === false ? 'bg-cool' : 'bg-background'} border shadow-[0_2px_8px_rgba(26,34,48,0.14)] rounded-full ${edge} ${
                     open
                       ? 'md:rounded-2xl md:min-w-[240px] md:transition-[border-radius,min-width] md:duration-300 md:ease-out'
                       : 'md:min-w-0 group-hover:-translate-y-0.5 transition-transform duration-150'
@@ -324,11 +500,14 @@ export default function CirclesMap({
                     // width:100% resolved against a container the collapsed
                     // body had already made too wide, then clamped at 240.
                     // Shrink-wrapped, it is exactly as wide as the name.
-                    className={`block text-left font-medium leading-none whitespace-nowrap truncate text-[13px] px-2.5 py-1.5 max-w-[70vw] md:max-w-[260px] ${
+                    className={`block text-left font-medium leading-none whitespace-nowrap truncate text-[13px] px-2.5 py-1.5 max-w-[46vw] md:max-w-[210px] ${
                       open ? 'md:text-[15px] md:px-3.5 md:pt-3 md:pb-1 md:max-w-none md:transition-[font-size] md:duration-300' : ''
                     }`}
                   >
                     {circle.emoji ? `${circle.emoji} ` : ''}{circle.name}
+                    {/* Paid circles: a tinted tag and a $ mark, so cost reads
+                        before anyone taps. Free is the default look. */}
+                    {circle.is_free === false && <span aria-label="paid" className="ml-1.5 inline-grid place-items-center w-4 h-4 rounded-full bg-foreground text-background text-[10px] font-semibold align-[1px]">$</span>}
                   </button>
                   <div
                     // max-w-0 is the other half, and the non-obvious half.
@@ -352,6 +531,9 @@ export default function CirclesMap({
                           <p className="font-medium text-sm text-muted-foreground leading-tight">
                             {[circle.category, circle.kind === 'commercial' ? 'business' : null].filter(Boolean).join(', ')}
                           </p>
+                        )}
+                        {circle.is_free != null && (
+                          <p className="text-xs font-medium">{circle.is_free ? 'Free' : `Paid${circle.price_note ? `: ${circle.price_note}` : ''}`}</p>
                         )}
                         {circle.description && (
                           <p className="text-xs leading-snug text-foreground/80 line-clamp-2">{circle.description}</p>
