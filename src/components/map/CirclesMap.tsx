@@ -299,8 +299,11 @@ export default function CirclesMap({
         setBounds(e.target.getBounds())
         setLabelLayer(e.target.getStyle()?.layers?.find((l) => l.type === 'symbol')?.id)
       }}
-      onMove={() => setViewTick((t) => t + 1)}
       onMoveEnd={(e) => {
+        // Regroup tags once the camera settles, not on every frame: on a phone
+        // a fingertip's jitter moved the map, regrouped the markers and swapped
+        // the very element being tapped, so taps were lost.
+        setViewTick((t) => t + 1)
         const b = e.target.getBounds()
         setBounds(b)
         // A selection you have panned away from is not a selection any more.
@@ -313,7 +316,13 @@ export default function CirclesMap({
       }}
       // Tapping the map away from any pin folds the tag and clears the
       // selection. Pin clicks stop propagation, so they never land here.
-      onClick={() => {
+      onClick={(e) => {
+        // On touch, Mapbox fires its own map tap separately from the marker's
+        // click, so stopPropagation on the marker doesn't stop it, and the map
+        // closed what the marker had just opened. Ignore taps that landed on a
+        // marker.
+        const target = e.originalEvent?.target as HTMLElement | null
+        if (target?.closest?.('.mapboxgl-marker')) return
         setPopupCircle(null)
         setOpenGroup(null)
         onDeselect?.()

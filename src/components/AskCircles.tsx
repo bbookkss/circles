@@ -192,7 +192,9 @@ export default function AskCircles() {
           onClick={() => setOpen(true)}
           aria-expanded={false}
           aria-controls="ask-circles"
-          className="ask-trigger fixed z-40 right-4 bottom-[calc(8.5rem+env(safe-area-inset-bottom))] md:bottom-[4.75rem] h-11 rounded-full glass text-foreground pl-3.5 pr-4 flex items-center gap-2 text-sm font-medium hover:bg-background/70 transition-colors print:hidden"
+          // Solid ink with a real shadow, not glass: over a dark list, frosted
+          // glass blended into the rows beneath it.
+          className="ask-trigger fixed z-40 right-4 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] md:bottom-[4.75rem] h-12 w-12 md:w-auto rounded-full bg-foreground text-background md:pl-3.5 md:pr-4 flex items-center justify-center gap-2 text-sm font-medium shadow-[0_6px_20px_rgba(0,0,0,0.28)] ring-1 ring-background/20 hover:opacity-90 transition-opacity print:hidden"
         >
           <Ring />
           <span className="max-md:sr-only">Ask Radius</span>
@@ -204,7 +206,10 @@ export default function AskCircles() {
           id="ask-circles"
           role="dialog"
           aria-label="Radius, your Circles assistant"
-          className="fixed z-50 inset-x-2 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] md:inset-x-auto md:right-4 md:bottom-6 md:w-[420px] h-[min(660px,calc(100dvh-7rem))] glass rounded-[26px] overflow-hidden flex flex-col print:hidden"
+          // Phones: pinned between the nav and the tab bar, so its header never
+          // slides up under the nav however short the screen. Desktop: a panel
+          // in the corner.
+          className="fixed z-50 inset-x-2 top-[calc(4.25rem+env(safe-area-inset-top))] bottom-[calc(4.75rem+env(safe-area-inset-bottom))] md:top-auto md:inset-x-auto md:right-4 md:bottom-6 md:w-[420px] md:h-[min(660px,calc(100dvh-7rem))] glass rounded-[26px] overflow-hidden flex flex-col print:hidden"
         >
           <header className="flex items-center gap-2.5 pl-5 pr-3 h-14 shrink-0">
             <Ring spinning={busy} />

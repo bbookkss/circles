@@ -12,7 +12,12 @@ import { sendFeedback } from '@/app/actions/feedback'
  * one box and one button: a pilot user who has just hit something odd
  * should be able to say so in the time it takes to lose the thought.
  */
-export default function FeedbackButton() {
+/**
+ * `inline`: a plain button in the page (the profile page on phones) instead of
+ * the floating corner button, which on a phone sat over every list's row
+ * buttons next to Ask Radius. The form is the same either way.
+ */
+export default function FeedbackButton({ inline = false }: { inline?: boolean }) {
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
   // Tell Radius the feedback window is open, so its button hides instead of
@@ -52,7 +57,7 @@ export default function FeedbackButton() {
     // Lifted clear of the bottom bar on phones (64px + safe area), and the
     // trigger is a 44px circle rather than a wide pill so it stops covering
     // whatever is underneath it.
-    <div className="feedback-widget fixed right-4 bottom-[calc(5rem+env(safe-area-inset-bottom))] md:bottom-6 z-40 flex flex-col items-end gap-2 print:hidden">
+    <div className={inline ? 'flex flex-col items-start gap-3' : 'feedback-widget fixed right-4 bottom-[calc(5rem+env(safe-area-inset-bottom))] md:bottom-6 z-40 max-md:hidden flex flex-col items-end gap-2 print:hidden'}>
       {open && (
         <form
           onSubmit={submit}
@@ -101,10 +106,11 @@ export default function FeedbackButton() {
         aria-expanded={open}
         aria-label={open ? 'Close feedback' : 'Send feedback'}
         title="Send feedback"
-        className="glass w-11 h-11 md:w-auto md:h-auto md:px-4 md:py-2.5 rounded-full text-sm font-medium transition-colors flex items-center justify-center"
+        className={inline
+          ? 'order-first rounded-full bg-muted hover:bg-cool-2 px-4 py-2 text-sm font-medium transition-colors'
+          : 'rounded-full bg-background border border-border shadow-[0_6px_20px_rgba(0,0,0,0.18)] px-4 py-2.5 text-sm font-medium transition-colors flex items-center justify-center'}
       >
-        <span className="md:hidden text-lg leading-none" aria-hidden>{open ? '\u00d7' : '?'}</span>
-        <span className="hidden md:inline">{open ? 'Close' : 'Feedback'}</span>
+        {open ? 'Close' : inline ? 'Send feedback' : 'Feedback'}
       </button>
     </div>
   )

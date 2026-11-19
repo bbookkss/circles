@@ -132,9 +132,9 @@ export default function PublicSearch() {
           placeholder="What do you want to find?"
           maxLength={120}
           autoComplete="off"
-          className="flex-1 min-w-0 bg-transparent border-0 outline-none text-[17px] px-3.5 py-2 placeholder:text-muted-foreground"
+          className="flex-1 min-w-0 bg-transparent border-0 outline-none text-[16px] sm:text-[17px] px-3 sm:px-3.5 py-2 placeholder:text-muted-foreground"
         />
-        <Button type="submit" size="lg" disabled={loading || !query.trim()}>
+        <Button type="submit" size="lg" className="max-sm:h-10 max-sm:px-4" disabled={loading || !query.trim()}>
           Search
         </Button>
       </form>

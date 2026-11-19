@@ -33,8 +33,10 @@ export async function suggestionsFor(ctx: Ctx): Promise<string[]> {
     out.push(`Read my ${unread.length} new messages`)
   }
 
-  const later = week.find((m) => m !== unanswered && !m.my_status)
-  if (later) out.push(`Who's going to ${later.circle_name}?`)
+  // Only for a meet you've said you're going to (or might): "who's going to
+  // <whatever is next>" kept suggesting circles people had no plans for.
+  const planned = week.find((m) => m !== unanswered && (m.my_status === 'yes' || m.my_status === 'maybe' || m.scheduled_status === 'yes'))
+  if (planned) out.push(`Who's going to ${planned.circle_name}?`)
 
   if (week.length > 0) out.push("What's on this week?")
 

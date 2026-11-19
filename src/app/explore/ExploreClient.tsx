@@ -500,7 +500,7 @@ export default function ExploreClient({ circles, people, initialView, origin: or
       {/* isolate: the map is its own stacking context, so the z-index markers
           use to order themselves (open card over group badges) stays inside
           the map and never lifts a marker over the list panel. */}
-      <main className={`${mobileView === 'map' ? 'block' : 'hidden'} md:block absolute inset-0 isolate`}>
+      <main className={`${mobileView === 'map' ? 'block' : 'hidden'} md:block absolute inset-0 isolate map-under-nav`}>
         <CirclesMap
           circles={filtered}
           onCircleClick={setSelected}
