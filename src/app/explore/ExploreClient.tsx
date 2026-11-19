@@ -7,7 +7,6 @@ import { useState, useMemo, useEffect } from 'react'
 import type { CirclePin } from '@/components/map/CirclesMap'
 import { distanceKm, type MapView } from '@/lib/mapView'
 import { Button } from '@/components/ui/button'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 const CirclesMap = dynamic(() => import('@/components/map/CirclesMap'), {
   ssr: false,
@@ -63,8 +62,8 @@ export default function ExploreClient({ circles, people, initialView, origin: or
   // Music), and groups narrow each other (Trivia AND Free AND Wednesday).
   const [categoryFilter, setCategoryFilter] = useState<string[]>([])
   const [dayFilter, setDayFilter] = useState<number[]>([])
-  const [neighborhoodFilter, setNeighborhoodFilter] = useState<string | null>(null)
-  const [cityFilter, setCityFilter] = useState<string | null>(null)
+  const [neighborhoodFilter, setNeighborhoodFilter] = useState<string[]>([])
+  const [cityFilter, setCityFilter] = useState<string[]>([])
   const [sizeFilter, setSizeFilter] = useState<string[]>([])
   const [kindFilter, setKindFilter] = useState<('social' | 'commercial')[]>([])
   const [costFilter, setCostFilter] = useState<('free' | 'paid')[]>([])
@@ -87,7 +86,7 @@ export default function ExploreClient({ circles, people, initialView, origin: or
 
   // Derive unique neighborhoods, filtered by selected city
   const neighborhoods = useMemo(() => {
-    const source = cityFilter ? circles.filter((c) => c.city === cityFilter) : circles
+    const source = cityFilter.length ? circles.filter((c) => cityFilter.includes(c.city ?? '')) : circles
     const hoods = source.map((c) => c.neighborhood).filter(Boolean) as string[]
     return [...new Set(hoods)].sort()
   }, [circles, cityFilter])
@@ -96,8 +95,8 @@ export default function ExploreClient({ circles, people, initialView, origin: or
     return circles.filter((c) => {
       if (search && !c.name.toLowerCase().includes(search.toLowerCase())) return false
       if (categoryFilter.length && !categoryFilter.includes(c.category ?? '')) return false
-      if (cityFilter && c.city !== cityFilter) return false
-      if (neighborhoodFilter && c.neighborhood !== neighborhoodFilter) return false
+      if (cityFilter.length && !cityFilter.includes(c.city ?? '')) return false
+      if (neighborhoodFilter.length && !neighborhoodFilter.includes(c.neighborhood ?? '')) return false
       if (dayFilter.length && !dayFilter.some((d) => c.days_of_week?.includes(d))) return false
       if (sizeFilter.length) {
         const n = c.member_count ?? 0
@@ -162,20 +161,30 @@ export default function ExploreClient({ circles, people, initialView, origin: or
       .slice(0, 6)
   }, [people, search])
 
-  const hasFilters = !!(search || categoryFilter.length || dayFilter.length || cityFilter || neighborhoodFilter || sizeFilter.length || kindFilter.length || costFilter.length)
+  const hasFilters = !!(search || categoryFilter.length || dayFilter.length || cityFilter.length || neighborhoodFilter.length || sizeFilter.length || kindFilter.length || costFilter.length)
   // Search is deliberately not counted: it has its own visible field, and
   // counting it would make the button light up while somebody types.
   // Counts chips, not groups: two categories picked reads as two.
   const activeFilterCount =
     categoryFilter.length + dayFilter.length + sizeFilter.length + kindFilter.length + costFilter.length +
-    (cityFilter ? 1 : 0) + (neighborhoodFilter ? 1 : 0)
+    cityFilter.length + neighborhoodFilter.length
+
+  /** Toggle a city, and drop picked neighbourhoods that aren't in the cities left. */
+  function toggleCity(c: string) {
+    const next = cityFilter.includes(c) ? cityFilter.filter((x) => x !== c) : [...cityFilter, c]
+    setCityFilter(next)
+    if (next.length) {
+      const keep = new Set(circles.filter((x) => next.includes(x.city ?? '')).map((x) => x.neighborhood))
+      setNeighborhoodFilter((prev) => prev.filter((n) => keep.has(n)))
+    }
+  }
 
   function clearFilters() {
     setSearch('')
     setCategoryFilter([])
     setDayFilter([])
-    setCityFilter(null)
-    setNeighborhoodFilter(null)
+    setCityFilter([])
+    setNeighborhoodFilter([])
     setSizeFilter([])
     setKindFilter([])
     setCostFilter([])
@@ -330,30 +339,28 @@ export default function ExploreClient({ circles, people, initialView, origin: or
               </div>
             </div>
 
-            {/* City */}
+            {/* City: several at once, like every other group. Choosing cities
+                narrows the neighbourhoods, and drops picked ones that no longer
+                apply. */}
             <div>
               <p className="text-sm font-medium mb-2">City</p>
               {cities.length === 0 ? (
                 <p className="text-xs text-muted-foreground">No cities detected yet</p>
               ) : (
-                <Select
-                  value={cityFilter ?? ''}
-                  onValueChange={(v) => {
-                    setCityFilter((v as string) || null)
-                    setNeighborhoodFilter(null)
-                  }}
-                  items={{ '': 'Any city', ...Object.fromEntries(cities.map((c) => [c, c])) }}
-                >
-                  <SelectTrigger size="sm" className="w-full text-xs">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="">Any city</SelectItem>
-                    {cities.map((c) => (
-                      <SelectItem key={c} value={c}>{c}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="flex flex-wrap gap-1.5">
+                  {cities.map((c) => (
+                    <button
+                      key={c}
+                      onClick={() => toggleCity(c)}
+                      aria-pressed={cityFilter.includes(c)}
+                      className={`text-sm px-3 py-1 rounded-full transition-colors ${
+                        cityFilter.includes(c) ? 'bg-foreground text-background border-foreground' : 'bg-muted hover:bg-cool-2'
+                      }`}
+                    >
+                      {c}
+                    </button>
+                  ))}
+                </div>
               )}
             </div>
 
@@ -361,23 +368,22 @@ export default function ExploreClient({ circles, people, initialView, origin: or
             <div>
               <p className="text-sm font-medium mb-2">Neighborhood</p>
               {neighborhoods.length === 0 ? (
-                <p className="text-xs text-muted-foreground">{cityFilter ? 'No neighborhoods in this city yet' : 'No neighborhoods detected yet'}</p>
+                <p className="text-xs text-muted-foreground">{cityFilter.length ? 'No neighborhoods in these cities yet' : 'No neighborhoods detected yet'}</p>
               ) : (
-                <Select
-                  value={neighborhoodFilter ?? ''}
-                  onValueChange={(v) => setNeighborhoodFilter((v as string) || null)}
-                  items={{ '': 'Any', ...Object.fromEntries(neighborhoods.map((n) => [n, n])) }}
-                >
-                  <SelectTrigger size="sm" className="w-full text-xs">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="">Any</SelectItem>
-                    {neighborhoods.map((n) => (
-                      <SelectItem key={n} value={n}>{n}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto">
+                  {neighborhoods.map((n) => (
+                    <button
+                      key={n}
+                      onClick={() => toggle(setNeighborhoodFilter, n)}
+                      aria-pressed={neighborhoodFilter.includes(n)}
+                      className={`text-sm px-3 py-1 rounded-full transition-colors ${
+                        neighborhoodFilter.includes(n) ? 'bg-foreground text-background border-foreground' : 'bg-muted hover:bg-cool-2'
+                      }`}
+                    >
+                      {n}
+                    </button>
+                  ))}
+                </div>
               )}
             </div>
 
