@@ -134,14 +134,16 @@ export default async function Landing() {
           </p>
           <div className="mt-7 grid gap-4 sm:grid-cols-2">
             {[
-              { title: 'Before you join', sub: 'Thursday chess, around Mission Dolores', glow: true },
-              { title: 'Once you\'re in', sub: 'Ritual Coffee, Valencia St', glow: false },
+              { title: 'Before you join', sub: 'Thursday chess, somewhere around Mission Dolores', glow: true },
+              { title: 'Once you\'re in', sub: 'Thursday chess, at Ritual Coffee on Valencia St', glow: false },
             ].map((v) => (
               <figure key={v.title} className="m-0">
                 <div className="relative h-[200px] rounded-[18px] overflow-hidden">
                   <HeatMap
                     seed={29}
-                    areas={v.glow ? [{ x: 0.5, y: 0.5, r: 80, temp: 0.9 }] : []}
+                    // Same circle, same glow in both. After joining the glow fades back
+                    // and the pin sits inside it, off-centre, as on Explore.
+                    areas={[{ x: 0.5, y: 0.5, r: 80, temp: v.glow ? 0.9 : 0.35 }]}
                     label={v.glow ? 'A glow over the area where a circle meets, with no pin' : 'A pin on the exact spot where a circle meets'}
                   />
                   {!v.glow && (

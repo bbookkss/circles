@@ -9,9 +9,10 @@
  */
 const TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN
 
-export default function MapThumb({ lat, lng, exact, label }: { lat: number; lng: number; exact: boolean; label: string }) {
+export default function MapThumb({ lat, lng, exact, label, small = false }: { lat: number; lng: number; exact: boolean; label: string; small?: boolean }) {
+  const box = small ? 'w-11 h-11' : 'w-16 h-14'
   if (!TOKEN || !Number.isFinite(lat) || !Number.isFinite(lng)) {
-    return <div className="w-16 h-14 shrink-0 rounded-md bg-muted" aria-hidden="true" />
+    return <div className={`${box} shrink-0 rounded-md bg-muted`} aria-hidden="true" />
   }
   const x = lng.toFixed(5)
   const y = lat.toFixed(5)
@@ -19,7 +20,7 @@ export default function MapThumb({ lat, lng, exact, label }: { lat: number; lng:
   const zoom = exact ? 14 : 12.5
   const src = `https://api.mapbox.com/styles/v1/mapbox/light-v11/static/${overlay}${x},${y},${zoom},0/128x112@2x?attribution=false&logo=false&access_token=${TOKEN}`
   return (
-    <span className="relative w-16 h-14 shrink-0 rounded-xl overflow-hidden bg-cool-2 block">
+    <span className={`relative ${box} shrink-0 ${small ? 'rounded-[10px]' : 'rounded-xl'} overflow-hidden bg-cool-2 block`}>
       {/* eslint-disable-next-line @next/next/no-img-element -- a static map image, not worth the image optimiser */}
       <img
         src={src}
@@ -30,7 +31,7 @@ export default function MapThumb({ lat, lng, exact, label }: { lat: number; lng:
         className="w-full h-full object-cover"
       />
       {!exact && (
-        <span aria-hidden="true" className="absolute inset-0 m-auto w-10 h-10 rounded-full bg-[radial-gradient(circle,rgba(242,165,49,.7)_0%,rgba(242,165,49,.3)_45%,rgba(242,165,49,0)_100%)]" />
+        <span aria-hidden="true" className={`absolute inset-0 m-auto ${small ? 'w-8 h-8' : 'w-10 h-10'} rounded-full bg-[radial-gradient(circle,rgba(242,165,49,.7)_0%,rgba(242,165,49,.3)_45%,rgba(242,165,49,0)_100%)]`} />
       )}
     </span>
   )

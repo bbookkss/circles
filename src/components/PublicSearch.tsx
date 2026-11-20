@@ -209,16 +209,16 @@ export default function PublicSearch() {
               </div>
             )}
             {result.circles.length > 0 && (
-              <ul className="grid gap-2">
+              <ul className="grid gap-1.5">
                 {result.circles.map((c) => (
-                  <li key={c.id} className="flex items-center gap-3.5 rounded-2xl bg-background p-2 pr-4">
+                  <li key={c.id} className="flex items-center gap-3 rounded-xl bg-background p-1.5 pr-3.5">
                     {/* The area as a glow, never a pin: signed out, nobody sees the spot. */}
                     {c.lat !== null && c.lng !== null
-                      ? <MapThumb lat={c.lat} lng={c.lng} exact={false} label={c.name} />
-                      : <span className="w-16 h-14 shrink-0 rounded-xl bg-muted" aria-hidden />}
+                      ? <MapThumb small lat={c.lat} lng={c.lng} exact={false} label={c.name} />
+                      : <span className="w-11 h-11 shrink-0 rounded-[10px] bg-muted" aria-hidden />}
                     <div className="min-w-0 flex-1">
-                      <p className="font-medium truncate">{c.name}</p>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="font-medium text-[15px] leading-snug truncate">{c.name}</p>
+                      <p className="text-xs text-muted-foreground truncate">
                         {[c.neighborhood ?? c.city, daysText(c.days), c.members ? `${c.members} ${c.members === 1 ? 'member' : 'members'}` : '']
                           .filter(Boolean).join(', ')}
                       </p>

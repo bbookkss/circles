@@ -2,6 +2,7 @@ import 'server-only'
 import type Anthropic from '@anthropic-ai/sdk'
 import { createAnonClient } from '@/lib/supabase/anon'
 import { distanceKm, type Geo } from '@/lib/mapView'
+import { costOk, meetsOn, parseQuery, scoreText } from '@/lib/ai/match'
 
 /**
  * Tools for public search. Everything here runs on the anon client, so the
@@ -21,7 +22,12 @@ export const PUBLIC_TOOLS: Anthropic.Tool[] = [
     input_schema: {
       type: 'object',
       properties: {
-        query: { type: 'string', description: 'A few activity keywords, e.g. "pickup basketball". Max 60 characters.' },
+        query: {
+          type: 'string',
+          description:
+            'What they asked for, in a few words, keeping any day and cost: e.g. "basketball saturday", "free things this weekend", "running". ' +
+            'Synonyms and plurals are handled. An empty activity returns everything on those days. Max 60 characters.',
+        },
       },
       required: ['query'],
       additionalProperties: false,
@@ -62,50 +68,49 @@ export type PublicCircle = {
 
 const DAY = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
-/** Words to match on: up to 4, 3+ letters, stripped of anything PostgREST's .or() would read as syntax. */
-export function searchWords(query: string): string[] {
-  return query
-    .toLowerCase()
-    // Letters, digits and hyphens only: nothing PostgREST's filter syntax could read.
-    .split(/[^\p{L}\p{N}-]+/u)
-    .filter((w) => w.length >= 3 && w.length <= 30)
-    .slice(0, 4)
-}
-
 export async function searchPublicCircles(
   query: string,
   geo: Geo | null
 ): Promise<{ forModel: string; rows: PublicCircle[] }> {
-  const words = searchWords(query)
-  if (words.length === 0) return { forModel: '[]', rows: [] }
-
+  const parsed = parseQuery(query)
   const supabase = createAnonClient()
-  const or = words
-    .flatMap((w) => [`name.ilike.*${w}*`, `description.ilike.*${w}*`, `category.ilike.*${w}*`])
-    .join(',')
 
-  const { data, error } = await supabase
-    .from('circles')
-    .select('id, name, category, neighborhood, city, area_latitude, area_longitude, description')
-    .not('area_latitude', 'is', null)
-    .not('area_longitude', 'is', null)
-    .or(or)
-    .limit(20)
-
-  if (error || !data) return { forModel: '[]', rows: [] }
-
-  const ids = data.map((c) => c.id as string)
-  const [schedules, counts] = ids.length
-    ? await Promise.all([
-        supabase.from('circle_schedules').select('circle_id, days_of_week').in('circle_id', ids),
-        supabase.rpc('circle_member_counts', { cids: ids }),
-      ])
-    : [{ data: [] }, { data: [] }]
+  // Every public circle the anon role can read, matched in code. The old
+  // version built a PostgREST filter from the words and took the first 20
+  // rows in table order, nearest or not; it also missed plurals, synonyms
+  // and any question about a day.
+  const [{ data: all, error }, { data: allSchedules }] = await Promise.all([
+    supabase
+      .from('circles')
+      .select('id, name, category, neighborhood, city, area_latitude, area_longitude, description, is_free')
+      .not('area_latitude', 'is', null)
+      .not('area_longitude', 'is', null)
+      .limit(1000),
+    supabase.from('circle_schedules').select('circle_id, days_of_week').limit(3000),
+  ])
+  if (error || !all) return { forModel: '[]', rows: [] }
 
   const daysOf = new Map<string, number[]>()
-  for (const s of (schedules.data ?? []) as { circle_id: string; days_of_week: number[] | null }[]) {
+  for (const s of (allSchedules ?? []) as { circle_id: string; days_of_week: number[] | null }[]) {
     daysOf.set(s.circle_id, [...new Set([...(daysOf.get(s.circle_id) ?? []), ...(s.days_of_week ?? [])])].sort())
   }
+
+  const kmOf = (c: { area_latitude: unknown; area_longitude: unknown }) =>
+    geo && typeof c.area_latitude === 'number' && typeof c.area_longitude === 'number'
+      ? distanceKm(geo, { latitude: c.area_latitude, longitude: c.area_longitude })
+      : null
+  const ranked = all
+    .filter((c) => meetsOn(daysOf.get(c.id as string), parsed.days) && costOk(c.is_free as boolean | null, parsed.free))
+    .map((c) => ({ c, score: scoreText({ name: c.name, category: c.category, description: c.description, place: `${c.neighborhood ?? ''} ${c.city ?? ''}` }, parsed), km: kmOf(c) }))
+    .filter((x) => x.score > 0)
+    // Best match first, then nearest; far-away matches still count when
+    // nothing is close, but a near one beats a slightly better far one.
+    .sort((a, b) => b.score - a.score + ((a.km ?? 0) - (b.km ?? 0)) / 25)
+    .slice(0, 20)
+  const data = ranked.map((x) => x.c)
+
+  const ids = data.map((c) => c.id as string)
+  const counts = ids.length ? await supabase.rpc('circle_member_counts', { cids: ids }) : { data: [] }
   const countOf = new Map<string, number>()
   for (const r of (counts.data ?? []) as { circle_id: string; member_count: number }[]) {
     countOf.set(r.circle_id, Number(r.member_count))
@@ -133,7 +138,6 @@ export async function searchPublicCircles(
         about: typeof c.description === 'string' ? c.description.slice(0, 140) : '',
       }
     })
-    .sort((a, b) => (a.row.km ?? Infinity) - (b.row.km ?? Infinity))
 
   const forModel = JSON.stringify(
     rows.map(({ row, about }) => ({
@@ -144,6 +148,7 @@ export async function searchPublicCircles(
       days: row.days.map((d) => DAY[d] ?? ''),
       members: row.members,
       km: row.km,
+      cost: (all.find((c) => c.id === row.id)?.is_free === false) ? 'paid' : 'free',
       about_written_by_creator: about,
     }))
   )

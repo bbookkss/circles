@@ -3,6 +3,7 @@ import { distanceKm } from '@/lib/mapView'
 import { forwardGeocode } from '@/lib/geocoding'
 import type { CirclePlace } from '@/lib/approxLocation'
 import type { Card, Ctx, ToolOutput } from './types'
+import { costOk, meetsOn, parseQuery, scoreText } from '@/lib/ai/match'
 
 const STOP = new Set(
   'a an the i im me my to for in on at of and or with near some any find looking want group groups club circle circles something things do where can is there people weekly local'.split(' ')
@@ -67,7 +68,7 @@ export async function searchCircles(
   input: { query: string; near?: { latitude: number; longitude: number; label?: string | null } | null; radiusKm?: number | null }
 ): Promise<ToolOutput> {
   const { supabase, userId } = ctx
-  const words = wordsOf(String(input.query ?? ''))
+  const parsed = parseQuery(String(input.query ?? ''))
   const center = input.near ?? ctx.near
   const placeLabel = input.near ? (input.near.label ?? 'that spot') : null
   const radius = input.radiusKm ?? (input.near ? 3 : 60)
@@ -75,7 +76,7 @@ export async function searchCircles(
   const [{ data: circles }, { data: mine }] = await Promise.all([
     supabase
       .from('circles')
-      .select('id, name, description, category, emoji, neighborhood, city, area_latitude, area_longitude')
+      .select('id, name, description, category, emoji, neighborhood, city, area_latitude, area_longitude, is_free')
       .not('area_latitude', 'is', null)
       .not('area_longitude', 'is', null)
       .limit(500),
@@ -83,35 +84,48 @@ export async function searchCircles(
   ])
   const memberOf = new Set((mine ?? []).map((m) => m.circle_id as string))
 
-  const scored = (circles ?? [])
+  // Days are needed before ranking when the question names one ("on
+  // saturday", "this weekend"), so read every schedule RLS allows. A circle
+  // can have more than one schedule; their days are merged.
+  const { data: schedules } = await supabase.from('circle_schedules').select('circle_id, days_of_week').limit(2000)
+  const daysOf = new Map<string, number[]>()
+  for (const s of (schedules ?? []) as { circle_id: string; days_of_week: number[] | null }[]) {
+    daysOf.set(s.circle_id, [...new Set([...(daysOf.get(s.circle_id) ?? []), ...(s.days_of_week ?? [])])].sort())
+  }
+
+  const inReach = (circles ?? [])
     .map((c) => {
-      const hay = `${c.name} ${c.description ?? ''} ${c.category ?? ''} ${c.neighborhood ?? ''} ${c.city ?? ''}`.toLowerCase()
-      const score = words.length ? words.filter((w) => hay.includes(w)).length : 1
+      const score = scoreText(
+        { name: c.name, category: c.category, description: c.description, place: `${c.neighborhood ?? ''} ${c.city ?? ''}` },
+        parsed
+      )
       const km = center
         ? distanceKm(center, { latitude: c.area_latitude as number, longitude: c.area_longitude as number })
         : null
       return { c, score, km }
     })
-    .filter((x) => x.score > 0)
     // Within the radius asked for (default: a few km of a place, a metro of the person).
     .filter((x) => x.km === null || x.km <= radius)
-    .sort((a, b) => b.score - a.score || (a.km ?? 0) - (b.km ?? 0))
-    .slice(0, input.near ? 8 : 5)
+    .filter((x) => meetsOn(daysOf.get(x.c.id), parsed.days) && costOk(x.c.is_free, parsed.free))
+  const byRank = (a: { score: number; km: number | null }, b: { score: number; km: number | null }) =>
+    b.score - a.score || (a.km ?? 0) - (b.km ?? 0)
+  const limit = input.near ? 8 : 5
+  let scored = inReach.filter((x) => x.score > 0).sort(byRank).slice(0, limit)
+  // Nothing for the activity: say so, but offer what is there on those days
+  // nearby instead of an empty answer. The model is told which is which.
+  const exact = scored.length > 0
+  if (!exact && parsed.terms.length) {
+    scored = inReach.sort((a, b) => (a.km ?? 0) - (b.km ?? 0)).slice(0, 3)
+  }
 
   const ids = scored.map((x) => x.c.id as string)
   const memberIds = ids.filter((id) => memberOf.has(id))
-  const [countsRes, schedulesRes, placesRes] = await Promise.all([
+  const [countsRes, placesRes] = await Promise.all([
     ids.length ? supabase.rpc('circle_member_counts', { cids: ids }) : Promise.resolve({ data: [] }),
-    ids.length
-      ? supabase.from('circle_schedules').select('circle_id, days_of_week').in('circle_id', ids)
-      : Promise.resolve({ data: [] }),
     memberIds.length ? supabase.rpc('circle_places', { cids: memberIds }) : Promise.resolve({ data: [] }),
   ])
   const countOf = new Map(
     ((countsRes.data ?? []) as { circle_id: string; member_count: number }[]).map((r) => [r.circle_id, Number(r.member_count)])
-  )
-  const daysOf = new Map(
-    ((schedulesRes.data ?? []) as { circle_id: string; days_of_week: number[] }[]).map((s) => [s.circle_id, s.days_of_week])
   )
   const placeOf = new Map(((placesRes.data ?? []) as CirclePlace[]).map((p) => [p.circle_id, p]))
 
@@ -139,6 +153,15 @@ export async function searchCircles(
   return {
     forModel: {
       searched_near: placeLabel ?? (center ? 'the person' : 'anywhere'),
+      understood_as: {
+        activity: parsed.terms.map((t) => t[0]).join(', ') || 'anything',
+        days: parsed.days ? parsed.days.map((d) => DAY[d]).join(', ') : 'any',
+        cost: parsed.free === null ? 'any' : parsed.free ? 'free' : 'paid',
+      },
+      matched: exact || !parsed.terms.length,
+      note: exact || !parsed.terms.length
+        ? undefined
+        : 'Nothing matched the activity. These are other circles nearby: say so plainly before mentioning them.',
       results: scored.map(({ c, km }) => ({
         circle_id: c.id,
         name: c.name,
@@ -146,6 +169,7 @@ export async function searchCircles(
         neighborhood: c.neighborhood ?? c.city,
         meets: (daysOf.get(c.id) ?? []).map((d) => DAY[d]).join(', '),
         members: countOf.get(c.id) ?? 0,
+        cost: c.is_free === false ? 'paid' : 'free',
         you_are_a_member: memberOf.has(c.id),
         km: km === null ? null : Math.round(km * 10) / 10,
       })),

@@ -242,7 +242,7 @@ export default function AskCircles() {
                 <div key={i} className="space-y-2">
                   <p className={`text-[0.95rem] whitespace-pre-wrap break-words ${t.error ? 'text-muted-foreground' : ''}`}>{t.text}</p>
                   {(t.cards ?? []).length > 0 && (
-                    <ul className="space-y-2">
+                    <ul className="space-y-1.5">
                       {(t.cards ?? []).map((c, j) => (
                         <li key={j}>
                           <CardView
@@ -346,32 +346,30 @@ function CardView({
   }
   if (card.kind === 'message') {
     return (
-      <div className="rounded-2xl bg-muted p-3.5 space-y-1">
-        <p className="text-sm flex flex-wrap items-baseline gap-x-2">
-          <span className="font-medium">{card.from_name}</span>
-          <span className="text-xs text-muted-foreground">{new Date(card.sent_at).toLocaleString('en-US', { weekday: 'short', hour: 'numeric', minute: '2-digit' })}</span>
+      <Link href={`/messages/${encodeURIComponent(card.from_id)}`} className="block rounded-xl bg-muted px-3 py-2 hover:bg-cool-2 transition-colors text-sm">
+        <span className="flex items-baseline gap-2">
+          <span className="font-medium truncate">{card.from_name}</span>
           {card.unread && <span className="text-xs text-pen font-medium">New</span>}
-        </p>
-        <p className="text-sm whitespace-pre-wrap break-words">{card.text}</p>
-        <Link href={`/messages/${encodeURIComponent(card.from_id)}`} className="inline-block text-sm underline underline-offset-4 decoration-1 decoration-cool-2 hover:decoration-foreground">
-          Open conversation
-        </Link>
-      </div>
+          <span className="ml-auto shrink-0 text-xs text-muted-foreground">{new Date(card.sent_at).toLocaleString('en-US', { weekday: 'short', hour: 'numeric', minute: '2-digit' })}</span>
+        </span>
+        <span className="block text-muted-foreground line-clamp-2 break-words">{card.text}</span>
+      </Link>
     )
   }
   if (card.kind === 'circle') {
+    const meta = [
+      card.neighborhood,
+      card.days.length ? card.days.map((d) => DAYS[d]).join(', ') : null,
+      `${card.member_count} member${card.member_count === 1 ? '' : 's'}`,
+    ].filter(Boolean).join(', ')
     return (
-      <Link href={`/circles/${encodeURIComponent(card.circle_id)}`} className="flex gap-3 rounded-2xl bg-muted p-2 pr-3 hover:bg-cool-2 transition-colors">
-        {card.thumb && <MapThumb lat={card.thumb.lat} lng={card.thumb.lng} exact={card.thumb.exact} label={card.name} />}
-        <span className="min-w-0 text-sm">
+      <Link href={`/circles/${encodeURIComponent(card.circle_id)}`} className="flex items-center gap-2.5 rounded-xl bg-muted p-1.5 pr-3 hover:bg-cool-2 transition-colors">
+        {card.thumb && <MapThumb small lat={card.thumb.lat} lng={card.thumb.lng} exact={card.thumb.exact} label={card.name} />}
+        <span className="min-w-0 flex-1 text-sm leading-snug">
           <span className="block font-medium truncate">{card.emoji ? `${card.emoji} ` : ''}{card.name}</span>
-          <span className="block text-muted-foreground truncate">
-            {[card.neighborhood, card.days.length ? card.days.map((d) => DAYS[d]).join(', ') : null].filter(Boolean).join(', ')}
-          </span>
-          <span className="block text-muted-foreground">
-            {card.member_count} member{card.member_count === 1 ? '' : 's'}{card.is_member ? ', including you' : ''}
-          </span>
+          <span className="block text-xs text-muted-foreground truncate">{meta}</span>
         </span>
+        {card.is_member && <span className="shrink-0 text-[11px] font-medium text-muted-foreground">Joined</span>}
       </Link>
     )
   }
@@ -381,9 +379,10 @@ function CardView({
     <button
       type="button"
       onClick={() => onNavigate(href)}
-      className="w-full text-left rounded-2xl bg-muted p-3.5 hover:bg-cool-2 transition-colors text-sm"
+      className="inline-flex items-center gap-1.5 rounded-full bg-muted pl-3 pr-3.5 h-8 hover:bg-cool-2 transition-colors text-sm"
     >
-      Open the map at <span className="font-medium">{card.label}</span>
+      <svg aria-hidden width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 21s7-6.5 7-12a7 7 0 0 0-14 0c0 5.5 7 12 7 12z" /><circle cx="12" cy="9" r="2.5" /></svg>
+      Map of <span className="font-medium">{card.label}</span>
     </button>
   )
 }
@@ -401,79 +400,67 @@ function MeetCard({
   const scheduled = state ? state.scheduled : meet.scheduled_status
   const current = meet.open ? status : scheduled ?? status
   const showSuggestion = suggested && current !== suggested
+  const going = meet.going.length
+    ? `${meet.going.slice(0, 2).join(', ')}${meet.going.length > 2 ? ` +${meet.going.length - 2}` : ''} in`
+    : 'Nobody in yet'
+  // One line of state instead of a row of chips and a footnote.
+  const stateLine = meet.open && status
+    ? `Sent: ${WORD[status]}`
+    : !meet.open && scheduled
+      ? `Saved: ${WORD[scheduled]}, sends ${meet.opens_label}`
+      : status
+        ? `Sent: ${WORD[status]}`
+        : meet.open ? 'Check-in open' : `Check-in opens ${meet.opens_label}`
 
   return (
-    <div className="flex gap-3 rounded-2xl bg-muted p-2 pr-3">
-      {meet.thumb && <MapThumb lat={meet.thumb.lat} lng={meet.thumb.lng} exact={meet.thumb.exact} label={meet.circle_name} />}
-      <div className="min-w-0 flex-1 text-sm space-y-1.5">
-        <p>
-          <Link href={`/circles/${encodeURIComponent(meet.circle_id)}`} className="font-medium hover:underline underline-offset-4">
+    <div className="rounded-xl bg-muted p-1.5 pr-3 text-sm">
+      <div className="flex items-center gap-2.5">
+        {meet.thumb && <MapThumb small lat={meet.thumb.lat} lng={meet.thumb.lng} exact={meet.thumb.exact} label={meet.circle_name} />}
+        <div className="min-w-0 flex-1 leading-snug">
+          <Link href={`/circles/${encodeURIComponent(meet.circle_id)}`} className="block font-medium truncate hover:underline underline-offset-4">
             {meet.emoji ? `${meet.emoji} ` : ''}{meet.circle_name}
           </Link>
-          <span className="text-muted-foreground">, {meet.day_label}, {meet.time_label}</span>
-        </p>
-        {meet.venue && <p className="text-muted-foreground truncate">{meet.venue}</p>}
-        <p className="text-muted-foreground">
-          {meet.open ? <span className="text-pen font-medium">Check-in open. </span> : `Check-in opens ${meet.opens_label}. `}
-          {meet.going.length ? `${meet.going.slice(0, 3).join(', ')}${meet.going.length > 3 ? ` and ${meet.going.length - 3} more` : ''} ${meet.going.length === 1 ? 'is' : 'are'} in.` : 'Nobody has said yes yet.'}
-        </p>
-
-        <p className="flex flex-wrap gap-1.5">
-          {meet.open && status ? (
-            <Chip tone="sent"><Tick />Sent: {WORD[status]}</Chip>
-          ) : !meet.open && scheduled ? (
-            <Chip tone="scheduled">Scheduled: {WORD[scheduled]}. Sends {meet.opens_label}.</Chip>
-          ) : status ? (
-            <Chip tone="sent"><Tick />Sent: {WORD[status]}</Chip>
-          ) : (
-            <Chip tone="none">Not answered</Chip>
-          )}
-          {showSuggestion && <Chip tone="suggested">Suggested: {WORD[suggested]}. Not sent.</Chip>}
-        </p>
-
-        <div role="group" aria-label={`Your answer for ${meet.circle_name}`} className="flex flex-wrap items-center gap-1.5 pt-0.5">
-          {(['yes', 'maybe', 'no'] as Status[]).map((s) => {
-            const pressed = current === s
-            const isSuggested = showSuggestion && suggested === s
-            return (
-              <button
-                key={s}
-                type="button"
-                disabled={state?.busy}
-                aria-pressed={pressed}
-                onClick={() => onAnswer(meet, s)}
-                className={[
-                  'h-8 px-3.5 rounded-full text-[0.8rem] font-medium border transition-colors disabled:opacity-50',
-                  pressed
-                    ? s === 'yes' ? 'bg-heat text-[#1a2230] border-heat' : 'bg-foreground text-background border-foreground'
-                    : isSuggested ? 'bg-background border-dashed border-foreground' : 'bg-background border-transparent hover:border-cool-2',
-                ].join(' ')}
-              >
-                {LABEL[s]}
-              </button>
-            )
-          })}
-          {state?.prev && (
-            <button type="button" disabled={state.busy} onClick={() => onUndo(meet)} className="h-8 px-1 text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground">
-              Undo
-            </button>
-          )}
+          <p className="text-xs text-muted-foreground truncate">
+            {[`${meet.day_label} ${meet.time_label}`, meet.venue, going].filter(Boolean).join(', ')}
+          </p>
         </div>
-        {!meet.open && <p className="text-xs text-muted-foreground">Check-in isn&apos;t open yet. A tap is saved and sent {meet.opens_label}.</p>}
-        {state?.error && <p className="text-xs text-destructive">{state.error}</p>}
       </div>
+
+      <div role="group" aria-label={`Your answer for ${meet.circle_name}`} className="flex flex-wrap items-center gap-1 mt-1.5 pl-1">
+        {(['yes', 'maybe', 'no'] as Status[]).map((s) => {
+          const pressed = current === s
+          const isSuggested = showSuggestion && suggested === s
+          return (
+            <button
+              key={s}
+              type="button"
+              disabled={state?.busy}
+              aria-pressed={pressed}
+              onClick={() => onAnswer(meet, s)}
+              className={[
+                'h-7 px-3 rounded-full text-xs font-medium border transition-colors disabled:opacity-50',
+                pressed
+                  ? s === 'yes' ? 'bg-heat text-[#1a2230] border-heat' : 'bg-foreground text-background border-foreground'
+                  : isSuggested ? 'bg-background border-dashed border-foreground' : 'bg-background border-transparent hover:border-cool-2',
+              ].join(' ')}
+            >
+              {LABEL[s]}
+            </button>
+          )
+        })}
+        <span className={`ml-1 text-xs ${meet.open && !status ? 'text-pen font-medium' : 'text-muted-foreground'}`}>
+          {(status || scheduled) && <Tick />} {stateLine}
+          {showSuggestion ? `. Suggested ${WORD[suggested]}, not sent` : ''}
+        </span>
+        {state?.prev && (
+          <button type="button" disabled={state.busy} onClick={() => onUndo(meet)} className="h-7 px-1 text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground">
+            Undo
+          </button>
+        )}
+      </div>
+      {state?.error && <p className="text-xs text-destructive mt-1 pl-1">{state.error}</p>}
     </div>
   )
-}
-
-function Chip({ tone, children }: { tone: 'none' | 'sent' | 'scheduled' | 'suggested'; children: React.ReactNode }) {
-  const cls = {
-    none: 'bg-background text-muted-foreground',
-    sent: 'bg-foreground text-background',
-    scheduled: 'bg-cool-2 text-foreground',
-    suggested: 'border border-dashed border-muted-foreground text-foreground',
-  }[tone]
-  return <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${cls}`}>{children}</span>
 }
 
 function Tick() {

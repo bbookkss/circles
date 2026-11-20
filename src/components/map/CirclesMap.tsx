@@ -412,18 +412,19 @@ export default function CirclesMap({
           >
             <span className="relative flex flex-col items-center cursor-pointer group">
               <span
-                className="flex items-center gap-1.5 bg-background border border-foreground rounded-full shadow-[0_2px_8px_rgba(26,34,48,0.14)] px-2.5 py-1.5 text-[13px] font-medium leading-none group-hover:-translate-y-0.5 transition-transform"
+                className="map-tag flex items-center gap-1.5 rounded-full pl-2 pr-1 py-1 text-[13px] font-medium leading-none text-foreground group-hover:-translate-y-0.5 transition-transform"
                 title={g.members.map((m) => m.name).join(', ')}
               >
                 <span aria-hidden className="flex gap-0.5">{g.members.slice(0, 3).map((m) => <span key={m.id}>{m.emoji ?? '•'}</span>)}</span>
-                {g.members.length} circles
+                <span className="num rounded-full bg-foreground text-background text-[11px] font-semibold min-w-5 h-5 px-1.5 grid place-items-center">{g.members.length}</span>
+                <span className="sr-only">circles</span>
               </span>
-              <span aria-hidden className="w-px h-2 bg-foreground" />
+              <span aria-hidden className="map-dot mt-1.5" />
               {open && (
                 // Same spot: the list is the only way to tell them apart.
                 <div
                   onClick={(e) => e.stopPropagation()}
-                  className="absolute bottom-full mb-2 w-[min(280px,80vw)] bg-background border border-border rounded-2xl shadow-[0_8px_30px_rgba(26,34,48,0.18)] p-1.5 text-left cursor-default"
+                  className="map-tag absolute bottom-full mb-2 w-[min(280px,80vw)] rounded-2xl p-1.5 text-left cursor-default"
                 >
                   <p className="px-2.5 pt-1.5 pb-1 text-xs text-muted-foreground">{g.samePlace ? 'All meet at this spot' : 'Close together here'}</p>
                   <ul>
@@ -433,7 +434,7 @@ export default function CirclesMap({
                             which is what everyone expected it to do. */}
                         <Link
                           href={`/circles/${m.id}`}
-                          className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl hover:bg-muted text-left"
+                          className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl hover:bg-foreground/[0.06] text-left"
                         >
                           <span aria-hidden className="w-5 text-center">{m.emoji ?? '•'}</span>
                           <span className="flex-1 min-w-0 truncate text-sm font-medium">{m.name}</span>
@@ -483,11 +484,13 @@ export default function CirclesMap({
               into a tag. */}
           {(() => {
             const open = popupCircle?.id === circle.id
+            // Approximate circles read quieter (muted name, hollow dot);
+            // businesses get a faint ring. No ink outlines: the glass is the edge.
             const edge = circle.approximate
-              ? 'border-transparent text-foreground'
+              ? 'text-foreground/80'
               : circle.kind === 'commercial'
-                ? 'border-foreground ring-1 ring-foreground/30 text-foreground'
-                : 'border-foreground text-foreground'
+                ? 'ring-1 ring-foreground/25 text-foreground'
+                : 'text-foreground'
             return (
               <span className={`relative flex flex-col items-center cursor-pointer group ${open ? 'z-20' : ''}`}>
                 {/* The width is a min-width, and that is the whole trick.
@@ -508,7 +511,7 @@ export default function CirclesMap({
                     this, and expanding here put two copies of the same
                     circle on one screen. */}
                 <div
-                  className={`${circle.is_free === false && !open ? 'bg-cool' : 'bg-background'} border shadow-[0_2px_8px_rgba(26,34,48,0.14)] rounded-full ${edge} ${
+                  className={`map-tag rounded-full ${edge} ${
                     open
                       ? 'md:rounded-2xl md:min-w-[240px] md:transition-[border-radius,min-width] md:duration-300 md:ease-out'
                       : 'md:min-w-0 group-hover:-translate-y-0.5 transition-transform duration-150'
@@ -535,7 +538,7 @@ export default function CirclesMap({
                     {circle.emoji ? `${circle.emoji} ` : ''}{circle.name}
                     {/* Paid circles: a tinted tag and a $ mark, so cost reads
                         before anyone taps. Free is the default look. */}
-                    {circle.is_free === false && <span aria-label="paid" className="ml-1.5 inline-grid place-items-center w-4 h-4 rounded-full bg-foreground text-background text-[10px] font-semibold align-[1px]">$</span>}
+                    {circle.is_free === false && <span aria-label="paid" className="ml-1.5 inline-grid place-items-center w-4 h-4 rounded-full bg-cool-2 text-foreground text-[10px] font-semibold align-[1px]">$</span>}
                   </button>
                   <div
                     // max-w-0 is the other half, and the non-obvious half.
@@ -583,7 +586,7 @@ export default function CirclesMap({
                     </div>
                   </div>
                 </div>
-                <span aria-hidden className={`w-px h-2 ${circle.approximate ? 'bg-muted-foreground' : 'bg-foreground'}`} />
+                <span aria-hidden className={`map-dot mt-1.5 ${circle.approximate ? 'map-dot-approx' : ''}`} />
               </span>
             )
           })()}

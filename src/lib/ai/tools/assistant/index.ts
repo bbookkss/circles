@@ -76,7 +76,16 @@ export const ASSISTANT_TOOLS: Anthropic.Beta.BetaTool[] = [
     description:
       "Find circles by activity or name near the person. For anywhere else, call find_place first and then circles_near with its coordinates. Circles they're not in show only an area, never an exact spot.",
     strict: true,
-    input_schema: obj({ query: { type: 'string' } }, ['query']),
+    input_schema: obj(
+      {
+        query: {
+          type: 'string',
+          description:
+            'What they want, in their words, keeping any day and cost: "basketball saturday", "free stuff this weekend", "running". Plurals and synonyms are handled; leave it empty for anything. The result says how it was understood and whether anything matched.',
+        },
+      },
+      ['query']
+    ),
   },
   {
     name: 'find_place',

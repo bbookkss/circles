@@ -25,7 +25,7 @@ export const dynamic = 'force-dynamic'
 
 const SYSTEM = `You help a signed-out visitor find circles: local groups that meet on a regular schedule, like a weekly run or a chess night.
 
-Use search_public_circles with a few activity keywords from what they asked for, then call answer once with a short, friendly sentence and the ids of the best matches.
+Use search_public_circles with what they asked for, in a few words, keeping any day and cost they mentioned ("basketball saturday", "free things this weekend"); synonyms and plurals are handled. If the search finds nothing, try once more with a broader or related activity (e.g. "salsa" then "dance"). Then call answer once with a short, friendly sentence and the ids of the best matches.
 
 Rules:
 - Keep it to one or two short sentences, under 160 characters. The results are shown as cards under your sentence, so don't list or describe them. No links, no web addresses, no email addresses.
@@ -145,11 +145,9 @@ export async function POST(request: Request) {
       for (const use of uses) {
         const input = (use.input ?? {}) as Record<string, unknown>
         if (use.name === 'search_public_circles') {
+          // An empty query is allowed: "what's on this weekend" has no
+          // activity, and means everything nearby.
           const q = typeof input.query === 'string' ? cleanInput(input.query, 60) : ''
-          if (!q) {
-            results.push({ type: 'tool_result', tool_use_id: use.id, is_error: true, content: 'query must be a non-empty string' })
-            continue
-          }
           const { forModel, rows } = await searchPublicCircles(q, geo)
           for (const r of rows) seen.set(r.id, r)
           lastRows = rows
