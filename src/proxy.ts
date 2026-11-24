@@ -91,7 +91,9 @@ export const config = {
   // not catch them, and without naming them here middleware redirects them to
   // /login for signed-out visitors -- which is everyone looking at the landing
   // page, i.e. exactly the people whose tab would show no icon at all.
+  // The same goes for the web app manifest and its icons (app/manifest.ts,
+  // app/pwa-icon): the browser fetches them signed out.
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|icon|apple-icon|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|icon|apple-icon|manifest.webmanifest|pwa-icon|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }

@@ -1,7 +1,8 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Host_Grotesk } from "next/font/google";
 import "./globals.css";
 import ViewerTimezone from "@/components/ViewerTimezone";
+import InstallHint from "@/components/InstallHint";
 
 /**
  * One family for everything: Host Grotesk. Big headings at weight 300 with
@@ -22,6 +23,19 @@ export const metadata: Metadata = {
   title: "Circles · groups that meet every week",
   description:
     "Nobody makes a friend at a one-off. Circles are local groups that meet on a schedule, close enough to walk to. See who is coming before you go.",
+  applicationName: "Circles",
+  // Added to an iPhone home screen, open full screen with no Safari bar.
+  appleWebApp: { capable: true, title: "Circles", statusBarStyle: "default" },
+};
+
+export const viewport: Viewport = {
+  // Lets content use the full screen; the nav, tab bar and sheets already
+  // pad themselves with env(safe-area-inset-*).
+  viewportFit: "cover",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f7f8fa" },
+    { media: "(prefers-color-scheme: dark)", color: "#252b34" },
+  ],
 };
 
 /**
@@ -40,6 +54,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-full flex flex-col">
         <ViewerTimezone />
         {children}
+        <InstallHint />
       </body>
     </html>
   );
