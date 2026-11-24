@@ -25,7 +25,10 @@ export const metadata: Metadata = {
     "Nobody makes a friend at a one-off. Circles are local groups that meet on a schedule, close enough to walk to. See who is coming before you go.",
   applicationName: "Circles",
   // Added to an iPhone home screen, open full screen with no Safari bar.
-  appleWebApp: { capable: true, title: "Circles", statusBarStyle: "default" },
+  // black-translucent: the app draws under the status bar instead of iOS
+  // painting it white (a white strip in dark mode). TopNav puts a band
+  // behind the clock and every page is pushed down by the safe area.
+  appleWebApp: { capable: true, title: "Circles", statusBarStyle: "black-translucent" },
 };
 
 export const viewport: Viewport = {

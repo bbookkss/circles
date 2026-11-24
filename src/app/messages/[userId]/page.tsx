@@ -43,7 +43,7 @@ export default async function MessageThreadPage({ params }: { params: Promise<{ 
   return (
     <>
       <TopNav />
-      <div className="pt-14 pb-16 md:pb-0 h-screen flex flex-col bg-background">
+      <div className="pt-14 pb-16 md:pb-0 h-[calc(100dvh-env(safe-area-inset-top))] flex flex-col bg-background">
         <header className="max-w-2xl w-full mx-auto px-4 md:px-6 pt-5 pb-3 flex items-center gap-3 flex-shrink-0 border-b border-border">
           <BackButton fallback="/messages" />
           <Link href={`/profile/${other.id}`} className="text-xl font-medium tracking-tight hover:underline underline-offset-4 decoration-1">

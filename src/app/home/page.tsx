@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button'
 import HomeCompose from '@/components/HomeCompose'
 import PostItem from '@/components/PostItem'
 import CheckInControl from '@/components/CheckInControl'
-import NotificationsSwitch from '@/components/NotificationsSwitch'
 import { todayISO, dayNameISO, daysBetweenISO, relativeDayLabel, formatTime, checkInWindow, meetPhase } from '@/lib/schedule'
 import MeetZone from '@/components/MeetZone'
 import HeatMap, { type HeatArea } from '@/components/HeatMap'
@@ -301,8 +300,6 @@ export default async function HomePage() {
         </section>
 
         <div className="mx-auto max-w-3xl px-5 md:px-11 pt-2 pb-10 space-y-12">
-          {/* Only in the installed app, only until answered. */}
-          <NotificationsSwitch prompt />
 
           {/* ---------------------------------------------------------
               The week. The greeting has a verb because the page has a job:

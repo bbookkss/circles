@@ -1,34 +1,67 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect } from 'react'
+import { saveTheme } from '@/app/actions/settings'
 
 /**
- * Light / dark. Follows the system until clicked, then remembers the choice
- * ("circles-theme" in localStorage). The class is first set by the inline
- * script in layout.tsx, before paint; this only flips it.
+ * Light / dark.
+ *
+ * Before paint, the inline script in layout.tsx applies the choice kept on
+ * this device ("circles-theme" in localStorage), or the device's own setting
+ * if there is none. A tap flips it at once, keeps it on this device, and
+ * saves it to the account (user_settings), so it follows the person to their
+ * phone, the installed app and any other browser.
+ *
+ * `saved` is the account's choice, read by TopNav on the server. When it
+ * differs from what this device has, the account wins: that's how a choice
+ * made on the laptop reaches the phone. With nothing chosen anywhere, the
+ * theme follows the device live, so switching the phone to dark at sunset
+ * switches Circles too.
  */
-export default function ThemeToggle({ className = '' }: { className?: string }) {
-  // Read once on the client; the server renders without it, hence the
-  // suppressed hydration warning on the label below.
-  const [dark, setDark] = useState(
-    () => typeof document !== 'undefined' && document.documentElement.classList.contains('dark')
-  )
+const KEY = 'circles-theme'
+const SYNCED = 'circles-theme-synced'
+
+function apply(dark: boolean) {
+  document.documentElement.classList.toggle('dark', dark)
+}
+
+export default function ThemeToggle({ className = '', saved = null }: { className?: string; saved?: 'light' | 'dark' | null }) {
+
+  useEffect(() => {
+    let local: string | null = null
+    try { local = localStorage.getItem(KEY) } catch {}
+    // Once per visit: after that, `saved` can be a stale server render from
+    // before a tap, and obeying it would undo the tap.
+    let synced = false
+    try { synced = sessionStorage.getItem(SYNCED) === '1'; sessionStorage.setItem(SYNCED, '1') } catch {}
+    if (!synced && saved && saved !== local) {
+      try { localStorage.setItem(KEY, saved) } catch {}
+      apply(saved === 'dark')
+      local = saved
+    }
+    if (local) return
+    const mq = matchMedia('(prefers-color-scheme: dark)')
+    const follow = () => apply(mq.matches)
+    follow()
+    mq.addEventListener('change', follow)
+    return () => mq.removeEventListener('change', follow)
+  }, [saved])
 
   function flip() {
     const next = !document.documentElement.classList.contains('dark')
-    document.documentElement.classList.toggle('dark', next)
-    try {
-      localStorage.setItem('circles-theme', next ? 'dark' : 'light')
-    } catch {}
-    setDark(next)
+    apply(next)
+    try { localStorage.setItem(KEY, next ? 'dark' : 'light'); sessionStorage.setItem(SYNCED, '1') } catch {}
+    // After the change is on screen; a failure here only means the next
+    // device won't know, never that this one doesn't switch.
+    saveTheme(next ? 'dark' : 'light').catch(() => {})
   }
 
   return (
     <button
       type="button"
       onClick={flip}
-      suppressHydrationWarning
-      aria-label={dark ? 'Switch to light mode' : 'Switch to dark mode'}
+      // The class on <html> is the state; nothing here needs a copy of it.
+      aria-label="Switch between light and dark mode"
       className={`w-9 h-9 rounded-full grid place-items-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors ${className}`}
     >
       {/* Both icons render; CSS picks one, so there's no wrong-icon flash before hydration. */}

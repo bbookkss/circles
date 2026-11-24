@@ -197,7 +197,7 @@ export default function ExploreClient({ circles, people, initialView, origin: or
     // The map fills the screen and runs under the glass nav. On wider screens
     // the list floats over it on a glass panel; on a phone, list and map are
     // two views switched at the bottom.
-    <div className="relative h-screen w-full overflow-hidden">
+    <div className="relative h-[calc(100dvh-env(safe-area-inset-top))] w-full overflow-hidden">
 
       {/* Sidebar */}
       <aside

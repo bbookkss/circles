@@ -527,7 +527,12 @@ html[data-ask-open] .feedback-widget { display: none; }
 
 /* Maps that run up under the floating glass nav: their top-right controls
    (zoom, compass, locate) start below it instead of hiding behind it. */
-.map-under-nav .mapboxgl-ctrl-top-right { top: calc(4.25rem + env(safe-area-inset-top)); }
+.map-under-nav .mapboxgl-ctrl-top-right { top: 4.25rem; }
+
+/* The installed iPhone app draws under the status bar. Push every page down
+   by that much, so the fixed nav (offset the same) and each page's own
+   pt-14 line up as they do in a browser, where the inset is zero. */
+body { padding-top: env(safe-area-inset-top); }
 /* Controls above the markers. Markers carry z-indexes so an open card sits
    over its neighbours, and without this they drew over zoom and locate. */
 .mapboxgl-control-container .mapboxgl-ctrl-top-right,

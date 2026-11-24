@@ -10,12 +10,13 @@ import { removePushSubscription, savePushSubscription, sendTestPush } from '@/ap
  * after a tap on something like this button (iOS then shows its own Allow
  * prompt). So the states are spelled out rather than leaving a dead button.
  *
- * `prompt` is the Home-screen variant: shown only in the installed app, only
- * while undecided, and gone for good once dismissed.
+ * `prompt` is the gold button in the top bar on every signed-in page, until
+ * notifications are on for this device. Not shown in iPhone Safari, where
+ * notifications can't work; the install hint covers that instead.
  */
 
 const KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
-const DISMISS = 'circles-push-prompt'
+const CHANGED = 'circles-push-changed'
 
 type State =
   | 'loading'
@@ -50,11 +51,12 @@ export default function NotificationsSwitch({ prompt = false }: { prompt?: boole
   const [state, setState] = useState<State>('loading')
   const [busy, setBusy] = useState(false)
   const [note, setNote] = useState<string | null>(null)
-  const [hidden, setHidden] = useState(false)
 
   useEffect(() => {
     let live = true
-    ;(async () => {
+    // Every copy (the gold button in the bar, the switch on Profile) re-checks
+    // when any of them turns notifications on or off.
+    const check = () => (async () => {
       let next: State
       if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
         next = isIOS() && !isStandalone() ? 'install-first' : 'unsupported'
@@ -65,15 +67,12 @@ export default function NotificationsSwitch({ prompt = false }: { prompt?: boole
         const sub = await reg?.pushManager.getSubscription()
         next = sub && Notification.permission === 'granted' ? 'on' : 'off'
       }
-      let dismissed = false
-      try { dismissed = localStorage.getItem(DISMISS) === '1' } catch {}
-      if (live) {
-        setState(next)
-        setHidden(prompt && (dismissed || !isStandalone()))
-      }
-    })().catch(() => live && setState('unsupported'))
-    return () => { live = false }
-  }, [prompt])
+      if (live) setState(next)
+    })().catch(() => { if (live) setState('unsupported') })
+    check()
+    window.addEventListener(CHANGED, check)
+    return () => { live = false; window.removeEventListener(CHANGED, check) }
+  }, [])
 
   if (!KEY) return null
 
@@ -100,7 +99,7 @@ export default function NotificationsSwitch({ prompt = false }: { prompt?: boole
         return
       }
       setState('on')
-      if (prompt) setHidden(true)
+      window.dispatchEvent(new Event(CHANGED))
     } catch {
       setNote("Couldn't turn on notifications. Try again.")
     } finally {
@@ -119,6 +118,7 @@ export default function NotificationsSwitch({ prompt = false }: { prompt?: boole
         await sub.unsubscribe()
       }
       setState('off')
+      window.dispatchEvent(new Event(CHANGED))
     } finally {
       setBusy(false)
     }
@@ -131,27 +131,21 @@ export default function NotificationsSwitch({ prompt = false }: { prompt?: boole
     setBusy(false)
   }
 
-  function dismiss() {
-    setHidden(true)
-    try { localStorage.setItem(DISMISS, '1') } catch {}
-  }
-
   if (prompt) {
-    if (hidden || state !== 'off') return null
+    if (state !== 'off') return null
     return (
-      <div className="rounded-2xl bg-muted px-4 py-3.5 text-sm">
-        <p className="font-medium">Get notified?</p>
-        <p className="text-muted-foreground mt-1 leading-snug">{WHAT_IS_SENT}</p>
-        <div className="flex gap-2 mt-3">
-          <button type="button" disabled={busy} onClick={turnOn} className="h-9 px-4 rounded-full bg-foreground text-background text-[13px] font-medium disabled:opacity-50">
-            Turn on
-          </button>
-          <button type="button" onClick={dismiss} className="h-9 px-3 rounded-full text-[13px] text-muted-foreground hover:text-foreground">
-            Not now
-          </button>
-        </div>
-        {note && <p className="text-xs text-muted-foreground mt-2">{note}</p>}
-      </div>
+      <button
+        type="button"
+        disabled={busy}
+        onClick={turnOn}
+        title={note ?? 'Turn on notifications for meet reminders and messages'}
+        className="inline-flex items-center gap-1.5 h-9 pl-2.5 pr-3 rounded-full bg-heat text-[#1a2230] text-[13px] font-semibold whitespace-nowrap shadow-[0_2px_10px_rgba(242,165,49,0.45)] hover:brightness-105 disabled:opacity-60 transition"
+      >
+        <svg aria-hidden width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+          <path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9" /><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
+        </svg>
+        {note ? 'Try again' : <><span className="sm:hidden">Turn on alerts</span><span className="hidden sm:inline">Turn on notifications</span></>}
+      </button>
     )
   }
 

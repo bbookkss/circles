@@ -6,6 +6,7 @@ import ThemeToggle from '@/components/ThemeToggle'
 import BottomNav from '@/components/BottomNav'
 import FeedbackButton from '@/components/FeedbackButton'
 import AskCircles from '@/components/AskCirclesLoader'
+import NotificationsSwitch from '@/components/NotificationsSwitch'
 
 export default async function TopNav() {
   const supabase = await createClient()
@@ -14,12 +15,14 @@ export default async function TopNav() {
     ? await supabase.from('profiles').select('full_name').eq('id', user.id).maybeSingle()
     : { data: null }
 
-  const [{ count: unread }, { count: unreadDms }] = user
+  const [{ count: unread }, { count: unreadDms }, { data: settings }] = user
     ? await Promise.all([
         supabase.from('notifications').select('*', { count: 'exact', head: true }).eq('user_id', user.id).eq('read', false),
         supabase.from('messages').select('*', { count: 'exact', head: true }).eq('recipient_id', user.id).eq('read', false),
+        supabase.from('user_settings').select('theme').eq('user_id', user.id).maybeSingle(),
       ])
-    : [{ count: 0 }, { count: 0 }]
+    : [{ count: 0 }, { count: 0 }, { data: null }]
+  const savedTheme = (settings?.theme as 'light' | 'dark' | null | undefined) ?? null
 
   const initials = profile?.full_name
     ? profile.full_name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
@@ -38,7 +41,12 @@ export default async function TopNav() {
     {user && <BottomNav unread={unread ?? 0} unreadDms={unreadDms ?? 0} />}
     {/* A glass pill floating over the page, which scrolls under it. The outer
         bar is transparent and lets clicks through around the pill. */}
-    <nav className="fixed top-0 left-0 right-0 z-50 h-14 px-3 pt-2 pointer-events-none">
+    {/* The installed iPhone app draws under the status bar (black-translucent,
+        so dark mode isn't a white strip). This band sits behind the clock:
+        ink in light mode so the white clock reads, page colour in dark.
+        Zero height everywhere else. */}
+    <div aria-hidden className="fixed top-0 inset-x-0 z-[51] h-[env(safe-area-inset-top)] bg-[#1a2230] dark:bg-background pointer-events-none" />
+    <nav className="fixed top-[env(safe-area-inset-top)] left-0 right-0 z-50 h-14 px-3 pt-2 pointer-events-none">
       <div className="glass pointer-events-auto mx-auto max-w-3xl h-12 rounded-full flex items-center gap-1 pl-4 pr-1.5">
         <Link href="/home" className="flex items-center gap-2 font-semibold text-[1.05rem] tracking-tight mr-2 -ml-2 px-2 py-1.5 rounded-full hover:bg-muted focus-visible:bg-muted outline-none transition-colors">
           <Logo />
@@ -56,7 +64,9 @@ export default async function TopNav() {
         </div>
 
         <div className="ml-auto flex items-center gap-1">
-          <ThemeToggle />
+          {/* Gold until notifications are on for this device; then gone. */}
+          {user && <NotificationsSwitch prompt />}
+          <ThemeToggle saved={savedTheme} />
           <Link
             href="/notifications"
             aria-label={unread ? `Notifications, ${unread} new` : 'Notifications'}
