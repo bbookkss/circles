@@ -1,7 +1,9 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { after } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { sendPush } from '@/lib/push'
 
 export async function sendMessage(recipientId: string, content: string) {
   const supabase = await createClient()
@@ -21,6 +23,22 @@ export async function sendMessage(recipientId: string, content: string) {
     content: text,
   })
   if (error) return { error: 'This message could not be sent. You can only message people you follow.' }
+
+  // Tell the recipient's devices, after the reply has gone back to the
+  // sender. Only the sender's first name: the text itself stays off the lock
+  // screen. One tag per sender, so a burst of messages is one notification.
+  // The name is read now, not inside after(): the request's cookies (and so
+  // the signed-in client) belong to the request.
+  const { data: me } = await supabase.from('profiles').select('full_name').eq('id', user.id).maybeSingle()
+  const first = ((me?.full_name as string | null) ?? '').split(' ')[0] || 'Someone'
+  after(async () => {
+    await sendPush(recipientId, {
+      title: first,
+      body: 'Sent you a message',
+      url: `/messages/${encodeURIComponent(user.id)}`,
+      tag: `msg-${user.id}`,
+    }).catch(() => {})
+  })
 
   revalidatePath(`/messages/${recipientId}`)
   revalidatePath('/messages')

@@ -438,6 +438,22 @@ works fine from this machine.
       ship. Signup was cut to three fields in the meantime, which is most of
       the same benefit without the wait.
 
+## Notifications (Web Push): built 2026-11-24
+
+- [ ] **Apply `supabase/push-2026-11-24.sql`** (`supabase/apply.sh push-2026-11-24`).
+      Adds `push_subscriptions` (own rows only), `push_sends` (claim log,
+      service role) and `due_push_notifications()` (service role).
+- [ ] **VAPID keys in Vercel Production**: `NEXT_PUBLIC_VAPID_PUBLIC_KEY`,
+      `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`. Generated into `.env.local`.
+      The public key is baked in at build, so redeploy after adding. Without
+      them the switch is hidden and nothing sends.
+- [ ] **Test on a real iPhone**: install from Safari, Profile → Turn on
+      notifications → Send a test. iOS 16.4+ and home-screen only.
+- Sends: check-in open (24 h before, unanswered), 3 h before a meet you said
+  yes to (both from the 15-minute `circle-reminders` cron), and new messages
+  (sender's first name only, never the text).
+- Not built: per-type or per-circle settings; it's one switch per device.
+
 ## AI agents: built 2026-11-18, not switched on
 
 Public search (`/api/find`, landing page) and Ask Circles (`/api/assistant`,

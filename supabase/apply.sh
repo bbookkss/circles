@@ -36,8 +36,16 @@ ref="${ref#https://}"; ref="${ref%%.supabase.co*}"
 psql=/opt/homebrew/opt/libpq/bin/psql
 [ -x "$psql" ] || { echo "$psql not found (brew install libpq)" >&2; exit 1; }
 
+# The direct host is IPv6-only. On a network without IPv6 it doesn't even
+# resolve, so fall back to the session pooler, which is IPv4. Its region is
+# us-west-2 (the us-west-1 name in SUPABASE_DB_URL answers "tenant not found").
+if curl -6 -s -m 4 -o /dev/null https://ipv6.google.com; then
+  conn="postgresql://postgres@db.${ref}.supabase.co:5432/postgres"
+else
+  echo "no IPv6 here; using the IPv4 session pooler"
+  conn="host=aws-0-us-west-2.pooler.supabase.com port=5432 user=postgres.${ref} dbname=postgres sslmode=require"
+fi
+
 echo "applying $file to $ref"
-PGPASSWORD="$pw" "$psql" \
-  "postgresql://postgres@db.${ref}.supabase.co:5432/postgres" \
-  -v ON_ERROR_STOP=1 -f "$file"
+PGPASSWORD="$pw" "$psql" "$conn" -v ON_ERROR_STOP=1 -f "$file"
 echo "done: $file"

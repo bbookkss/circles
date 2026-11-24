@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { emailConfigured, sendEmail } from '@/lib/email/send'
 import { reminderSubject, reminderText, reminderHtml } from '@/lib/email/reminder'
+import { pushConfigured, sendPush } from '@/lib/push'
 
 /**
  * The endpoint pg_cron calls to send meet reminders.
@@ -56,6 +57,10 @@ export async function POST(request: Request) {
   }
 
   const admin = createAdminClient()
+  // Notifications first and independently: they don't depend on the mail
+  // provider, and a mail failure shouldn't stop them.
+  const push = await sendDuePush(admin).catch((e) => ({ error: e instanceof Error ? e.message : 'push failed' }))
+
   const { data, error } = await admin.rpc('due_email_reminders')
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
@@ -66,6 +71,7 @@ export async function POST(request: Request) {
 
   if (!hasProvider) {
     return NextResponse.json({
+      push,
       mode: 'dry-run',
       reason: 'RESEND_API_KEY is not set, so nothing was sent and nothing was claimed',
       due: due.length,
@@ -107,7 +113,46 @@ export async function POST(request: Request) {
     }
   }
 
-  return NextResponse.json({ mode: 'live', due: due.length, sent, skipped, failures })
+  return NextResponse.json({ push, mode: 'live', due: due.length, sent, skipped, failures })
+}
+
+type DuePush = {
+  user_id: string
+  circle_id: string
+  circle_name: string
+  timezone: string | null
+  place: string | null
+  occurs_on: string
+  kind: 'checkin' | 'soon'
+  starts_at: string
+}
+
+/**
+ * Check-in opened on a meet you haven't answered; a meet you said yes to
+ * starts in about 3 hours. Same claim-then-send order as the email: a crash
+ * between the two loses one notification, never sends one twice.
+ */
+async function sendDuePush(admin: ReturnType<typeof createAdminClient>) {
+  if (!pushConfigured()) return { mode: 'off' }
+  const { data, error } = await admin.rpc('due_push_notifications')
+  if (error) return { error: error.message }
+  let sent = 0
+  for (const r of (data ?? []) as DuePush[]) {
+    const { error: claim } = await admin
+      .from('push_sends')
+      .insert({ user_id: r.user_id, circle_id: r.circle_id, occurs_on: r.occurs_on, kind: r.kind })
+    if (claim) continue
+    const tz = r.timezone ?? 'America/Los_Angeles'
+    // "Thu 7:00 PM" a day out; "7:00 PM" three hours out.
+    const time = new Date(r.starts_at).toLocaleString('en-US', {
+      ...(r.kind === 'checkin' ? { weekday: 'short' as const } : {}), hour: 'numeric', minute: '2-digit', timeZone: tz,
+    })
+    const n = await sendPush(r.user_id, r.kind === 'checkin'
+      ? { title: r.circle_name, body: `Check-in is open for ${time}. Going?`, url: `/circles/${r.circle_id}`, tag: `meet-${r.circle_id}-${r.occurs_on}` }
+      : { title: r.circle_name, body: `Starts at ${time}${r.place ? `, ${r.place}` : ''}.`, url: `/circles/${r.circle_id}`, tag: `meet-${r.circle_id}-${r.occurs_on}` })
+    if (n) sent++
+  }
+  return { mode: 'live', due: (data ?? []).length, sent }
 }
 
 async function sendReminder(row: DueRow): Promise<void> {

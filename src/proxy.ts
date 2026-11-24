@@ -94,6 +94,6 @@ export const config = {
   // The same goes for the web app manifest and its icons (app/manifest.ts,
   // app/pwa-icon): the browser fetches them signed out.
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|icon|apple-icon|manifest.webmanifest|pwa-icon|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|icon|apple-icon|manifest.webmanifest|pwa-icon|sw\\.js|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }

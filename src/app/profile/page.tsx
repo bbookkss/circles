@@ -5,6 +5,7 @@ import TopNav from '@/components/TopNav'
 import EditProfileForm from './EditProfileForm'
 import DeleteAccountForm from './DeleteAccountForm'
 import FeedbackButton from '@/components/FeedbackButton'
+import NotificationsSwitch from '@/components/NotificationsSwitch'
 import { logout } from '@/app/actions/auth'
 import { unblockUser } from '@/app/actions/safety'
 
@@ -140,6 +141,11 @@ export default async function ProfilePage() {
             ) : (
               <p className="text-sm text-muted-foreground">No circles yet.</p>
             )}
+          </div>
+
+          <div className="space-y-3">
+            <h2 className="label">Notifications</h2>
+            <NotificationsSwitch />
           </div>
 
           {/* On phones the feedback form lives here, not in a floating button. */}
