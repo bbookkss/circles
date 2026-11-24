@@ -570,7 +570,10 @@ export default async function CirclePage({
             <div className="space-y-8 min-w-0">
               {/* The one boxed thing on the page. */}
               {nextMeet && schedule && (
-                <div className="rounded-3xl bg-muted p-5 space-y-3 fade-rise">
+                // #next-meet is where notifications land: scrolled clear of
+                // the nav, and outlined in gold for a moment so the eye finds
+                // the buttons.
+                <div id="next-meet" className="rounded-3xl bg-muted p-5 space-y-3 fade-rise scroll-mt-24 target:ring-2 target:ring-heat target:ring-offset-2 target:ring-offset-background">
                   <div className="flex items-baseline justify-between gap-3 flex-wrap">
                     <p className="text-[26px] tracking-tight">
                       {(() => {

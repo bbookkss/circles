@@ -1,7 +1,9 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { cookies } from 'next/headers'
 import { pushConfigured, sendPush } from '@/lib/push'
+import { loadWeek } from '@/lib/ai/tools/assistant/week'
 
 /**
  * Turning notifications on and off for one device. The subscription is the
@@ -40,11 +42,31 @@ export async function removePushSubscription(endpoint: string) {
   return { ok: true }
 }
 
-/** "Send me a test": proves the whole path on this person's own devices. */
+/**
+ * "Send me a test": proves the whole path on this person's own devices, using
+ * their real next meet so it looks and lands exactly like the real thing
+ * (tap it and you're on that circle's check-in). With no meet coming up, a
+ * plain confirmation that opens Explore.
+ */
 export async function sendTestPush() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not signed in' }
-  const n = await sendPush(user.id, { title: 'Circles', body: 'Notifications are on.', url: '/profile', tag: 'test' })
+  const tz = (await cookies()).get('viewer_tz')?.value || 'America/Los_Angeles'
+  const next = (await loadWeek(supabase, user.id, tz, 14).catch(() => []))[0]
+  const start = next?.time_label.split(' – ')[0]
+  const n = await sendPush(
+    user.id,
+    next
+      ? {
+          title: next.circle_name,
+          body: next.open && !next.my_status
+            ? `Check-in is open for ${next.day_label.toLowerCase() === 'today' || next.day_label.toLowerCase() === 'tomorrow' ? next.day_label.toLowerCase() : next.day_label}, ${start}. Going?`
+            : `Next up: ${next.day_label}, ${start}.`,
+          url: `/circles/${next.circle_id}#next-meet`,
+          tag: 'test',
+        }
+      : { title: 'Circles', body: "Notifications are on. Nothing coming up yet; find a circle to join.", url: '/explore', tag: 'test' }
+  )
   return n ? { ok: true } : { error: 'No device got it. Try turning notifications off and on again.' }
 }

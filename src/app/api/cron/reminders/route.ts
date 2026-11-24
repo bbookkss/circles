@@ -148,8 +148,8 @@ async function sendDuePush(admin: ReturnType<typeof createAdminClient>) {
       ...(r.kind === 'checkin' ? { weekday: 'short' as const } : {}), hour: 'numeric', minute: '2-digit', timeZone: tz,
     })
     const n = await sendPush(r.user_id, r.kind === 'checkin'
-      ? { title: r.circle_name, body: `Check-in is open for ${time}. Going?`, url: `/circles/${r.circle_id}`, tag: `meet-${r.circle_id}-${r.occurs_on}` }
-      : { title: r.circle_name, body: `Starts at ${time}${r.place ? `, ${r.place}` : ''}.`, url: `/circles/${r.circle_id}`, tag: `meet-${r.circle_id}-${r.occurs_on}` })
+      ? { title: r.circle_name, body: `Check-in is open for ${time}. Going?`, url: `/circles/${r.circle_id}#next-meet`, tag: `meet-${r.circle_id}-${r.occurs_on}` }
+      : { title: r.circle_name, body: `Starts at ${time}${r.place ? `, ${r.place}` : ''}.`, url: `/circles/${r.circle_id}#next-meet`, tag: `meet-${r.circle_id}-${r.occurs_on}` })
     if (n) sent++
   }
   return { mode: 'live', due: (data ?? []).length, sent }
