@@ -51,7 +51,7 @@ export default async function RequestsPage({
   return (
     <>
     <TopNav />
-    <div className="pt-20 pb-24 min-h-screen bg-background">
+    <div className="pt-20 pb-24 max-md:pb-[calc(var(--tabbar)+2rem)] min-h-screen bg-background">
       <div className="max-w-2xl mx-auto px-5 py-8">
         <div className="mb-6">
           <Link href={`/circles/${id}`} className="text-sm text-muted-foreground hover:text-foreground">

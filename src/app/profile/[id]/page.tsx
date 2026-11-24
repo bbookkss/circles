@@ -93,7 +93,7 @@ export default async function UserProfilePage({ params }: { params: Promise<{ id
   return (
     <>
       <TopNav />
-      <main className="pt-14 pb-28 md:pb-12 min-h-screen bg-background">
+      <main className="pt-14 max-md:pb-[calc(var(--tabbar)+2rem)] md:pb-12 min-h-screen bg-background">
         <div className="max-w-2xl mx-auto px-4 md:px-6 pt-10 space-y-10">
 
           {/* Avatar + name + bio */}
@@ -141,9 +141,9 @@ export default async function UserProfilePage({ params }: { params: Promise<{ id
                   )}
                 </div>
               )}
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 pt-1 text-sm text-muted-foreground">
-                <ReportButton targetType="user" targetId={id} />
-                {!iBlocked && <BlockButton userId={id} name={profile.full_name ?? 'them'} />}
+              <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                <ReportButton targetType="user" targetId={id} label="Report" className="pill-btn" />
+                {!iBlocked && <BlockButton userId={id} name={profile.full_name ?? 'them'} label="Block" className="pill-btn hover:!bg-destructive hover:!text-white" />}
               </div>
             </div>
           </div>

@@ -201,7 +201,7 @@ export default function ExploreClient({ circles, people, initialView, origin: or
 
       {/* Sidebar */}
       <aside
-        className={`${mobileView === 'list' ? 'flex' : 'hidden'} md:flex flex-col min-h-0 absolute z-10 inset-0 pt-16 pb-36 bg-background md:inset-auto md:top-20 md:left-4 md:bottom-4 md:w-[360px] md:p-0 md:glass md:rounded-[24px] md:overflow-hidden`}
+        className={`${mobileView === 'list' ? 'flex' : 'hidden'} md:flex flex-col min-h-0 absolute z-10 inset-0 pt-16 pb-[calc(var(--tabbar)+4rem)] bg-background md:inset-auto md:top-20 md:left-4 md:bottom-4 md:w-[360px] md:p-0 md:glass md:rounded-[24px] md:overflow-hidden`}
       >
         {/* Search + filter toggle */}
         <div className="px-5 pt-5 pb-3 space-y-3">

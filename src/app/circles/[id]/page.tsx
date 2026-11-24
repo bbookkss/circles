@@ -197,7 +197,7 @@ export default async function CirclePage({
     return (
       <>
         {user ? <TopNav /> : (
-          <nav className="fixed top-0 left-0 right-0 z-50 h-14 px-3 pt-2 pointer-events-none">
+          <nav className="fixed top-[env(safe-area-inset-top)] left-0 right-0 z-50 h-14 px-3 pt-2 pointer-events-none">
             <div className="glass pointer-events-auto mx-auto max-w-3xl h-12 rounded-full flex items-center gap-2 pl-4 pr-1.5">
               <Link href="/" className="flex items-center gap-2 font-semibold text-[1.05rem] tracking-tight"><Logo />Circles</Link>
               <div className="ml-auto flex items-center gap-1">
@@ -207,7 +207,7 @@ export default async function CirclePage({
             </div>
           </nav>
         )}
-        <div className="pt-14 pb-20 md:pb-0 min-h-screen bg-background">
+        <div className="pt-14 max-md:pb-[calc(var(--tabbar)+2rem)] md:pb-0 min-h-screen bg-background">
           <div className="max-w-2xl mx-auto px-5 py-10 space-y-8">
 
             {actionError && (
@@ -493,7 +493,7 @@ export default async function CirclePage({
   return (
     <>
       <TopNav />
-      <div className="pt-14 pb-20 md:pb-0 min-h-screen bg-background">
+      <div className="pt-14 max-md:pb-[calc(var(--tabbar)+2rem)] md:pb-0 min-h-screen bg-background">
         <div className="max-w-3xl mx-auto px-5 md:px-6 py-8 md:py-10 space-y-8">
 
           {actionError && (

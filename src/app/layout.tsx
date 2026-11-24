@@ -55,6 +55,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
       </head>
       <body className="min-h-full flex flex-col">
+        {/* The installed iPhone app draws under the status bar
+            (black-translucent). This band sits behind the clock on every
+            page: ink in light mode so the white clock reads, page colour in
+            dark. Zero height in a browser. */}
+        <div aria-hidden className="fixed top-0 inset-x-0 z-[80] h-[env(safe-area-inset-top)] bg-[#1a2230] dark:bg-background pointer-events-none" />
         <ViewerTimezone />
         {children}
         <InstallHint />

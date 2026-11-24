@@ -50,7 +50,7 @@ export default async function NotificationsPage() {
     <>
       <TopNav />
       <ReadMarker />
-      <main className="pt-14 pb-28 md:pb-12 min-h-screen bg-background">
+      <main className="pt-14 max-md:pb-[calc(var(--tabbar)+2rem)] md:pb-12 min-h-screen bg-background">
         <div className="max-w-2xl mx-auto px-4 md:px-6 pt-10">
           <h1 className="text-[2.4rem] md:text-5xl mb-8">Notifications</h1>
 

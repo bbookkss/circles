@@ -43,16 +43,16 @@ export default async function MessageThreadPage({ params }: { params: Promise<{ 
   return (
     <>
       <TopNav />
-      <div className="pt-14 pb-16 md:pb-0 h-[calc(100dvh-env(safe-area-inset-top))] flex flex-col bg-background">
-        <header className="max-w-2xl w-full mx-auto px-4 md:px-6 pt-5 pb-3 flex items-center gap-3 flex-shrink-0 border-b border-border">
+      <div data-chat-thread className="pt-14 max-md:pb-[var(--tabbar)] h-[calc(100dvh-env(safe-area-inset-top))] flex flex-col bg-background">
+        <header className="max-w-2xl w-full mx-auto px-3 md:px-6 pt-4 pb-3 flex items-center gap-2 flex-shrink-0 border-b border-border">
           <BackButton fallback="/messages" />
-          <Link href={`/profile/${other.id}`} className="text-xl font-medium tracking-tight hover:underline underline-offset-4 decoration-1">
+          <Link href={`/profile/${other.id}`} className="min-w-0 truncate text-lg font-medium tracking-tight px-1 hover:underline underline-offset-4 decoration-1">
             {other.full_name}
           </Link>
           {!iBlocked && (
-            <div className="ml-auto flex items-center gap-4 text-sm text-muted-foreground">
-              <ReportButton targetType="user" targetId={other.id} />
-              <BlockButton userId={other.id} name={other.full_name ?? 'them'} />
+            <div className="ml-auto flex items-center gap-1.5 shrink-0">
+              <ReportButton targetType="user" targetId={other.id} label="Report" className="pill-btn" />
+              <BlockButton userId={other.id} name={other.full_name ?? 'them'} label="Block" className="pill-btn hover:!bg-destructive hover:!text-white" />
             </div>
           )}
         </header>

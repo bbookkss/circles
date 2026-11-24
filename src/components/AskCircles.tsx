@@ -206,6 +206,10 @@ export default function AskCircles() {
   }
 
   const last = turns[turns.length - 1]
+  // A suggestion already asked in this conversation never comes back: the
+  // server builds them from the schedule and doesn't know what was tapped.
+  const asked = new Set(turns.filter((t) => t.role === 'user').map((t) => norm(t.text)))
+  const fresh = suggestions.filter((q) => !asked.has(norm(q)))
 
   return (
     <>
@@ -255,7 +259,7 @@ export default function AskCircles() {
                 <p className="text-[0.95rem] text-muted-foreground">
                   Ask about your week, your messages, or circles anywhere. I&apos;ll lay out the options and you choose.
                 </p>
-                <Chips items={suggestions} onPick={ask} />
+                <Chips items={fresh} onPick={ask} />
               </div>
             )}
 
@@ -287,7 +291,7 @@ export default function AskCircles() {
             )}
 
             {busy && <p className="text-sm text-muted-foreground flex items-center gap-2.5"><span className="text-foreground"><Logo size={16} busy /></span>Looking…</p>}
-            {!busy && last?.role === 'assistant' && suggestions.length > 0 && <Chips items={suggestions.slice(0, 3)} onPick={ask} />}
+            {!busy && last?.role === 'assistant' && fresh.length > 0 && <Chips items={fresh.slice(0, 3)} onPick={ask} />}
           </div>
 
           {consent && nearStatus !== 'on' && (
@@ -347,6 +351,8 @@ export default function AskCircles() {
     </>
   )
 }
+
+const norm = (t: string) => t.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()
 
 function form(meet: Meet, s: Status | null) {
   const fd = new FormData()

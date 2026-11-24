@@ -600,7 +600,7 @@ export default function CirclesMap({
           under it: the empty-state card's buttons came out half-covered by
           the switch. Desktop has no pill and keeps the tighter inset. */}
       {emptyOverlay && nothingInView && (
-        <div className="absolute inset-x-0 bottom-0 flex justify-center p-4 pb-20 md:pb-4 pointer-events-none">
+        <div className="absolute inset-x-0 bottom-0 flex justify-center p-4 max-md:pb-[calc(var(--tabbar)+4.5rem)] md:pb-4 pointer-events-none">
           <div className="pointer-events-auto">{emptyOverlay({ showAll, canShowAll, areaName })}</div>
         </div>
       )}

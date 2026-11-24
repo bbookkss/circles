@@ -60,7 +60,7 @@ export default async function AdminPage() {
     <>
       <TopNav />
       <main className="pt-16 min-h-screen bg-background">
-        <div className="max-w-[720px] mx-auto px-4 sm:px-7 pt-8 pb-28 space-y-10">
+        <div className="max-w-[720px] mx-auto px-4 sm:px-7 pt-8 pb-28 max-md:pb-[calc(var(--tabbar)+2rem)] space-y-10">
 
           <div className="space-y-3">
             <div className="space-y-1">

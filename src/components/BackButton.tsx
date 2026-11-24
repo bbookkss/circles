@@ -1,14 +1,13 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import Circled from '@/components/Circled'
 
 // Routes to the actual previous page via browser history. Falls back to a
 // sensible destination when there's no in-app history (e.g. the page was
 // opened directly from a shared link).
 export default function BackButton({
   fallback = '/home',
-  label = '← back',
+  label = 'Back',
 }: {
   fallback?: string
   label?: string
@@ -24,14 +23,9 @@ export default function BackButton({
   }
 
   return (
-    <Circled>
-      <button
-        type="button"
-        onClick={handleBack}
-        className="text-sm text-muted-foreground hover:text-foreground px-2 py-1"
-      >
-        {label}
-      </button>
-    </Circled>
+    <button type="button" onClick={handleBack} className="pill-btn pl-2.5 shrink-0">
+      <svg aria-hidden width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
+      {label}
+    </button>
   )
 }

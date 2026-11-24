@@ -157,7 +157,7 @@ export default function NewCircleClient({
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="md:flex-1 md:overflow-y-auto p-4 pb-24 md:pb-4 space-y-5">
+        <form onSubmit={handleSubmit} className="md:flex-1 md:overflow-y-auto p-4 max-md:pb-[calc(var(--tabbar)+2rem)] md:pb-4 space-y-5">
           {error && (
             <p className="text-sm text-destructive bg-destructive/10 px-3.5 py-2.5 rounded-xl">
               {error}

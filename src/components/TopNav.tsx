@@ -41,11 +41,6 @@ export default async function TopNav() {
     {user && <BottomNav unread={unread ?? 0} unreadDms={unreadDms ?? 0} />}
     {/* A glass pill floating over the page, which scrolls under it. The outer
         bar is transparent and lets clicks through around the pill. */}
-    {/* The installed iPhone app draws under the status bar (black-translucent,
-        so dark mode isn't a white strip). This band sits behind the clock:
-        ink in light mode so the white clock reads, page colour in dark.
-        Zero height everywhere else. */}
-    <div aria-hidden className="fixed top-0 inset-x-0 z-[51] h-[env(safe-area-inset-top)] bg-[#1a2230] dark:bg-background pointer-events-none" />
     <nav className="fixed top-[env(safe-area-inset-top)] left-0 right-0 z-50 h-14 px-3 pt-2 pointer-events-none">
       <div className="glass pointer-events-auto mx-auto max-w-3xl h-12 rounded-full flex items-center gap-1 pl-4 pr-1.5">
         <Link href="/home" className="flex items-center gap-2 font-semibold text-[1.05rem] tracking-tight mr-2 -ml-2 px-2 py-1.5 rounded-full hover:bg-muted focus-visible:bg-muted outline-none transition-colors">

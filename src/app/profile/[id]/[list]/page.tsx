@@ -67,7 +67,7 @@ export default async function FollowListPage({
   return (
     <>
       <TopNav />
-      <main className="pt-14 pb-28 md:pb-12 min-h-screen bg-background">
+      <main className="pt-14 max-md:pb-[calc(var(--tabbar)+2rem)] md:pb-12 min-h-screen bg-background">
         <div className="max-w-2xl mx-auto px-4 md:px-6 pt-8 space-y-8">
           <div className="space-y-5">
             <BackButton fallback={backTo} />

@@ -8,7 +8,9 @@ import { blockUser } from '@/app/actions/safety'
  * Two taps, because a block quietly cuts several things at once and the
  * person deserves to know what before it happens.
  */
-export default function BlockButton({ userId, name }: { userId: string; name: string }) {
+export default function BlockButton({
+  userId, name, className = 'text-muted-foreground hover:text-destructive transition-colors', label = 'block',
+}: { userId: string; name: string; className?: string; label?: string }) {
   const [confirming, setConfirming] = useState(false)
   const [pending, setPending] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -29,9 +31,9 @@ export default function BlockButton({ userId, name }: { userId: string; name: st
       <button
         type="button"
         onClick={() => setConfirming(true)}
-        className="text-muted-foreground hover:text-destructive transition-colors"
+        className={className}
       >
-        block
+        {label}
       </button>
 
       {/* Portalled to body: a transformed ancestor (.fade-rise) would

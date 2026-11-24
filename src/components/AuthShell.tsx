@@ -31,7 +31,7 @@ export default function AuthShell({
 }) {
   return (
     <main className="relative min-h-screen bg-background text-foreground">
-      <nav className="fixed top-0 left-0 right-0 z-50 px-3 pt-2 pointer-events-none">
+      <nav className="fixed top-[env(safe-area-inset-top)] left-0 right-0 z-50 px-3 pt-2 pointer-events-none">
         <div className="glass pointer-events-auto mx-auto max-w-3xl h-12 rounded-full flex items-center gap-1 pl-4 pr-1.5">
           <Link href="/" className="flex items-center gap-2 font-semibold text-[1.05rem] tracking-tight">
             <Logo />

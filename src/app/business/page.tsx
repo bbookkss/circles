@@ -27,7 +27,7 @@ export default async function BusinessPage() {
     <>
       <TopNav />
       <main className="pt-16 min-h-screen bg-background">
-        <div className="max-w-[640px] mx-auto px-4 sm:px-7 pt-8 pb-28 space-y-7">
+        <div className="max-w-[640px] mx-auto px-4 sm:px-7 pt-8 pb-28 max-md:pb-[calc(var(--tabbar)+2rem)] space-y-7">
 
           <div className="space-y-2">
             <h1 className="text-[2rem] sm:text-[2.6rem]">For restaurants and businesses</h1>

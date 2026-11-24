@@ -272,7 +272,7 @@ export default async function HomePage() {
   return (
     <>
       <TopNav />
-      <main className="pb-24 md:pb-0 min-h-screen bg-background">
+      <main className="max-md:pb-[calc(var(--tabbar)+2rem)] md:pb-0 min-h-screen bg-background">
         {/* The week, on a glass sheet over the map, which runs up under the nav. */}
         <section className="relative h-[380px] md:h-[420px] overflow-hidden" aria-label="Your week">
           <HeatMap areas={heatAreas} className="absolute inset-0" />
