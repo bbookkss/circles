@@ -24,6 +24,9 @@ export type PushPayload = {
   tag?: string
 }
 
+/** The switches on Profile; each maps to a user_settings column. */
+export type PushKind = 'checkin' | 'soon' | 'messages' | 'friends' | 'going' | 'changes' | 'requests'
+
 export function pushConfigured(): boolean {
   return Boolean(
     process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY && process.env.VAPID_SUBJECT
@@ -47,11 +50,18 @@ function clip(s: string, n: number) {
   return t.length > n ? `${t.slice(0, n - 1)}…` : t
 }
 
-/** Sends to every device the person turned notifications on for. Returns how many got it. */
-export async function sendPush(userId: string, payload: PushPayload): Promise<number> {
+/**
+ * Sends to every device the person turned notifications on for. Returns how
+ * many got it. With `kind`, only if they haven't switched that kind off.
+ */
+export async function sendPush(userId: string, payload: PushPayload, kind?: PushKind): Promise<number> {
   if (!pushConfigured()) return 0
   setup()
   const admin = createAdminClient()
+  if (kind) {
+    const { data: wants } = await admin.rpc('push_wants', { p_user: userId, p_kind: kind })
+    if (wants === false) return 0
+  }
   const { data: subs } = await admin
     .from('push_subscriptions')
     .select('id, endpoint, p256dh, auth')

@@ -37,7 +37,7 @@ export async function sendMessage(recipientId: string, content: string) {
       body: 'Sent you a message',
       url: `/messages/${encodeURIComponent(user.id)}`,
       tag: `msg-${user.id}`,
-    }).catch(() => {})
+    }, 'messages').catch(() => {})
   })
 
   revalidatePath(`/messages/${recipientId}`)

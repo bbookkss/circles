@@ -6,6 +6,7 @@ import EditProfileForm from './EditProfileForm'
 import DeleteAccountForm from './DeleteAccountForm'
 import FeedbackButton from '@/components/FeedbackButton'
 import NotificationsSwitch from '@/components/NotificationsSwitch'
+import NotificationPrefs from '@/components/NotificationPrefs'
 import { logout } from '@/app/actions/auth'
 import { unblockUser } from '@/app/actions/safety'
 
@@ -13,6 +14,12 @@ export default async function ProfilePage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
+
+  const { data: pushPrefs } = await supabase
+    .from('user_settings')
+    .select('push_checkin_open, push_soon, push_messages, push_friends, push_going, push_changes, push_requests')
+    .eq('user_id', user.id)
+    .maybeSingle()
 
   const { data: profile } = await supabase
     .from('profiles')
@@ -146,6 +153,7 @@ export default async function ProfilePage() {
           <div className="space-y-3">
             <h2 className="label">Notifications</h2>
             <NotificationsSwitch />
+            {process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY && <NotificationPrefs initial={pushPrefs ?? {}} />}
           </div>
 
           {/* On phones the feedback form lives here, not in a floating button. */}

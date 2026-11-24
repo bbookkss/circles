@@ -2,7 +2,10 @@
 
 import { redirect } from 'next/navigation'
 import tzLookup from 'tz-lookup'
+import { after } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { sendPush } from '@/lib/push'
+import { formatTime } from '@/lib/schedule'
 
 /**
  * A circle's timezone comes from its pin, not from the server's locale. It
@@ -144,6 +147,12 @@ export async function updateCircle(formData: FormData) {
   const name = formData.get('name') as string
   if (!name?.trim()) return { error: 'Name is required' }
 
+  // Before the edit, for telling people what changed (below).
+  const [{ data: before }, { data: beforeSchedule }] = await Promise.all([
+    supabase.from('circles').select('location').eq('id', circle_id).maybeSingle(),
+    supabase.from('circle_schedules').select('days_of_week, start_time, end_time, frequency').eq('circle_id', circle_id).limit(1).maybeSingle(),
+  ])
+
   const latitude = parseFloat(formData.get('latitude') as string)
   const longitude = parseFloat(formData.get('longitude') as string)
   const neighborhood = formData.get('neighborhood') as string
@@ -200,7 +209,61 @@ export async function updateCircle(formData: FormData) {
     if (insError) return { error: insError.message }
   }
 
+  await notifyChange(supabase, user.id, circle_id, name.trim(), {
+    location: [before?.location ?? null, (formData.get('location') as string)?.trim() || null],
+    days: [beforeSchedule?.days_of_week ?? null, days.length && start_time ? days : beforeSchedule?.days_of_week ?? null],
+    start: [beforeSchedule?.start_time ?? null, days.length && start_time ? start_time : beforeSchedule?.start_time ?? null],
+    frequency: [beforeSchedule?.frequency ?? null, days.length && start_time ? ((formData.get('frequency') as string) || 'weekly') : beforeSchedule?.frequency ?? null],
+  })
+
   redirect(`/circles/${circle_id}`)
+}
+
+const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+
+/**
+ * The time, days or place of a circle changed: tell everyone who already
+ * answered yes or maybe for a coming meet, since they planned around the old
+ * one. Name, description, cost and the like don't count. The editor is left
+ * out. Sent after the response; per-person "changes" switch respected.
+ */
+async function notifyChange(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  editorId: string,
+  circleId: string,
+  circleName: string,
+  d: { location: [string | null, string | null]; days: [number[] | null, number[] | null]; start: [string | null, string | null]; frequency: [string | null, string | null] }
+) {
+  const sameDays = JSON.stringify([...(d.days[0] ?? [])].sort()) === JSON.stringify([...(d.days[1] ?? [])].sort())
+  const sameStart = (d.start[0] ?? '').slice(0, 5) === (d.start[1] ?? '').slice(0, 5)
+  const parts: string[] = []
+  if (!sameDays || d.frequency[0] !== d.frequency[1]) {
+    parts.push(`now ${(d.days[1] ?? []).map((x) => DAY_NAMES[x]).join(', ')}${d.start[1] ? ` at ${formatTime(d.start[1])}` : ''}`)
+  } else if (!sameStart && d.start[1]) {
+    parts.push(`now at ${formatTime(d.start[1])}`)
+  }
+  if ((d.location[0] ?? '') !== (d.location[1] ?? '')) parts.push(d.location[1] ? `new place: ${d.location[1]}` : 'place changed')
+  if (!parts.length) return
+
+  const today = new Date(Date.now() - 24 * 3600 * 1000).toISOString().slice(0, 10)
+  const { data: answered } = await supabase
+    .from('circle_check_ins')
+    .select('user_id')
+    .eq('circle_id', circleId)
+    .in('status', ['yes', 'maybe'])
+    .gte('occurs_on', today)
+  const people = [...new Set((answered ?? []).map((r) => r.user_id as string))].filter((id) => id !== editorId)
+  if (!people.length) return
+
+  const body = parts.join('; ')
+  after(async () => {
+    await Promise.all(people.map((id) => sendPush(id, {
+      title: `${circleName} changed`,
+      body: body.charAt(0).toUpperCase() + body.slice(1) + '.',
+      url: `/circles/${circleId}#next-meet`,
+      tag: `change-${circleId}`,
+    }, 'changes').catch(() => 0)))
+  })
 }
 
 export async function joinCircle(formData: FormData) {
@@ -280,6 +343,22 @@ export async function requestToJoin(formData: FormData) {
   // One insert per admin: RLS refuses a notification across a block, and a
   // refused row would sink the whole batch, so nobody would hear of it.
   await Promise.all(rows.map((row) => supabase.from('notifications').insert(row)))
+
+  // And a notification to each admin's devices, after the redirect is on its
+  // way. First name only, and the circle's name from the database.
+  const [{ data: me }, { data: circle }] = await Promise.all([
+    supabase.from('profiles').select('full_name').eq('id', user.id).maybeSingle(),
+    supabase.from('circles').select('name').eq('id', circle_id).maybeSingle(),
+  ])
+  const first = ((me?.full_name as string | null) ?? '').split(' ')[0] || 'Someone'
+  after(async () => {
+    await Promise.all(rows.map((r) => sendPush(r.user_id as string, {
+      title: (circle?.name as string | undefined) ?? 'Circles',
+      body: `${first} asked to join.`,
+      url: `/circles/${circle_id}/requests`,
+      tag: `req-${circle_id}`,
+    }, 'requests').catch(() => 0)))
+  })
 
   redirect(`/circles/${circle_id}`)
 }

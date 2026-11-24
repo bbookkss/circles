@@ -152,7 +152,72 @@ async function sendDuePush(admin: ReturnType<typeof createAdminClient>) {
       : { title: r.circle_name, body: `Starts at ${time}${r.place ? `, ${r.place}` : ''}.`, url: `/circles/${r.circle_id}#next-meet`, tag: `meet-${r.circle_id}-${r.occurs_on}` })
     if (n) sent++
   }
-  return { mode: 'live', due: (data ?? []).length, sent }
+
+  // "Ana and Sam are going to Thursday chess." Once per meet: claimed first.
+  const { data: friends } = await admin.rpc('due_friend_pushes')
+  for (const r of (friends ?? []) as Social[]) {
+    const { error: claim } = await admin
+      .from('push_sends')
+      .insert({ user_id: r.user_id, circle_id: r.circle_id, occurs_on: r.occurs_on, kind: 'friends' })
+    if (claim) continue
+    const who = names(r.names, r.total)
+    if (await sendPush(r.user_id, {
+      title: r.circle_name,
+      body: `${who} ${r.total === 1 ? 'is' : 'are'} going ${dayWord(r.starts_at, r.timezone)}. You in?`,
+      url: `/circles/${r.circle_id}#next-meet`,
+      tag: `meet-${r.circle_id}-${r.occurs_on}`,
+    })) sent++
+  }
+
+  // "Sam and 2 others said yes. 6 going." For people going, and for admins.
+  // The digest time is written first, so a crash skips one rather than
+  // repeating it, and the 3-hour spacing holds.
+  const { data: digests } = await admin.rpc('due_going_digests')
+  for (const r of (digests ?? []) as (Social & { new_count: number; going: number })[]) {
+    const { error: mark } = await admin
+      .from('push_digests')
+      .upsert({ user_id: r.user_id, circle_id: r.circle_id, occurs_on: r.occurs_on, last_sent_at: new Date().toISOString() })
+    if (mark) continue
+    const who = names(r.names, r.new_count)
+    if (await sendPush(r.user_id, {
+      title: r.circle_name,
+      body: `${who} said yes for ${dayWord(r.starts_at, r.timezone)}. ${r.going} going.`,
+      url: `/circles/${r.circle_id}#next-meet`,
+      tag: `going-${r.circle_id}-${r.occurs_on}`,
+    })) sent++
+  }
+
+  return { mode: 'live', due: (data ?? []).length + (friends ?? []).length + (digests ?? []).length, sent }
+}
+
+type Social = {
+  user_id: string
+  circle_id: string
+  circle_name: string
+  timezone: string | null
+  occurs_on: string
+  starts_at: string
+  names: string[] | null
+  total: number
+}
+
+/** "Ana", "Ana and Sam", "Ana, Sam and 3 others". */
+function names(list: string[] | null, count: number) {
+  const n = (list ?? []).filter(Boolean)
+  if (!n.length) return count === 1 ? 'Someone' : `${count} people`
+  if (count <= 1) return n[0]
+  if (count === 2 && n.length >= 2) return `${n[0]} and ${n[1]}`
+  const rest = count - n.length
+  return rest > 0 ? `${n.join(', ')} and ${rest} other${rest === 1 ? '' : 's'}` : `${n[0]} and ${n[1]}`
+}
+
+/** "today at 7:00 PM" / "tomorrow at 7:00 PM", in the circle's zone. */
+function dayWord(startsAt: string, tz: string | null) {
+  const zone = tz ?? 'America/Los_Angeles'
+  const d = new Date(startsAt)
+  const day = (x: Date) => x.toLocaleDateString('en-CA', { timeZone: zone })
+  const time = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: zone })
+  return `${day(d) === day(new Date()) ? 'today' : 'tomorrow'} at ${time}`
 }
 
 async function sendReminder(row: DueRow): Promise<void> {
