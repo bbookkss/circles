@@ -36,7 +36,7 @@ export const PUBLIC_TOOLS: Anthropic.Tool[] = [
   {
     name: 'answer',
     description:
-      'Finish with a short friendly sentence (no links, under 200 characters) and the ids of up to 5 ' +
+      'Finish with one plain sentence that is not a question (12 words or fewer, no links) and the ids of up to 5 ' +
       'circles from the search results to show, best first. Call this exactly once, last.',
     strict: true,
     input_schema: {

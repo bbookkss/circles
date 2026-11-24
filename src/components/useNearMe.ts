@@ -41,10 +41,19 @@ export function useNearMe() {
 /** A short line for the control, by state. */
 export function nearLabel(status: Status): string {
   switch (status) {
-    case 'on': return 'Using your location'
+    case 'on': return 'Using your rough location (about 1 km)'
     case 'asking': return 'Finding you…'
     case 'denied': return 'Location is off in your browser, so results use your rough area'
     case 'unavailable': return "Couldn't get your location, so results use your rough area"
     default: return 'Use my location'
   }
 }
+
+/**
+ * What happens when someone turns location on, said before the browser asks.
+ * Every claim here is enforced in code: rounded on the device (above), rounded
+ * again on the server (lib/ai/near.ts), passed to one request at a time, and
+ * never written to the database.
+ */
+export const LOCATION_EXPLAINER =
+  "It's rounded to about 1 km on your device, sent only with your questions to find circles nearby, and never saved or shown to other people. Turn it off any time."

@@ -8,6 +8,7 @@ import { setCheckIn, clearCheckIn } from '@/app/actions/checkins'
 import { scheduleCheckIn, cancelScheduledCheckIn } from '@/app/actions/scheduled'
 import MapThumb from '@/components/MapThumb'
 import { useNearMe, nearLabel } from '@/components/useNearMe'
+import LocationConsent from '@/components/LocationConsent'
 import type { Card, Meet, Status } from '@/lib/ai/tools/assistant/types'
 
 /**
@@ -80,6 +81,27 @@ export default function AskCircles() {
   const [input, setInput] = useState('')
   const [busy, setBusy] = useState(false)
   const { near, status: nearStatus, ask: askNear, forget: forgetNear } = useNearMe()
+  // The explanation shows before the browser's own prompt, never after.
+  const [consent, setConsent] = useState(false)
+  // Phones: the panel is the whole screen, sized to the visible viewport so
+  // the on-screen keyboard pushes the input up instead of covering it.
+  const [vv, setVv] = useState<{ h: number; top: number } | null>(null)
+  useEffect(() => {
+    if (!open || window.matchMedia('(min-width: 768px)').matches) return
+    const v = window.visualViewport
+    const sync = () => setVv(v ? { h: v.height, top: v.offsetTop } : null)
+    sync()
+    v?.addEventListener('resize', sync)
+    v?.addEventListener('scroll', sync)
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      v?.removeEventListener('resize', sync)
+      v?.removeEventListener('scroll', sync)
+      document.body.style.overflow = prev
+      setVv(null)
+    }
+  }, [open])
   const [rsvp, setRsvp] = useState<Record<string, RsvpState>>({})
   const inputRef = useRef<HTMLInputElement>(null)
   const buttonRef = useRef<HTMLButtonElement>(null)
@@ -101,7 +123,9 @@ export default function AskCircles() {
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => { if (live && d && Array.isArray(d.suggestions)) setSuggestions(d.suggestions.slice(0, 4)) })
       .catch(() => {})
-    inputRef.current?.focus()
+    // Desktop only: on a phone, focusing raises the keyboard over half the
+    // panel before the person has read anything.
+    if (window.matchMedia('(min-width: 768px)').matches) inputRef.current?.focus()
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') { setOpen(false); buttonRef.current?.focus() }
     }
@@ -206,12 +230,14 @@ export default function AskCircles() {
           id="ask-circles"
           role="dialog"
           aria-label="Radius, your Circles assistant"
-          // Phones: pinned between the nav and the tab bar, so its header never
-          // slides up under the nav however short the screen. Desktop: a panel
-          // in the corner.
-          className="fixed z-50 inset-x-2 top-[calc(4.25rem+env(safe-area-inset-top))] bottom-[calc(4.75rem+env(safe-area-inset-bottom))] md:top-auto md:inset-x-auto md:right-4 md:bottom-6 md:w-[420px] md:h-[min(660px,calc(100dvh-7rem))] glass rounded-[26px] overflow-hidden flex flex-col print:hidden"
+          // Phones: a full-screen sheet over the nav and tab bar, on solid
+          // paper (glass over a busy page was unreadable), its height the
+          // visible viewport so the keyboard never hides the input.
+          // Desktop: a glass panel in the corner.
+          style={vv ? { height: vv.h, top: vv.top } : undefined}
+          className="fixed z-[70] inset-x-0 top-0 h-[100dvh] max-md:!bg-background max-md:!border-0 max-md:!shadow-none max-md:!backdrop-blur-none md:z-50 md:top-auto md:inset-x-auto md:right-4 md:bottom-6 md:w-[420px] md:h-[min(660px,calc(100dvh-7rem))] glass md:rounded-[26px] overflow-hidden flex flex-col print:hidden"
         >
-          <header className="flex items-center gap-2.5 pl-5 pr-3 h-14 shrink-0">
+          <header className="flex items-center gap-2.5 pl-5 pr-3 h-14 shrink-0 max-md:mt-[env(safe-area-inset-top)] max-md:border-b max-md:border-border">
             <Ring spinning={busy} />
             <p className="font-medium leading-none">Radius</p>
             <button
@@ -264,15 +290,31 @@ export default function AskCircles() {
             {!busy && last?.role === 'assistant' && suggestions.length > 0 && <Chips items={suggestions.slice(0, 3)} onPick={ask} />}
           </div>
 
+          {consent && nearStatus !== 'on' && (
+            <LocationConsent
+              className="shrink-0 mx-2.5 mb-2 bg-muted max-md:bg-cool"
+              onAllow={() => { setConsent(false); askNear() }}
+              onCancel={() => setConsent(false)}
+            />
+          )}
+          {!consent && nearStatus !== 'off' && (
+            <p className="shrink-0 mx-4 mb-1.5 text-xs text-muted-foreground flex items-center gap-2">
+              {nearStatus === 'on' && <span className="w-1.5 h-1.5 rounded-full bg-heat shrink-0" aria-hidden />}
+              <span className="flex-1">{nearLabel(nearStatus)}</span>
+              {nearStatus === 'on' && (
+                <button type="button" onClick={forgetNear} className="underline underline-offset-[3px] hover:text-foreground">Stop</button>
+              )}
+            </p>
+          )}
           <form
             onSubmit={(e) => { e.preventDefault(); ask(input) }}
-            className="shrink-0 m-2.5 mt-0 p-1.5 pl-2 rounded-[20px] bg-background flex gap-2 items-center"
+            className="shrink-0 m-2.5 mt-0 max-md:mb-[calc(0.625rem+env(safe-area-inset-bottom))] p-1.5 pl-2 rounded-[20px] bg-background max-md:bg-muted flex gap-2 items-center"
           >
-            {/* Location: off until tapped; the browser asks, and only a rounded
-                position (about 1 km) is sent. Gold while it's in use. */}
+            {/* Location: off until tapped. Tapping explains what is shared
+                first; the browser asks only after Allow. Gold while on. */}
             <button
               type="button"
-              onClick={nearStatus === 'on' ? forgetNear : askNear}
+              onClick={nearStatus === 'on' ? forgetNear : () => setConsent((c) => !c)}
               disabled={nearStatus === 'asking'}
               aria-pressed={nearStatus === 'on'}
               aria-label={nearStatus === 'on' ? 'Stop using your location' : nearLabel(nearStatus)}

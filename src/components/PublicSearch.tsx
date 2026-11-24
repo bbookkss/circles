@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import Logo from '@/components/Logo'
 import MapThumb from '@/components/MapThumb'
+import LocationConsent from '@/components/LocationConsent'
 import { useNearMe, nearLabel } from '@/components/useNearMe'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
@@ -62,6 +63,7 @@ export default function PublicSearch() {
   const widgetId = useRef<string | null>(null)
   const token = useRef<string | null>(null)
   const { near, status: nearStatus, ask: askNear, forget: forgetNear } = useNearMe()
+  const [consent, setConsent] = useState(false)
 
   useEffect(() => {
     if (!SITE_KEY) return
@@ -149,7 +151,8 @@ export default function PublicSearch() {
         ) : (
           <button
             type="button"
-            onClick={askNear}
+            onClick={() => setConsent((c) => !c)}
+            aria-expanded={consent}
             disabled={nearStatus === 'asking'}
             className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 -ml-3 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors disabled:opacity-60"
           >
@@ -158,6 +161,13 @@ export default function PublicSearch() {
           </button>
         )}
       </div>
+      {consent && nearStatus !== 'on' && (
+        <LocationConsent
+          className="mt-2 max-w-[46ch] bg-background"
+          onAllow={() => { setConsent(false); askNear() }}
+          onCancel={() => setConsent(false)}
+        />
+      )}
 
       {!result && !error && !loading && (
         <p className="text-sm text-muted-foreground mt-2">
